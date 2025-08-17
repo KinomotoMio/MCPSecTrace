@@ -1,14 +1,66 @@
 [project]
-name = "ftagent-master"
+name = "mcpsectrace"
 version = "0.1.0"
-description = "Add your description here"
+description = "综合性安全监控与分析工具包，集成自动化安全工具、系统监控、浏览器取证以及威胁情报的MCP服务器"
 readme = "README.md"
+authors = [
+    {name = "MCPSecTrace Team"}
+]
 requires-python = ">=3.13"
+keywords = ["security", "forensics", "automation", "mcp", "threat-intelligence"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "httpx>=0.28.1",
-    "opencv-python>=4.12.0.88",
+    "opencv-python>=4.12.0.88", 
     "pillow>=11.3.0",
     "pyautogui>=0.9.54",
     "pydantic>=2.11.7",
-    "pywin32>=311",
+    "pywin32>=311; sys_platform == 'win32'",
+    "mcp>=1.0.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "mypy>=1.8.0",
+]
+
+[project.scripts]
+mcpsectrace-browser = "mcpsectrace.core.browser_forensics:main"
+mcpsectrace-sysmon = "mcpsectrace.core.sysmon_collector:main"
+mcpsectrace-huorong = "mcpsectrace.automation.huorong:main"
+mcpsectrace-hrkill = "mcpsectrace.automation.hrkill:main"
+mcpsectrace-focus = "mcpsectrace.automation.focus_pack:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

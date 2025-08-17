@@ -1,5 +1,84 @@
-# 忽略JetBrains IDE (如IntelliJ IDEA, PyCharm, WebStorm等)的配置目录
-.idea/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# 忽略所有.exe可执行文件
-*.exe
+# 虚拟环境
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 日志文件
+*.log
+logs/
+data/logs/
+
+# 临时文件
+temp_*.txt
+*.tmp
+*.temp
+
+# 敏感配置
+config/secrets.json
+.env.local
+*.key
+*.pem
+
+# 数据文件
+data/browser_exports/
+data/logs/
+*.json
+!config/**/*.json
+!external_mcp/**/config*.json
+
+# 工具和可执行文件
+tools/executables/*.exe
+!tools/executables/.gitkeep
+
+# 测试覆盖率
+.coverage
+htmlcov/
+.pytest_cache/
+
+# MCP特定
+mcp_*.log
+quarantine_files.log
+trust_files.log
