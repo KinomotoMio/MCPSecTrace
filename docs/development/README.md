@@ -15,6 +15,34 @@
 
 **适用对象：** 所有项目贡献者，特别是GitHub协作经验不足的团队成员
 
+### [重构后代码测试指南](post-refactor-testing-guide.md)
+项目重构后的系统性测试方法，包括：
+- ✅ 快速验证清单和环境配置测试
+- ✅ 模块导入和循环依赖检查
+- ✅ 核心功能和MCP服务器测试
+- ✅ GUI自动化和集成测试
+- ✅ 性能测试和文档验证
+- ✅ 自动化测试脚本和故障排除
+
+**适用对象：** 开发者在重构后验证代码正常性，QA测试人员
+
+## 🧪 测试脚本
+
+### 自动化测试脚本
+- `tests/integration/test_imports.py` - 模块导入测试
+- `tests/unit/test_utils.py` - 工具功能测试  
+- `scripts/test_all.sh` - 综合测试脚本
+
+**运行方式：**
+```bash
+# 运行单个测试
+uv run python tests/integration/test_imports.py
+uv run python tests/unit/test_utils.py
+
+# 运行完整测试套件
+bash scripts/test_all.sh
+```
+
 ## 🎯 快速开始
 
 如果你是新成员，建议按以下顺序阅读：
