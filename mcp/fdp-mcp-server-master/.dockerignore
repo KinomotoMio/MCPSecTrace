@@ -1,0 +1,9 @@
+__pycache__
+.venv
+build
+dist
+.gitignore
+.python-version
+LICENSE
+README.md
+*.egg-info/

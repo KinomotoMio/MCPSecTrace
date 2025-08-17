@@ -1,0 +1,16 @@
+[project]
+name = "fdp-mcp-server"
+version = "0.1.1"
+description = "QAX XLab's mcp server"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mcp>=1.9.4",
+]
+
+[project.scripts]
+fdp-mcp-server = "fdp_mcp_server.__main__:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

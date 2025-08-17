@@ -1,0 +1,5 @@
+# 忽略JetBrains IDE (如IntelliJ IDEA, PyCharm, WebStorm等)的配置目录
+.idea/
+
+# 忽略所有.exe可执行文件
+*.exe

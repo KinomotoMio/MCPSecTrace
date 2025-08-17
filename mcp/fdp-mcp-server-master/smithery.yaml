@@ -1,0 +1,9 @@
+version: 1
+runtime: container
+startCommand:
+  type: stdio
+  commandFunction: |-
+    (config) => ({
+      command: "uv",
+      args: ["--project", "/app", "run", "fdp-mcp-server"],
+    }) 
