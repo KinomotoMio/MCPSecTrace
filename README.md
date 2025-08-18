@@ -74,19 +74,15 @@ MCPSecTrace/
 
 ## 🛠️ 开发
 
-### 代码质量检查
+### 快速验证
 
 ```bash
-# 代码格式化
+# 验证项目设置
+bash scripts/test_all.sh
+
+# 代码质量检查
 uv run black src/ tests/
-uv run isort src/ tests/
-
-# 类型检查
-uv run mypy src/
-
-# 运行测试
 uv run pytest
-uv run pytest --cov=src/mcpsectrace
 ```
 
 ## ⚠️ 重要说明
@@ -105,7 +101,10 @@ uv run pytest --cov=src/mcpsectrace
 
 ## 📖 文档
 
-详细的使用说明和开发指南请参考 [CLAUDE.md](CLAUDE.md)。
+- **快速入门**: 参考 [CLAUDE.md](CLAUDE.md) 获取基本使用说明
+- **开发指南**: 详细的开发文档位于 [docs/development/](docs/development/) 目录
+  - [GitHub协作开发指南](docs/development/github-collaboration-guide.md)
+  - [重构后代码测试指南](docs/development/post-refactor-testing-guide.md)
 
 ## 📄 许可证
 
