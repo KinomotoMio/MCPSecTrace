@@ -1,0 +1,29 @@
+name: ✨ 新功能
+description: 提出新功能或改进
+title: "[Feature] "
+labels: ["enhancement"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 功能描述
+      description: 描述要添加的功能和实现思路
+      placeholder: |
+        **功能**: 要实现的功能
+        **价值**: 为什么需要这个功能
+        **实现方案**: 大致的实现思路
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完成标准
+      description: 什么情况下认为功能已完成
+      placeholder: |
+        - [ ] 功能1完成
+        - [ ] 功能2完成
+        - [ ] 测试通过
+    validations:
+      required: false

@@ -1,0 +1,28 @@
+name: 🐛 Bug修复
+description: 报告需要修复的问题
+title: "[Bug] "
+labels: ["bug"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 简要描述问题和修复计划
+      placeholder: |
+        **问题**: 简述遇到的问题
+        **影响**: 对项目的影响
+        **修复计划**: 准备如何修复
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 重现步骤（可选）
+      description: 如何重现这个问题
+      placeholder: |
+        1. 执行...
+        2. 发现...
+    validations:
+      required: false

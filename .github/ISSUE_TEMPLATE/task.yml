@@ -1,0 +1,29 @@
+name: 📋 开发任务
+description: 日常开发任务和改进
+title: "[Task] "
+labels: ["task"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 任务描述
+      description: 描述要完成的任务
+      placeholder: |
+        **任务**: 需要完成的工作
+        **背景**: 为什么要做这个任务
+        **预期结果**: 完成后的效果
+    validations:
+      required: true
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: 任务清单
+      description: 具体的执行步骤
+      placeholder: |
+        - [ ] 步骤1
+        - [ ] 步骤2
+        - [ ] 步骤3
+    validations:
+      required: false

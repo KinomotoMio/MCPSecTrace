@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 开发文档
+    url: https://github.com/KinomotoMio/MCPSecTrace/tree/master/docs/development
+    about: 查看开发指南和协作规范
