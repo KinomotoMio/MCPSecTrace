@@ -21,9 +21,7 @@ class Settings:
     SIZE = 10
 
 
-mcp = FastMCP(
-    describe="Pywin32 win32evtlog for Retrieval Windows Logs"
-)
+mcp = FastMCP("Pywin32 win32evtlog for Retrieval Windows Logs")
 
 
 @mcp.tool()
