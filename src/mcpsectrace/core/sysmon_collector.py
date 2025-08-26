@@ -1,11 +1,12 @@
-import os
+import base64
 import ctypes
+import json
+import os
 import subprocess
 import sys
+
 import psutil
 import win32evtlog
-import json
-import base64
 
 # --- 配置项 ---
 # 定义 Sysmon 的相关路径和名称
@@ -58,7 +59,9 @@ def install_and_run_sysmon():
     command = [sysmon_path, "-accepteula", "-i", config_path]
 
     try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8')
+        result = subprocess.run(
+            command, check=True, capture_output=True, text=True, encoding="utf-8"
+        )
         print("[+] Sysmon 安装成功。")
         print(result.stdout)
         return True
@@ -86,9 +89,7 @@ def get_sysmon_logs_to_json(num_logs=50):
     try:
         # 使用 EvtQuery API，这部分保持不变，因为它是正确的
         query_handle = win32evtlog.EvtQuery(
-            SYSMON_LOG_CHANNEL,
-            win32evtlog.EvtQueryReverseDirection,
-            "*"
+            SYSMON_LOG_CHANNEL, win32evtlog.EvtQueryReverseDirection, "*"
         )
 
         print("[*] 成功创建查询句柄，正在读取事件原文...")
@@ -103,10 +104,10 @@ def get_sysmon_logs_to_json(num_logs=50):
             event_handle = events[0]
 
             # 使用 EvtRender 获取 XML 原文
-            xml_content = win32evtlog.EvtRender(event_handle, win32evtlog.EvtRenderEventXml)
-            log_entry = {
-                "EventRawXML": xml_content
-            }
+            xml_content = win32evtlog.EvtRender(
+                event_handle, win32evtlog.EvtRenderEventXml
+            )
+            log_entry = {"EventRawXML": xml_content}
             log_entries.append(log_entry)
 
         # 确保日志目录存在
@@ -115,13 +116,14 @@ def get_sysmon_logs_to_json(num_logs=50):
             os.makedirs(output_dir)
 
         # 将包含原始XML的列表写入JSON文件
-        with open(JSON_OUTPUT_FILE, 'w', encoding='utf-8') as f:
+        with open(JSON_OUTPUT_FILE, "w", encoding="utf-8") as f:
             json.dump(log_entries, f, ensure_ascii=False, indent=4)
 
         print(f"[+] {len(log_entries)} 条日志原文已成功写入到文件: {JSON_OUTPUT_FILE}")
 
     except Exception as e:
         import traceback
+
         print(f"[!] 获取或写入 Sysmon 日志失败: {e}")
         traceback.print_exc()
         print("[!] 请确保 Sysmon 已安装且正在运行，并且脚本以管理员权限执行。")
@@ -135,7 +137,9 @@ def main():
     if not is_admin():
         print("[!] 请以管理员权限运行此脚本。")
         try:
-            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, " ".join(sys.argv), None, 1
+            )
         except Exception as e:
             print(f"[!] 提权失败: {e}")
         return

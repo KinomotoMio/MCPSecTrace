@@ -1,24 +1,26 @@
-import pyautogui
-import time
-import subprocess
 import os
+import subprocess
+import time
 from datetime import datetime  # 新增导入 for 获取当前时间
+
+import pyautogui
 
 # --- 用户配置 ---
 # HUORONG_PATH = r"C:\Program Files (x86)\Huorong\Sysdiag\bin\HipsTray.exe" # 示例
 HUORONG_PATH = "D:\\HuoRong\\Sysdiag\\bin\\HipsMain.exe"  # 用户提供的路径
 
 # 用于图像识别的截图文件名 (请确保这些文件与脚本在同一目录下)
-MENU_ICON_IMAGE = './tag_image/huorong/huorong_menu_icon.png'
-SECURITY_LOG_IMAGE = './tag_image/huorong/huorong_security_log.png'
+MENU_ICON_IMAGE = "./tag_image/huorong/huorong_menu_icon.png"
+SECURITY_LOG_IMAGE = "./tag_image/huorong/huorong_security_log.png"
 
 # 新增图片文件名
-EXPORT_LOG_BUTTON_IMAGE = './tag_image/huorong/huorong_export_log_button.png'
-FILENAME_INPUT_BOX_IMAGE = 'tag_image/huorong/huorong_filename_input_box.png'
-SAVE_BUTTON_IMAGE = './tag_image/huorong/huorong_save_button.png'
+EXPORT_LOG_BUTTON_IMAGE = "./tag_image/huorong/huorong_export_log_button.png"
+FILENAME_INPUT_BOX_IMAGE = "tag_image/huorong/huorong_filename_input_box.png"
+SAVE_BUTTON_IMAGE = "./tag_image/huorong/huorong_save_button.png"
 
 
 # --- 用户配置结束 ---
+
 
 def start_application(path):
     """尝试启动一个应用程序"""
@@ -39,19 +41,25 @@ def start_application(path):
         return None
 
 
-def click_image_on_screen(image_filename, confidence_level=0.85, timeout_seconds=15, description=""):
+def click_image_on_screen(
+    image_filename, confidence_level=0.85, timeout_seconds=15, description=""
+):
     """
     在屏幕上查找指定的图像并点击其中心。
     """
     if not description:
         description = image_filename
 
-    print(f"正在查找图像: '{description}' (文件: {image_filename})，超时时间: {timeout_seconds}秒...")
+    print(
+        f"正在查找图像: '{description}' (文件: {image_filename})，超时时间: {timeout_seconds}秒..."
+    )
     start_time = time.time()
     location = None  # 初始化 location
     while time.time() - start_time < timeout_seconds:
         try:
-            location = pyautogui.locateCenterOnScreen(image_filename, confidence=confidence_level)
+            location = pyautogui.locateCenterOnScreen(
+                image_filename, confidence=confidence_level
+            )
             if location:
                 pyautogui.click(location)
                 print(f"成功点击 '{description}' 在坐标: {location}")
@@ -61,13 +69,19 @@ def click_image_on_screen(image_filename, confidence_level=0.85, timeout_seconds
         except pyautogui.ImageNotFoundException:
             time.sleep(0.5)
         except FileNotFoundError:  # PyAutoGUI 内部也可能因图片文件问题抛出此异常
-            print(f"严重错误：图像文件 '{image_filename}' 未找到或无法访问！请确保它在脚本的同一目录下且格式正确。")
+            print(
+                f"严重错误：图像文件 '{image_filename}' 未找到或无法访问！请确保它在脚本的同一目录下且格式正确。"
+            )
             return False
         except Exception as e:
-            if "Failed to read" in str(e) or "cannot identify image file" in str(e) or isinstance(e,
-                                                                                                  pyautogui.ImageNotFoundException):
+            if (
+                "Failed to read" in str(e)
+                or "cannot identify image file" in str(e)
+                or isinstance(e, pyautogui.ImageNotFoundException)
+            ):
                 print(
-                    f"错误: PyAutoGUI无法读取或识别图像文件 '{image_filename}'。请确保文件存在、未损坏且为支持的格式(如PNG)。错误详情: {e}")
+                    f"错误: PyAutoGUI无法读取或识别图像文件 '{image_filename}'。请确保文件存在、未损坏且为支持的格式(如PNG)。错误详情: {e}"
+                )
                 return False
             print(f"查找或点击图像 '{description}' 时发生其他错误: {e}")
             return False
@@ -82,14 +96,23 @@ def main_automation_flow():
     time.sleep(2)
 
     # 步骤 1: 点击菜单图标
-    if not click_image_on_screen(MENU_ICON_IMAGE, confidence_level=0.8, timeout_seconds=20, description="火绒菜单图标"):
+    if not click_image_on_screen(
+        MENU_ICON_IMAGE,
+        confidence_level=0.8,
+        timeout_seconds=20,
+        description="火绒菜单图标",
+    ):
         print(f"未能点击火绒菜单图标。请检查 '{MENU_ICON_IMAGE}' 图像。")
         return
     time.sleep(1.5)  # 等待菜单展开
 
     # 步骤 2: 点击"安全日志"
-    if not click_image_on_screen(SECURITY_LOG_IMAGE, confidence_level=0.8, timeout_seconds=15,
-                                 description="安全日志选项"):
+    if not click_image_on_screen(
+        SECURITY_LOG_IMAGE,
+        confidence_level=0.8,
+        timeout_seconds=15,
+        description="安全日志选项",
+    ):
         print(f"未能点击安全日志选项。请检查 '{SECURITY_LOG_IMAGE}' 图像。")
         return
 
@@ -99,18 +122,30 @@ def main_automation_flow():
     # 新增步骤：导出日志
     # 步骤 3: 点击“导出本页日志”按钮
     print("尝试点击“导出本页日志”...")
-    if not click_image_on_screen(EXPORT_LOG_BUTTON_IMAGE, confidence_level=0.8, timeout_seconds=15,
-                                 description="导出本页日志按钮"):
-        print(f"未能点击“导出本页日志”按钮。请检查 '{EXPORT_LOG_BUTTON_IMAGE}' 图像是否准确，以及按钮是否可见。")
+    if not click_image_on_screen(
+        EXPORT_LOG_BUTTON_IMAGE,
+        confidence_level=0.8,
+        timeout_seconds=15,
+        description="导出本页日志按钮",
+    ):
+        print(
+            f"未能点击“导出本页日志”按钮。请检查 '{EXPORT_LOG_BUTTON_IMAGE}' 图像是否准确，以及按钮是否可见。"
+        )
         return
     time.sleep(2.5)  # 等待“另存为”对话框出现，根据实际情况调整
 
     # 步骤 4: 点击文件名输入框
     print("尝试点击文件名输入框...")
     # 注意：文件名输入框的截图可能需要精确，或者可以考虑点击 "文件名：" 标签右侧固定偏移量（更复杂）
-    if not click_image_on_screen(FILENAME_INPUT_BOX_IMAGE, confidence_level=0.8, timeout_seconds=15,
-                                 description="文件名输入框"):
-        print(f"未能点击文件名输入框。请检查 '{FILENAME_INPUT_BOX_IMAGE}' 图像是否准确。")
+    if not click_image_on_screen(
+        FILENAME_INPUT_BOX_IMAGE,
+        confidence_level=0.8,
+        timeout_seconds=15,
+        description="文件名输入框",
+    ):
+        print(
+            f"未能点击文件名输入框。请检查 '{FILENAME_INPUT_BOX_IMAGE}' 图像是否准确。"
+        )
         return
     time.sleep(0.5)  # 给输入框获取焦点的时间
 
@@ -137,7 +172,12 @@ def main_automation_flow():
     # 步骤 6: 点击“保存”按钮
     print("尝试点击“保存”按钮...")
     time.sleep(0.5)
-    if not click_image_on_screen(SAVE_BUTTON_IMAGE, confidence_level=0.8, timeout_seconds=15, description="保存按钮"):
+    if not click_image_on_screen(
+        SAVE_BUTTON_IMAGE,
+        confidence_level=0.8,
+        timeout_seconds=15,
+        description="保存按钮",
+    ):
         print(f"未能点击“保存”按钮。请检查 '{SAVE_BUTTON_IMAGE}' 图像是否准确。")
         return
 
@@ -163,8 +203,13 @@ if __name__ == "__main__":
     print("--------------------------------------------------------------------")
 
     missing_files = False
-    required_images = [MENU_ICON_IMAGE, SECURITY_LOG_IMAGE, EXPORT_LOG_BUTTON_IMAGE, FILENAME_INPUT_BOX_IMAGE,
-                       SAVE_BUTTON_IMAGE]
+    required_images = [
+        MENU_ICON_IMAGE,
+        SECURITY_LOG_IMAGE,
+        EXPORT_LOG_BUTTON_IMAGE,
+        FILENAME_INPUT_BOX_IMAGE,
+        SAVE_BUTTON_IMAGE,
+    ]
     for img_file in required_images:
         if not os.path.exists(img_file):
             print(f"错误：必需的图像文件 '{img_file}' 未在脚本目录中找到！")
@@ -175,7 +220,9 @@ if __name__ == "__main__":
     else:
         # 获取火绒路径
         # default_path_suggestion = r"D:\HuoRong\Sysdiag\bin\HipsMain.exe" # 已在顶部HUORONG_PATH配置
-        user_path_input = input(f"请输入火绒的完整路径 (当前配置为 '{HUORONG_PATH}', 直接回车使用此配置):\n")
+        user_path_input = input(
+            f"请输入火绒的完整路径 (当前配置为 '{HUORONG_PATH}', 直接回车使用此配置):\n"
+        )
         if user_path_input.strip():
             HUORONG_PATH = user_path_input.strip()
         else:
@@ -183,7 +230,9 @@ if __name__ == "__main__":
             print(f"使用已配置路径: {HUORONG_PATH}")
 
         print("\n脚本将在几秒后开始执行自动化操作...")
-        print("你有5秒钟时间切换到桌面或准备环境。要中途停止脚本，请快速将鼠标移动到屏幕的任一角落。")
+        print(
+            "你有5秒钟时间切换到桌面或准备环境。要中途停止脚本，请快速将鼠标移动到屏幕的任一角落。"
+        )
         time.sleep(5)
 
         if HUORONG_PATH:

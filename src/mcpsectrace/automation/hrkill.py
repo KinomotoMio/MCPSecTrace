@@ -1,9 +1,11 @@
 import ctypes
-import sys
-import subprocess
 import os
+import subprocess
+import sys
 import time
+
 import pyautogui
+
 
 # ================== 权限检查 ==================
 def is_admin():
@@ -12,10 +14,13 @@ def is_admin():
     except:
         return False
 
+
 def run_as_admin():
     ctypes.windll.shell32.ShellExecuteW(
-        None, "runas", sys.executable, os.path.abspath(sys.argv[0]), None, 1)
+        None, "runas", sys.executable, os.path.abspath(sys.argv[0]), None, 1
+    )
     sys.exit()
+
 
 # ================== 启动程序 ==================
 def run_exe(exe_path):
@@ -24,6 +29,7 @@ def run_exe(exe_path):
     print(f"已尝试启动程序: {exe_path}")
     time.sleep(3)  # 等待窗口加载
     return os.path.basename(exe_path)
+
 
 # ================== 自动化操作 ==================
 def click_start_scan_button(image_path, confidence=0.8):
@@ -43,11 +49,16 @@ def click_start_scan_button(image_path, confidence=0.8):
             print("❌ 未找到 '开始扫描' 按钮，请确认截图是否准确、按钮是否已显示")
             return False
     except pyautogui.ImageNotFoundException:
-        print("💥 图像识别失败：未能找到与提供的图像匹配的区域，请确保图像正确无误，并且目标界面可见。")
+        print(
+            "💥 图像识别失败：未能找到与提供的图像匹配的区域，请确保图像正确无误，并且目标界面可见。"
+        )
         return False
     return True
 
-def wait_for_scan_complete(complete_image_path, timeout=900, check_interval=8, confidence=0.7):
+
+def wait_for_scan_complete(
+    complete_image_path, timeout=900, check_interval=8, confidence=0.7
+):
     """
     等待扫描完成
     :param complete_image_path: 扫描完成标志的截图路径
@@ -58,7 +69,9 @@ def wait_for_scan_complete(complete_image_path, timeout=900, check_interval=8, c
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            location = pyautogui.locateOnScreen(complete_image_path, confidence=confidence)
+            location = pyautogui.locateOnScreen(
+                complete_image_path, confidence=confidence
+            )
             if location:
                 print("🎉 扫描已完成！")
                 return True
@@ -68,12 +81,15 @@ def wait_for_scan_complete(complete_image_path, timeout=900, check_interval=8, c
     print("⌛ 扫描未在指定时间内完成或无法找到完成标志。")
     return False
 
+
 # ================== 主程序入口 ==================
 if __name__ == "__main__":
     # 配置项
-    exe_to_run = "tool\\hrkill-1.0.0.86.exe"       # 火绒程序路径
-    start_button_image = "tag_image\\hr\\start_scan_button.png"     # “开始扫描”按钮截图文件
-    complete_button_image = "tag_image\\hr\\scan_complete.png"     # 扫描完成标志截图文件
+    exe_to_run = "tool\\hrkill-1.0.0.86.exe"  # 火绒程序路径
+    start_button_image = (
+        "tag_image\\hr\\start_scan_button.png"  # “开始扫描”按钮截图文件
+    )
+    complete_button_image = "tag_image\\hr\\scan_complete.png"  # 扫描完成标志截图文件
 
     # 1. 检查权限
     if not is_admin():
