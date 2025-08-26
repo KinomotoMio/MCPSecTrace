@@ -1,10 +1,10 @@
-import os
-import sqlite3
 import datetime
+import json  # For structured output
+import os
 import platform
 import shutil  # For copying files
+import sqlite3
 from pathlib import Path
-import json  # For structured output
 
 # Optional: psutil to check if browser is running
 try:
@@ -20,7 +20,7 @@ except ImportError:
 def get_user_profile_path():
     """Gets the current user's profile path."""
     if platform.system() == "Windows":
-        return Path(os.environ['USERPROFILE'])
+        return Path(os.environ["USERPROFILE"])
     elif platform.system() == "Darwin":  # macOS
         return Path.home()
     elif platform.system() == "Linux":
@@ -31,7 +31,9 @@ def get_user_profile_path():
 def convert_chrome_time(chrome_time):
     """Converts Chrome's timestamp (microseconds since Jan 1, 1601 UTC) to datetime."""
     if chrome_time > 0:
-        return datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=chrome_time)
+        return datetime.datetime(1601, 1, 1) + datetime.timedelta(
+            microseconds=chrome_time
+        )
     return None
 
 
@@ -53,7 +55,8 @@ def get_chrome_history(profile_path: Path, max_items=100):
     chrome_paths_to_check = [
         profile_path / "AppData/Local/Google/Chrome/User Data/Default/History",
         # Add paths for other Chrome-based browsers if needed (e.g., Brave, Vivaldi)
-        profile_path / "AppData/Local/Microsoft/Edge/User Data/Default/History"  # Microsoft Edge (Chromium)
+        profile_path
+        / "AppData/Local/Microsoft/Edge/User Data/Default/History",  # Microsoft Edge (Chromium)
     ]
 
     history_db_path = None
@@ -76,7 +79,12 @@ def get_chrome_history(profile_path: Path, max_items=100):
 
     if not history_db_path:
         print("No Chrome/Edge history database found at common locations.")
-        return {"browser": browser_name, "status": "error", "message": "History DB not found", "data": []}
+        return {
+            "browser": browser_name,
+            "status": "error",
+            "message": "History DB not found",
+            "data": [],
+        }
 
     # Copy the database to a temporary location to avoid lock issues
     temp_db_path = profile_path / f"temp_{browser_name.replace(' ', '_')}_history.db"
@@ -85,11 +93,18 @@ def get_chrome_history(profile_path: Path, max_items=100):
         print(f"Copied history DB to temporary file: {temp_db_path}")
     except Exception as e:
         print(f"Error copying history DB: {e}. Ensure {browser_name} is closed.")
-        return {"browser": browser_name, "status": "error", "message": f"Failed to copy DB: {e}", "data": []}
+        return {
+            "browser": browser_name,
+            "status": "error",
+            "message": f"Failed to copy DB: {e}",
+            "data": [],
+        }
 
     conn = None
     try:
-        conn = sqlite3.connect(f"file:{temp_db_path}?mode=ro", uri=True)  # Read-only mode
+        conn = sqlite3.connect(
+            f"file:{temp_db_path}?mode=ro", uri=True
+        )  # Read-only mode
         cursor = conn.cursor()
         # Query to get URL, title, and last visit time
         # last_visit_time is in microseconds since 1601-01-01 00:00:00 UTC
@@ -106,18 +121,31 @@ def get_chrome_history(profile_path: Path, max_items=100):
             title = row[1]
             timestamp_us = row[2]  # This is Chrome's timestamp
             visit_time_dt = convert_chrome_time(timestamp_us)
-            history_items.append({
-                "url": url,
-                "title": title,
-                "last_visit_time_utc": visit_time_dt.isoformat() if visit_time_dt else None,
-                "timestamp_raw": timestamp_us
-            })
+            history_items.append(
+                {
+                    "url": url,
+                    "title": title,
+                    "last_visit_time_utc": (
+                        visit_time_dt.isoformat() if visit_time_dt else None
+                    ),
+                    "timestamp_raw": timestamp_us,
+                }
+            )
         print(f"Retrieved {len(history_items)} history items from {browser_name}.")
-        return {"browser": browser_name, "status": "success", "message": f"Retrieved {len(history_items)} items.",
-                "data": history_items}
+        return {
+            "browser": browser_name,
+            "status": "success",
+            "message": f"Retrieved {len(history_items)} items.",
+            "data": history_items,
+        }
     except sqlite3.Error as e:
         print(f"SQLite error while reading {browser_name} history: {e}")
-        return {"browser": browser_name, "status": "error", "message": f"SQLite error: {e}", "data": []}
+        return {
+            "browser": browser_name,
+            "status": "error",
+            "message": f"SQLite error: {e}",
+            "data": [],
+        }
     finally:
         if conn:
             conn.close()
@@ -138,7 +166,8 @@ def get_chrome_downloads(profile_path: Path, max_items=50):
     # Common paths for Chrome history (downloads are in the same DB)
     chrome_paths_to_check = [
         profile_path / "AppData/Local/Google/Chrome/User Data/Default/History",
-        profile_path / "AppData/Local/Microsoft/Edge/User Data/Default/History"  # Microsoft Edge (Chromium)
+        profile_path
+        / "AppData/Local/Microsoft/Edge/User Data/Default/History",  # Microsoft Edge (Chromium)
     ]
 
     history_db_path = None
@@ -151,7 +180,9 @@ def get_chrome_downloads(profile_path: Path, max_items=50):
                 browser_name = "Microsoft Edge"
             elif "Chrome" in str(p_path):
                 browser_name = "Google Chrome"
-            print(f"Found {browser_name} history database (for downloads) at: {history_db_path}")
+            print(
+                f"Found {browser_name} history database (for downloads) at: {history_db_path}"
+            )
             break
         else:
             if p_idx == 0:
@@ -161,15 +192,29 @@ def get_chrome_downloads(profile_path: Path, max_items=50):
 
     if not history_db_path:
         print("No Chrome/Edge history database found for downloads.")
-        return {"browser": browser_name, "status": "error", "message": "History DB not found for downloads", "data": []}
+        return {
+            "browser": browser_name,
+            "status": "error",
+            "message": "History DB not found for downloads",
+            "data": [],
+        }
 
-    temp_db_path = profile_path / f"temp_{browser_name.replace(' ', '_')}_downloads_history.db"
+    temp_db_path = (
+        profile_path / f"temp_{browser_name.replace(' ', '_')}_downloads_history.db"
+    )
     try:
         shutil.copy2(history_db_path, temp_db_path)
         print(f"Copied downloads history DB to temporary file: {temp_db_path}")
     except Exception as e:
-        print(f"Error copying downloads history DB: {e}. Ensure {browser_name} is closed.")
-        return {"browser": browser_name, "status": "error", "message": f"Failed to copy DB: {e}", "data": []}
+        print(
+            f"Error copying downloads history DB: {e}. Ensure {browser_name} is closed."
+        )
+        return {
+            "browser": browser_name,
+            "status": "error",
+            "message": f"Failed to copy DB: {e}",
+            "data": [],
+        }
 
     conn = None
     try:
@@ -190,23 +235,36 @@ def get_chrome_downloads(profile_path: Path, max_items=50):
             end_time_dt = convert_chrome_time(row[5])
             # State: 0=IN_PROGRESS, 1=COMPLETE, 2=CANCELLED, 3=INTERRUPTED, 4=DANGEROUS, 5=BUG_147583_FIX, etc.
             # Danger Type: 0=NOT_DANGEROUS, 1=DANGEROUS_FILE, 2=DANGEROUS_URL, etc.
-            download_items.append({
-                "target_path": row[0],
-                "source_url": row[1],
-                "mime_type": row[2],
-                "total_bytes": row[3],
-                "start_time_utc": start_time_dt.isoformat() if start_time_dt else None,
-                "end_time_utc": end_time_dt.isoformat() if end_time_dt else None,
-                "state": row[6],
-                "danger_type": row[7],
-                "start_timestamp_raw": row[4]
-            })
+            download_items.append(
+                {
+                    "target_path": row[0],
+                    "source_url": row[1],
+                    "mime_type": row[2],
+                    "total_bytes": row[3],
+                    "start_time_utc": (
+                        start_time_dt.isoformat() if start_time_dt else None
+                    ),
+                    "end_time_utc": end_time_dt.isoformat() if end_time_dt else None,
+                    "state": row[6],
+                    "danger_type": row[7],
+                    "start_timestamp_raw": row[4],
+                }
+            )
         print(f"Retrieved {len(download_items)} download items from {browser_name}.")
-        return {"browser": browser_name, "status": "success", "message": f"Retrieved {len(download_items)} items.",
-                "data": download_items}
+        return {
+            "browser": browser_name,
+            "status": "success",
+            "message": f"Retrieved {len(download_items)} items.",
+            "data": download_items,
+        }
     except sqlite3.Error as e:
         print(f"SQLite error while reading {browser_name} downloads: {e}")
-        return {"browser": browser_name, "status": "error", "message": f"SQLite error: {e}", "data": []}
+        return {
+            "browser": browser_name,
+            "status": "error",
+            "message": f"SQLite error: {e}",
+            "data": [],
+        }
     finally:
         if conn:
             conn.close()
@@ -229,18 +287,27 @@ def get_firefox_history(profile_path: Path, max_items=100):
     if platform.system() == "Windows":
         firefox_base_path = profile_path / "AppData/Roaming/Mozilla/Firefox/Profiles"
     elif platform.system() == "Darwin":  # macOS
-        firefox_base_path = profile_path / "Library/Application Support/Firefox/Profiles"
+        firefox_base_path = (
+            profile_path / "Library/Application Support/Firefox/Profiles"
+        )
     elif platform.system() == "Linux":
         firefox_base_path = profile_path / ".mozilla/firefox"
 
     if not firefox_base_path or not firefox_base_path.exists():
         print(f"Firefox profiles base path not found: {firefox_base_path}")
-        return {"browser": "Firefox", "status": "error", "message": "Profiles base path not found", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": "Profiles base path not found",
+            "data": [],
+        }
 
     history_db_path = None
     # Firefox profile folders have a random string and a profile name (e.g., xxxxxxxx.default-release)
     for item in firefox_base_path.iterdir():
-        if item.is_dir() and (item.name.endswith(".default") or item.name.endswith(".default-release")):
+        if item.is_dir() and (
+            item.name.endswith(".default") or item.name.endswith(".default-release")
+        ):
             potential_db = item / "places.sqlite"
             if potential_db.exists():
                 history_db_path = potential_db
@@ -249,7 +316,12 @@ def get_firefox_history(profile_path: Path, max_items=100):
 
     if not history_db_path:
         print("No Firefox history database (places.sqlite) found in default profiles.")
-        return {"browser": "Firefox", "status": "error", "message": "places.sqlite not found", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": "places.sqlite not found",
+            "data": [],
+        }
 
     temp_db_path = profile_path / "temp_firefox_history.db"
     try:
@@ -257,7 +329,12 @@ def get_firefox_history(profile_path: Path, max_items=100):
         print(f"Copied Firefox history DB to temporary file: {temp_db_path}")
     except Exception as e:
         print(f"Error copying Firefox history DB: {e}. Ensure Firefox is closed.")
-        return {"browser": "Firefox", "status": "error", "message": f"Failed to copy DB: {e}", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": f"Failed to copy DB: {e}",
+            "data": [],
+        }
 
     conn = None
     try:
@@ -278,18 +355,31 @@ def get_firefox_history(profile_path: Path, max_items=100):
             title = row[1]
             timestamp_us = row[2]  # Firefox timestamp
             visit_time_dt = convert_firefox_time(timestamp_us)
-            history_items.append({
-                "url": url,
-                "title": title,
-                "last_visit_time_utc": visit_time_dt.isoformat() if visit_time_dt else None,
-                "timestamp_raw": timestamp_us
-            })
+            history_items.append(
+                {
+                    "url": url,
+                    "title": title,
+                    "last_visit_time_utc": (
+                        visit_time_dt.isoformat() if visit_time_dt else None
+                    ),
+                    "timestamp_raw": timestamp_us,
+                }
+            )
         print(f"Retrieved {len(history_items)} history items from Firefox.")
-        return {"browser": "Firefox", "status": "success", "message": f"Retrieved {len(history_items)} items.",
-                "data": history_items}
+        return {
+            "browser": "Firefox",
+            "status": "success",
+            "message": f"Retrieved {len(history_items)} items.",
+            "data": history_items,
+        }
     except sqlite3.Error as e:
         print(f"SQLite error while reading Firefox history: {e}")
-        return {"browser": "Firefox", "status": "error", "message": f"SQLite error: {e}", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": f"SQLite error: {e}",
+            "data": [],
+        }
     finally:
         if conn:
             conn.close()
@@ -298,7 +388,9 @@ def get_firefox_history(profile_path: Path, max_items=100):
                 os.remove(temp_db_path)
                 print(f"Removed temporary Firefox history DB: {temp_db_path}")
             except OSError as e:
-                print(f"Error removing temporary Firefox history DB {temp_db_path}: {e}")
+                print(
+                    f"Error removing temporary Firefox history DB {temp_db_path}: {e}"
+                )
 
 
 def get_firefox_downloads(profile_path: Path, max_items=50):
@@ -315,12 +407,21 @@ def get_firefox_downloads(profile_path: Path, max_items=50):
     # ... (add macOS and Linux paths as in get_firefox_history) ...
 
     if not firefox_base_path or not firefox_base_path.exists():
-        print(f"Firefox profiles base path not found for downloads: {firefox_base_path}")
-        return {"browser": "Firefox", "status": "error", "message": "Profiles base path not found", "data": []}
+        print(
+            f"Firefox profiles base path not found for downloads: {firefox_base_path}"
+        )
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": "Profiles base path not found",
+            "data": [],
+        }
 
     history_db_path = None
     for item in firefox_base_path.iterdir():
-        if item.is_dir() and (item.name.endswith(".default") or item.name.endswith(".default-release")):
+        if item.is_dir() and (
+            item.name.endswith(".default") or item.name.endswith(".default-release")
+        ):
             potential_db = item / "places.sqlite"
             if potential_db.exists():
                 history_db_path = potential_db
@@ -329,7 +430,12 @@ def get_firefox_downloads(profile_path: Path, max_items=50):
 
     if not history_db_path:
         print("No Firefox database (places.sqlite) found for downloads.")
-        return {"browser": "Firefox", "status": "error", "message": "places.sqlite not found for downloads", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": "places.sqlite not found for downloads",
+            "data": [],
+        }
 
     temp_db_path = profile_path / "temp_firefox_downloads.db"
     try:
@@ -337,7 +443,12 @@ def get_firefox_downloads(profile_path: Path, max_items=50):
         print(f"Copied Firefox downloads DB to temporary file: {temp_db_path}")
     except Exception as e:
         print(f"Error copying Firefox downloads DB: {e}. Ensure Firefox is closed.")
-        return {"browser": "Firefox", "status": "error", "message": f"Failed to copy DB: {e}", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": f"Failed to copy DB: {e}",
+            "data": [],
+        }
 
     conn = None
     try:
@@ -394,47 +505,68 @@ def get_firefox_downloads(profile_path: Path, max_items=50):
             LIMIT {max_items * 5}; -- Fetch more to sort and group later
         """  # This simpler query will require post-processing to group related download annotations
 
-        cursor.execute(simple_query)  # Using the simpler query for now, requires post-processing
+        cursor.execute(
+            simple_query
+        )  # Using the simpler query for now, requires post-processing
 
         # Post-processing for the simpler query (this is basic)
         raw_downloads = {}
         for row in cursor.fetchall():
             source_url, content, name, date_us = row
             if source_url not in raw_downloads:
-                raw_downloads[source_url] = {"source_url": source_url, "approx_date_utc": None, "target_path": None,
-                                             "metadata": None}
+                raw_downloads[source_url] = {
+                    "source_url": source_url,
+                    "approx_date_utc": None,
+                    "target_path": None,
+                    "metadata": None,
+                }
 
             dt_obj = convert_firefox_time(date_us)
             if dt_obj:
                 raw_downloads[source_url]["approx_date_utc"] = dt_obj.isoformat()
 
-            if name == 'downloads/destinationFileURI':
-                raw_downloads[source_url]["target_path"] = content.replace("file:///", "")  # Clean file URI
-            elif name == 'downloads/metaData':
+            if name == "downloads/destinationFileURI":
+                raw_downloads[source_url]["target_path"] = content.replace(
+                    "file:///", ""
+                )  # Clean file URI
+            elif name == "downloads/metaData":
                 try:
                     raw_downloads[source_url]["metadata"] = json.loads(content)
                 except json.JSONDecodeError:
-                    raw_downloads[source_url]["metadata"] = {"error": "Could not parse metadata JSON",
-                                                             "raw_content": content}
+                    raw_downloads[source_url]["metadata"] = {
+                        "error": "Could not parse metadata JSON",
+                        "raw_content": content,
+                    }
 
         # Convert dictionary to list and sort
         processed_downloads = sorted(
-            [v for v in raw_downloads.values() if v.get("target_path")],  # Only include if we found a target_path
+            [
+                v for v in raw_downloads.values() if v.get("target_path")
+            ],  # Only include if we found a target_path
             key=lambda x: x.get("approx_date_utc", "0"),
-            reverse=True
+            reverse=True,
         )[:max_items]
 
         download_items = processed_downloads
 
         print(
-            f"Retrieved {len(download_items)} potential download items from Firefox (requires careful interpretation).")
-        return {"browser": "Firefox", "status": "success_partial" if download_items else "success_no_items",
-                "message": f"Retrieved {len(download_items)} items. Firefox download data is complex.",
-                "data": download_items}
+            f"Retrieved {len(download_items)} potential download items from Firefox (requires careful interpretation)."
+        )
+        return {
+            "browser": "Firefox",
+            "status": "success_partial" if download_items else "success_no_items",
+            "message": f"Retrieved {len(download_items)} items. Firefox download data is complex.",
+            "data": download_items,
+        }
 
     except sqlite3.Error as e:
         print(f"SQLite error while reading Firefox downloads: {e}")
-        return {"browser": "Firefox", "status": "error", "message": f"SQLite error: {e}", "data": []}
+        return {
+            "browser": "Firefox",
+            "status": "error",
+            "message": f"SQLite error: {e}",
+            "data": [],
+        }
     finally:
         if conn:
             conn.close()
@@ -443,7 +575,9 @@ def get_firefox_downloads(profile_path: Path, max_items=50):
                 os.remove(temp_db_path)
                 print(f"Removed temporary Firefox downloads DB: {temp_db_path}")
             except OSError as e:
-                print(f"Error removing temporary Firefox downloads DB {temp_db_path}: {e}")
+                print(
+                    f"Error removing temporary Firefox downloads DB {temp_db_path}: {e}"
+                )
 
 
 def check_browser_processes(browser_executables):
@@ -451,14 +585,16 @@ def check_browser_processes(browser_executables):
     if not PSUTIL_AVAILABLE:
         return
     running_browsers = []
-    for proc in psutil.process_iter(['name']):
-        if proc.info['name'] in browser_executables:
-            running_browsers.append(proc.info['name'])
+    for proc in psutil.process_iter(["name"]):
+        if proc.info["name"] in browser_executables:
+            running_browsers.append(proc.info["name"])
     if running_browsers:
         print("\nWARNING: The following browser processes are running:")
         for b in set(running_browsers):
             print(f"  - {b}")
-        print("Please close them for more reliable data extraction, as database files might be locked.")
+        print(
+            "Please close them for more reliable data extraction, as database files might be locked."
+        )
     else:
         print("\nNo target browser processes detected as running (good!).")
 
@@ -496,7 +632,9 @@ if __name__ == "__main__":
     all_browser_data["firefox_downloads"] = firefox_downloads
 
     # --- Output ---
-    output_filename = f"browser_activity_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    output_filename = (
+        f"browser_activity_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     output_dir = Path("browser_data_collection")
     output_dir.mkdir(parents=True, exist_ok=True)
     full_output_path = output_dir / output_filename
@@ -519,4 +657,6 @@ if __name__ == "__main__":
             else:
                 print(value_dict)
 
-    print("\nReminder: Ensure you have proper authorization before accessing user data.")
+    print(
+        "\nReminder: Ensure you have proper authorization before accessing user data."
+    )

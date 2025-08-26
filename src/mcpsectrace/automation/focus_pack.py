@@ -1,9 +1,11 @@
 import ctypes
-import sys
-import subprocess
 import os
+import subprocess
+import sys
 import time
+
 import pyautogui
+
 
 # ================== 权限检查 ==================
 def is_admin():
@@ -12,10 +14,13 @@ def is_admin():
     except:
         return False
 
+
 def run_as_admin():
     ctypes.windll.shell32.ShellExecuteW(
-        None, "runas", sys.executable, os.path.abspath(sys.argv[0]), None, 1)
+        None, "runas", sys.executable, os.path.abspath(sys.argv[0]), None, 1
+    )
     sys.exit()
+
 
 # ================== 启动程序 ==================
 def run_exe(exe_path):
@@ -24,6 +29,7 @@ def run_exe(exe_path):
     print(f"已尝试启动程序: {exe_path}")
     time.sleep(3)  # 等待窗口加载
     return os.path.basename(exe_path)
+
 
 # ================== 自动化操作 ==================
 def click_start_scan_button(image_path, confidence=0.8):
@@ -43,9 +49,12 @@ def click_start_scan_button(image_path, confidence=0.8):
             print("❌ 未找到 '开始扫描' 按钮，请确认截图是否准确、按钮是否已显示")
             return False
     except pyautogui.ImageNotFoundException:
-        print("💥 图像识别失败：未能找到与提供的图像匹配的区域，请确保图像正确无误，并且目标界面可见。")
+        print(
+            "💥 图像识别失败：未能找到与提供的图像匹配的区域，请确保图像正确无误，并且目标界面可见。"
+        )
         return False
     return True
+
 
 def wait_for_new_log_file(log_dir, initial_files=None, check_interval=8, timeout=900):
     """
@@ -59,20 +68,21 @@ def wait_for_new_log_file(log_dir, initial_files=None, check_interval=8, timeout
     start_time = time.time()
     if initial_files is None:
         initial_files = set(os.listdir(log_dir))
-    
+
     while time.time() - start_time < timeout:
         current_files = set(os.listdir(log_dir))
         new_files = current_files - initial_files
-        
+
         if new_files:
-            new_file_path = os.path.join(log_dir, new_files.pop())  
+            new_file_path = os.path.join(log_dir, new_files.pop())
             print(f"🎉 检测到新日志文件: {new_file_path}")
             return new_file_path
-        
+
         time.sleep(check_interval)
-    
+
     print("⏰ 超时：未检测到新日志文件。")
     return None
+
 
 def get_initial_files(log_dir):
     """
@@ -86,6 +96,7 @@ def get_initial_files(log_dir):
     else:
         return set(os.listdir(log_dir))
 
+
 # ================== 主程序入口 ==================
 if __name__ == "__main__":
     # 配置项
@@ -93,8 +104,8 @@ if __name__ == "__main__":
     start_button_image = "tag_image\\focus_pack\\quick_scan.png"
 
     # 获取当前用户的 AppData\Roaming 目录
-    appdata_roaming = os.path.expanduser('~\\AppData\\Roaming')
-    focus_logs_path = os.path.join(appdata_roaming, 'FocusLogs')
+    appdata_roaming = os.path.expanduser("~\\AppData\\Roaming")
+    focus_logs_path = os.path.join(appdata_roaming, "FocusLogs")
     print(f"日志目录: {focus_logs_path}")
 
     # 1. 检查权限
