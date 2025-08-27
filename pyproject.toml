@@ -24,6 +24,7 @@ dependencies = [
     "pywin32>=311; sys_platform == 'win32'",
     "mcp>=1.0.0",
     "selenium>=4.35.0",
+    "black>=25.1.0",
 ]
 
 [project.optional-dependencies]
