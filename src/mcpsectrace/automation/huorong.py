@@ -1,8 +1,9 @@
-import pyautogui
-import time
-import subprocess
 import os
+import subprocess
+import time
 from datetime import datetime  # 新增导入 for 获取当前时间
+
+import pyautogui
 
 # --- 用户配置 ---
 # HUORONG_PATH = r"C:\Program Files (x86)\Huorong\Sysdiag\bin\HipsTray.exe" # 示例

@@ -1,10 +1,10 @@
-import os
-import sqlite3
 import datetime
+import json  # For structured output
+import os
 import platform
 import shutil  # For copying files
+import sqlite3
 from pathlib import Path
-import json  # For structured output
 
 # Optional: psutil to check if browser is running
 try:

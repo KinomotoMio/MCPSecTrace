@@ -1,12 +1,13 @@
-import os
-import sys
 import argparse
-import pyautogui
-import time
-import subprocess
-import io
 import ctypes
+import io
+import os
+import subprocess
+import sys
+import time
 from datetime import datetime
+
+import pyautogui
 
 # --- 输出使用utf-8编码 --
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")

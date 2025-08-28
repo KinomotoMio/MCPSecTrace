@@ -2,12 +2,13 @@
 GUI自动化图像识别工具
 """
 
+import logging
+from pathlib import Path
+from typing import Optional, Tuple, Union
+
 import cv2
 import numpy as np
 import pyautogui
-from pathlib import Path
-from typing import Optional, Tuple, Union
-import logging
 
 logger = logging.getLogger(__name__)
 

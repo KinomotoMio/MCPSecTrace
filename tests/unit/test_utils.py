@@ -4,9 +4,9 @@
 重构后代码测试脚本 - 工具功能测试
 """
 
+import os
 import sys
 import tempfile
-import os
 from pathlib import Path
 
 # 添加项目根目录到Python路径
