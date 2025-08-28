@@ -19,8 +19,8 @@ def test_logging_setup():
     print("🔍 测试日志配置功能...")
     try:
         from src.mcpsectrace.utils.logging_setup import (
-            setup_logger,
             get_timestamped_filename,
+            setup_logger,
         )
 
         # 测试基本日志设置
@@ -140,8 +140,8 @@ def test_dependency_imports():
         print(f"✅ PyAutoGUI版本: {pyautogui.__version__}")
 
         # 测试其他核心依赖
-        import pydantic
         import httpx
+        import pydantic
 
         print(f"✅ Pydantic版本: {pydantic.VERSION}")
         print(f"✅ HTTPX版本: {httpx.__version__}")

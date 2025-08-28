@@ -16,10 +16,11 @@ def test_core_modules():
     """测试核心模块导入"""
     print("🔍 测试核心模块导入...")
     try:
-        from src.mcpsectrace.core import browser_forensics
-        from src.mcpsectrace.core import sysmon_collector
-        from src.mcpsectrace.core import base_automation
-
+        from src.mcpsectrace.core import (
+            base_automation,
+            browser_forensics,
+            sysmon_collector,
+        )
         print("✅ 核心模块导入成功")
         return True
     except ImportError as e:
@@ -31,10 +32,7 @@ def test_automation_modules():
     """测试自动化模块导入"""
     print("🔍 测试自动化模块导入...")
     try:
-        from src.mcpsectrace.automation import huorong
-        from src.mcpsectrace.automation import hrkill
-        from src.mcpsectrace.automation import focus_pack
-
+        from src.mcpsectrace.automation import focus_pack, hrkill, huorong
         print("✅ 自动化模块导入成功")
         return True
     except ImportError as e:
@@ -46,11 +44,12 @@ def test_mcp_modules():
     """测试MCP服务器模块导入"""
     print("🔍 测试MCP服务器模块导入...")
     try:
-        from src.mcpsectrace.mcp_servers import browser_mcp
-        from src.mcpsectrace.mcp_servers import huorong_mcp
-        from src.mcpsectrace.mcp_servers import hrkill_mcp
-        from src.mcpsectrace.mcp_servers import focus_pack_mcp
-
+        from src.mcpsectrace.mcp_servers import (
+            browser_mcp,
+            focus_pack_mcp,
+            hrkill_mcp,
+            huorong_mcp,
+        )
         print("✅ MCP服务器模块导入成功")
         return True
     except ImportError as e:
@@ -62,9 +61,7 @@ def test_utils_modules():
     """测试工具模块导入"""
     print("🔍 测试工具模块导入...")
     try:
-        from src.mcpsectrace.utils import logging_setup
-        from src.mcpsectrace.utils import image_recognition
-
+        from src.mcpsectrace.utils import image_recognition, logging_setup
         print("✅ 工具模块导入成功")
         return True
     except ImportError as e:
@@ -81,7 +78,7 @@ def test_package_structure():
         print(f"✅ 主包导入成功: {src.mcpsectrace.__file__}")
 
         # 测试子包
-        from src.mcpsectrace import core, automation, mcp_servers, utils
+        from src.mcpsectrace import automation, core, mcp_servers, utils
 
         print("✅ 所有子包导入成功")
         return True
