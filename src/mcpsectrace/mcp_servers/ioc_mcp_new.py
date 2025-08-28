@@ -420,14 +420,14 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                             )
                             collapse_screenshot_path = os.path.join(
                                 pic_output_dir_abs,
-                                f"{domain_name}_collapse_{i}_{safe_title}.png",
+                                f"{ip_address}_collapse_{i}_{safe_title}.png",
                             )
                             item.screenshot(collapse_screenshot_path)
                             print(f"折叠面板项截图已保存: {collapse_screenshot_path}")
 
                             md_content.append(f"### {clue_title}")
                             md_content.append(
-                                f"![{clue_title}](ioc_pic/{domain_name}_collapse_{i}_{safe_title}.png)\n"
+                                f"![{clue_title}](ioc_pic/{ip_address}_collapse_{i}_{safe_title}.png)\n"
                             )
 
                     except Exception as item_e:
