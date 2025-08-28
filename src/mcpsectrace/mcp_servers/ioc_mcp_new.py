@@ -338,7 +338,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
                                                 md_content.append(f"#### {tab_text}")
                                                 md_content.append(
-                                                    f"![{tab_text}](ioc_pic/{domain_name}_related_{j}_{safe_tab_text}.png)\n"
+                                                    f"![{tab_text}](ioc_pic/{ip_address}_related_{j}_{safe_tab_text}.png)\n"
                                                 )
 
                                         except Exception as tab_e:
