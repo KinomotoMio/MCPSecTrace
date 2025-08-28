@@ -263,32 +263,10 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
                                                 # 处理文件名中的特殊字符
                                                 # 第506行 - 处理相关情报标签fallback文件名
-                                                safe_tab_text = (
-                                                    tab_text.replace(" ", "_")
-                                                    .replace("/", "_")
-                                                    .replace(":", "_")
-                                                    .replace("\\", "_")
-                                                    .replace("*", "_")
-                                                    .replace("?", "_")
-                                                    .replace('"', "_")
-                                                    .replace("<", "_")
-                                                    .replace(">", "_")
-                                                    .replace("|", "_")
-                                                )
+                                                safe_tab_text = sanitize_filename(tab_text)
 
                                                 # 第519行 - 处理折叠面板标题文件名
-                                                safe_title = (
-                                                    clue_title.replace(" ", "_")
-                                                    .replace("/", "_")
-                                                    .replace(":", "_")
-                                                    .replace("\\", "_")
-                                                    .replace("*", "_")
-                                                    .replace("?", "_")
-                                                    .replace('"', "_")
-                                                    .replace("<", "_")
-                                                    .replace(">", "_")
-                                                    .replace("|", "_")
-                                                )
+                                                safe_title = sanitize_filename(clue_title)
 
                                                 # 第530行 - 处理导航列表错误时的文件名
                                                 safe_title = (
@@ -319,7 +297,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                                                 )
                                                 related_screenshot_path = os.path.join(
                                                     pic_output_dir_abs,
-                                                    f"{domain_name}_related_{j}_{safe_tab_text}.png",
+                                                    f"{ip_address}_related_{j}_{safe_tab_text}.png",
                                                 )
                                                 content_area.screenshot(
                                                     related_screenshot_path
@@ -330,7 +308,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
                                                 md_content.append(f"#### {tab_text}")
                                                 md_content.append(
-                                                    f"![{tab_text}](ioc_pic/{domain_name}_related_{j}_{safe_tab_text}.png)\n"
+                                                    f"![{tab_text}](ioc_pic/{ip_address}_related_{j}_{safe_tab_text}.png)\n"
                                                 )
 
                                             except Exception as content_e:
@@ -352,7 +330,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                                                 )
                                                 fallback_screenshot_path = os.path.join(
                                                     pic_output_dir_abs,
-                                                    f"{domain_name}_related_{j}_{safe_tab_text}.png",
+                                                    f"{ip_address}_related_{j}_{safe_tab_text}.png",
                                                 )
                                                 item.screenshot(
                                                     fallback_screenshot_path
@@ -360,7 +338,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
                                                 md_content.append(f"#### {tab_text}")
                                                 md_content.append(
-                                                    f"![{tab_text}](ioc_pic/{domain_name}_related_{j}_{safe_tab_text}.png)\n"
+                                                    f"![{tab_text}](ioc_pic/{ip_address}_related_{j}_{safe_tab_text}.png)\n"
                                                 )
 
                                         except Exception as tab_e:
@@ -416,7 +394,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                                 )
                                 collapse_screenshot_path = os.path.join(
                                     pic_output_dir_abs,
-                                    f"{domain_name}_collapse_{i}_{safe_title}.png",
+                                    f"{ip_address}_collapse_{i}_{safe_title}.png",
                                 )
                                 item.screenshot(collapse_screenshot_path)
                                 print(
@@ -425,7 +403,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
                                 md_content.append(f"### {clue_title}")
                                 md_content.append(
-                                    f"![{clue_title}](ioc_pic/{domain_name}_collapse_{i}_{safe_title}.png)\n"
+                                    f"![{clue_title}](ioc_pic/{ip_address}_collapse_{i}_{safe_title}.png)\n"
                                 )
                         else:
                             # 如果不是相关情报面板，按原来的方式处理
@@ -442,14 +420,14 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                             )
                             collapse_screenshot_path = os.path.join(
                                 pic_output_dir_abs,
-                                f"{domain_name}_collapse_{i}_{safe_title}.png",
+                                f"{ip_address}_collapse_{i}_{safe_title}.png",
                             )
                             item.screenshot(collapse_screenshot_path)
                             print(f"折叠面板项截图已保存: {collapse_screenshot_path}")
 
                             md_content.append(f"### {clue_title}")
                             md_content.append(
-                                f"![{clue_title}](ioc_pic/{domain_name}_collapse_{i}_{safe_title}.png)\n"
+                                f"![{clue_title}](ioc_pic/{ip_address}_collapse_{i}_{safe_title}.png)\n"
                             )
 
                     except Exception as item_e:
@@ -608,13 +586,7 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
         except Exception as e:
             print(f"截图情报洞察元素时出错: {e}")
             md_content.append(f"## 情报洞察")
-            md_content.append(f"未找到情报洞察内容\n")
-
-        except Exception as e:
-            print(f"截图情报洞察元素时出错: {e}")
-            md_content.append(f"## 情报洞察")
-            md_content.append(f"无法获取情报洞察截图\n")
-
+            md_content.append(f"未找到情报洞察内容\n无法获取情报洞察截图\n")
         # 新增：截图ant-collapse元素
         try:
             collapse_container = driver.find_element(
