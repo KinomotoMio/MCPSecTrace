@@ -394,7 +394,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                                 )
                                 collapse_screenshot_path = os.path.join(
                                     pic_output_dir_abs,
-                                    f"{domain_name}_collapse_{i}_{safe_title}.png",
+                                    f"{ip_address}_collapse_{i}_{safe_title}.png",
                                 )
                                 item.screenshot(collapse_screenshot_path)
                                 print(
