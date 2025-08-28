@@ -263,10 +263,14 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
                                                 # 处理文件名中的特殊字符
                                                 # 第506行 - 处理相关情报标签fallback文件名
-                                                safe_tab_text = sanitize_filename(tab_text)
+                                                safe_tab_text = sanitize_filename(
+                                                    tab_text
+                                                )
 
                                                 # 第519行 - 处理折叠面板标题文件名
-                                                safe_title = sanitize_filename(clue_title)
+                                                safe_title = sanitize_filename(
+                                                    clue_title
+                                                )
 
                                                 # 第530行 - 处理导航列表错误时的文件名
                                                 safe_title = (
