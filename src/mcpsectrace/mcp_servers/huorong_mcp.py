@@ -10,9 +10,6 @@ import time
 import urllib.request
 from datetime import datetime
 from typing import Optional
-import shutil  # 文件复制
-import sqlite3  # 数据库
-
 
 import pyautogui
 from PIL import Image
