@@ -12,8 +12,7 @@ from datetime import datetime
 from typing import Optional
 
 import pyautogui
-from PIL import Image 
-
+from PIL import Image
 
 # --- 输出使用utf-8编码 --
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
