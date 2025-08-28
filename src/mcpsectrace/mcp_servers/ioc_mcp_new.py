@@ -586,13 +586,7 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
         except Exception as e:
             print(f"截图情报洞察元素时出错: {e}")
             md_content.append(f"## 情报洞察")
-            md_content.append(f"未找到情报洞察内容\n")
-
-        except Exception as e:
-            print(f"截图情报洞察元素时出错: {e}")
-            md_content.append(f"## 情报洞察")
-            md_content.append(f"无法获取情报洞察截图\n")
-
+            md_content.append(f"未找到情报洞察内容\n无法获取情报洞察截图\n")
         # 新增：截图ant-collapse元素
         try:
             collapse_container = driver.find_element(
