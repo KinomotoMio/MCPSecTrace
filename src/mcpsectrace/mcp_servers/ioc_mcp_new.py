@@ -330,7 +330,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
                                                 )
                                                 fallback_screenshot_path = os.path.join(
                                                     pic_output_dir_abs,
-                                                    f"{domain_name}_related_{j}_{safe_tab_text}.png",
+                                                    f"{ip_address}_related_{j}_{safe_tab_text}.png",
                                                 )
                                                 item.screenshot(
                                                     fallback_screenshot_path
