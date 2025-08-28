@@ -21,6 +21,7 @@ def test_core_modules():
             browser_forensics,
             sysmon_collector,
         )
+
         print("✅ 核心模块导入成功")
         return True
     except ImportError as e:
@@ -33,6 +34,7 @@ def test_automation_modules():
     print("🔍 测试自动化模块导入...")
     try:
         from src.mcpsectrace.automation import focus_pack, hrkill, huorong
+        
         print("✅ 自动化模块导入成功")
         return True
     except ImportError as e:
@@ -50,6 +52,7 @@ def test_mcp_modules():
             hrkill_mcp,
             huorong_mcp,
         )
+        
         print("✅ MCP服务器模块导入成功")
         return True
     except ImportError as e:
@@ -62,6 +65,7 @@ def test_utils_modules():
     print("🔍 测试工具模块导入...")
     try:
         from src.mcpsectrace.utils import image_recognition, logging_setup
+        
         print("✅ 工具模块导入成功")
         return True
     except ImportError as e:
