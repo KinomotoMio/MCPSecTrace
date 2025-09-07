@@ -31,8 +31,8 @@ USER_DATA_DIR = r"C:\Users\Sssu\AppData\Local\Google\Chrome for Testing\User Dat
 PAGE_LOAD_WAIT_SECONDS = 10
 
 # 结果输出目录，将结果保存在指定的子文件夹中
-OUTPUT_DIR = "src/mcpsectrace/mcp_servers/logs/ioc"
-PIC_OUTPUT_DIR = "src/mcpsectrace/mcp_servers/logs/ioc/ioc_pic"
+OUTPUT_DIR = "./logs/ioc"
+PIC_OUTPUT_DIR = "./logs/ioc/ioc_pic"
 
 # ==============================================================================
 
@@ -932,13 +932,15 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
 
 # --- 主程序入口，用于直接运行测试 ---
 if __name__ == "__main__":
-    print("--- 开始测试域名查询（截图版本）---")
-    domain_to_query = "db.testyk.com"
-    domain_result_path = query_threatbook_domain_and_save_with_screenshots(
-        domain_to_query
-    )
 
-    if domain_result_path and domain_result_path.endswith(".md"):
-        print(f"\n域名查询任务完成！分析报告已保存在: {domain_result_path}")
-    else:
-        print(f"\n域名查询任务失败: {domain_result_path}")
+    mcp.run(transport="stdio")
+    # print("--- 开始测试域名查询（截图版本）---")
+    # domain_to_query = "db.testyk.com"
+    # domain_result_path = query_threatbook_domain_and_save_with_screenshots(
+    #     domain_to_query
+    # )
+
+    # if domain_result_path and domain_result_path.endswith(".md"):
+    #     print(f"\n域名查询任务完成！分析报告已保存在: {domain_result_path}")
+    # else:
+    #     print(f"\n域名查询任务失败: {domain_result_path}")
