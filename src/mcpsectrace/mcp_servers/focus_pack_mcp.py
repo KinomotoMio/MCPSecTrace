@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 
 import pyautogui
+from mcpsectrace.utils import get_settings
 
 # --- 输出使用utf-8编码 --
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -26,19 +27,36 @@ except ImportError:
     print('[致命错误] 请先运行: uv add "mcp[cli]" httpx', file=sys.stderr)
     sys.exit(1)
 
-# --- 创建MCP Server ---
-mcp = FastMCP("focus_pack", log_level="ERROR", port=8888)
+# --- 创建MCP Server（从配置加载） ---
+SETTINGS = get_settings()
+_mcp_cfg = SETTINGS.get("mcp", {}).get("focus_pack", {})
+mcp = FastMCP(
+    _mcp_cfg.get("name", "focus_pack"),
+    log_level=_mcp_cfg.get("log_level", "ERROR"),
+    port=_mcp_cfg.get("port", 8888),
+)
 
-# --- 图片路径 ---
-QUICK_SCAN_BUTTON_IMAGE = "./tag_image/focus_pack/quick_scan_button.png"
-QUICK_SCAN_MODE_IMAGE = "./tag_image/focus_pack/quick_scan_mode.png"
-QUICK_SCAN_COMPLETE_IMAGE = "./tag_image/focus_pack/quick_scan_complete.png"
+# --- 图片路径（从配置加载） ---
+_img = SETTINGS.get("focus_pack", {}).get("images", {})
+QUICK_SCAN_BUTTON_IMAGE = _img.get(
+    "quick_scan", "assets/screenshots/focus_pack/quick_scan_button.png"
+)
+QUICK_SCAN_MODE_IMAGE = _img.get(
+    "quick_scan_mode", "assets/screenshots/focus_pack/quick_scan_mode.png"
+)
+QUICK_SCAN_COMPLETE_IMAGE = _img.get(
+    "quick_scan_complete", "assets/screenshots/focus_pack/quick_scan_complete.png"
+)
 
-# --- 设备性能与等待时间 ---
-DEVICE_LEVEL = 1  # 1: 低性能设备，2: 中性能设备，3: 高性能设备
-SLEEP_TIME_SHORT = 1 * DEVICE_LEVEL
-SLEEP_TIME_MEDIUM = 3 * DEVICE_LEVEL
-SLEEP_TIME_LONG = 5 * DEVICE_LEVEL
+# --- 设备性能与等待时间（从配置加载） ---
+_tuning = SETTINGS.get("focus_pack", {}).get("tuning", {})
+DEVICE_LEVEL = _tuning.get("device_level", 1)
+SLEEP_TIME_SHORT = _tuning.get("sleep_short", 1) * DEVICE_LEVEL
+SLEEP_TIME_MEDIUM = _tuning.get("sleep_medium", 3) * DEVICE_LEVEL
+SLEEP_TIME_LONG = _tuning.get("sleep_long", 5) * DEVICE_LEVEL
+DEFAULT_CONFIDENCE = _tuning.get("confidence", 0.8)
+DEFAULT_FIND_TIMEOUT = _tuning.get("find_timeout", 15)
+QUICK_SCAN_TIMEOUT = _tuning.get("quick_scan_timeout", 600)
 
 
 # --- 日志函数 ---
@@ -303,8 +321,8 @@ def quick_scan():
     debug_print(f"[Step 2] 点击 “ 快速扫描 ” 按钮")
     if not find_and_click(
         QUICK_SCAN_BUTTON_IMAGE,
-        confidence_level=0.8,
-        timeout_seconds=15,
+        confidence_level=DEFAULT_CONFIDENCE,
+        timeout_seconds=DEFAULT_FIND_TIMEOUT,
         description="快速扫描按钮",
     ):
         return "[ERROR] 未能找到快速扫描按钮，或点击失败，请查看最新操作日志溯源。"
@@ -314,8 +332,8 @@ def quick_scan():
     debug_print(f"[Step 3] 检测是否正在扫描")
     if find_image_on_screen(
         QUICK_SCAN_MODE_IMAGE,
-        confidence_level=0.8,
-        timeout_seconds=15,
+        confidence_level=DEFAULT_CONFIDENCE,
+        timeout_seconds=DEFAULT_FIND_TIMEOUT,
         description="快速扫描模式",
     ):
         debug_print("正在执行快速扫描。")
@@ -326,12 +344,12 @@ def quick_scan():
     time.sleep(SLEEP_TIME_LONG)
 
     # 4. 检测是否扫描完成（时长可调节）
-    interval = 600
+    interval = QUICK_SCAN_TIMEOUT
     debug_print(f"[Step 4] 检测是否扫描完成（时长为{interval}s,可调节）")
     start_time = time.time()
     img_loc = find_image_on_screen(
         QUICK_SCAN_COMPLETE_IMAGE,
-        confidence_level=0.8,
+        confidence_level=DEFAULT_CONFIDENCE,
         timeout_seconds=interval,
         description="快速查杀完成",
     )
@@ -362,13 +380,18 @@ def main():
     global FOCUS_PACK_PATH, DEBUG_MODE, LOG_NAME
     parser = argparse.ArgumentParser(description="Focus_Pack MCP工具")
     parser.add_argument(
-        "--focus-pack-path", type=str, required=True, help="Focus_Pack软件的完整路径"
+        "--focus-pack-path",
+        type=str,
+        required=False,
+        default=SETTINGS.get("tools", {}).get("focus_pack", {}).get("exe_path", ""),
+        help="Focus_Pack软件的完整路径（可在配置文件 tools.focus_pack.exe_path 中设置）",
     )
     parser.add_argument("--debug", action="store_true", help="调试模式")
     args = parser.parse_args()
     FOCUS_PACK_PATH = args.focus_pack_path
     DEBUG_MODE = args.debug
-    LOG_NAME = setup_log("logs/focus_pack")
+    _log_dir = SETTINGS.get("logging", {}).get("focus_pack", {}).get("log_dir", "logs/focus_pack")
+    LOG_NAME = setup_log(_log_dir)
 
     # 1. 检查VS code权限
     debug_print("--- VS code 管理员权限检查 ---")
@@ -386,7 +409,7 @@ def main():
         quick_scan()
     else:
         print("--- 当前处于正式运行模式 ---")
-        mcp.run(transport="stdio")
+        mcp.run(transport=_mcp_cfg.get("transport", "stdio"))
 
 
 # --- 主程序入口 ---

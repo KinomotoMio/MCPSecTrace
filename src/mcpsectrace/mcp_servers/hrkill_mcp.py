@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 
 import pyautogui
+from mcpsectrace.utils import get_settings
 
 # --- 输出使用utf-8编码 --
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -18,12 +19,17 @@ LOG_HANDLE = None  # 日志文件句柄
 LOG_NAME = None
 HRKILL_PATH = None
 DEBUG_MODE = None
+SETTINGS = get_settings()
 
-# --- 设备性能与等待时间 ---
-DEVICE_LEVEL = 1  # 1: 低性能设备，2: 中性能设备，3: 高性能设备
-SLEEP_TIME_SHORT = 1 * DEVICE_LEVEL
-SLEEP_TIME_MEDIUM = 3 * DEVICE_LEVEL
-SLEEP_TIME_LONG = 5 * DEVICE_LEVEL
+# --- 设备性能与等待时间（从配置加载） ---
+_tuning = SETTINGS.get("hrkill", {}).get("tuning", {})
+DEVICE_LEVEL = _tuning.get("device_level", 1)
+SLEEP_TIME_SHORT = _tuning.get("sleep_short", 1) * DEVICE_LEVEL
+SLEEP_TIME_MEDIUM = _tuning.get("sleep_medium", 3) * DEVICE_LEVEL
+SLEEP_TIME_LONG = _tuning.get("sleep_long", 5) * DEVICE_LEVEL
+DEFAULT_CONFIDENCE = _tuning.get("confidence", 0.8)
+DEFAULT_FIND_TIMEOUT = _tuning.get("find_timeout", 15)
+SCAN_COMPLETE_TIMEOUT = _tuning.get("scan_complete_timeout", 300)
 
 # --- 导入MCP ---
 try:
@@ -32,19 +38,27 @@ except ImportError:
     print('[致命错误] 请先运行: uv add "mcp[cli]" httpx', file=sys.stderr)
     sys.exit(1)
 
-# --- 创建MCP Server ---
-mcp = FastMCP("hrkill", log_level="ERROR", port=8888)
+# --- 创建MCP Server（从配置加载） ---
+_mcp_cfg = SETTINGS.get("mcp", {}).get("hrkill", {})
+mcp = FastMCP(
+    _mcp_cfg.get("name", "hrkill"),
+    log_level=_mcp_cfg.get("log_level", "ERROR"),
+    port=_mcp_cfg.get("port", 8888),
+)
 
-# --- 图片路径 ---
-START_SCAN_BUTTON_IMAGE = "./tag_image/hrkill/start_scan_button.png"
-PAUSE_BUTTON_IMAGE = "./tag_image/hrkill/pause_button.png"
-SCAN_COMPLETE_IMAGE = "./tag_image/hrkill/scan_complete.png"
+# --- 图片路径（从配置加载） ---
+_img = SETTINGS.get("hrkill", {}).get("images", {})
+START_SCAN_BUTTON_IMAGE = _img.get(
+    "start_scan", "assets/screenshots/hrkill/start_scan_button.png"
+)
+PAUSE_BUTTON_IMAGE = _img.get(
+    "pause", "assets/screenshots/hrkill/pause_button.png"
+)
+SCAN_COMPLETE_IMAGE = _img.get(
+    "scan_complete", "assets/screenshots/hrkill/scan_complete.png"
+)
 
-# --- 设备性能与等待时间 ---
-DEVICE_LEVEL = 1  # 1: 低性能设备，2: 中性能设备，3: 高性能设备
-SLEEP_TIME_SHORT = 1 * DEVICE_LEVEL
-SLEEP_TIME_MEDIUM = 3 * DEVICE_LEVEL
-SLEEP_TIME_LONG = 5 * DEVICE_LEVEL
+# 已在上方按配置初始化等待时间参数
 
 
 # --- 日志函数 ---
@@ -273,8 +287,8 @@ def scan_virus():
     debug_print(f"[Step 2] 点击'开始扫描按钮'")
     if not find_and_click(
         START_SCAN_BUTTON_IMAGE,
-        confidence_level=0.8,
-        timeout_seconds=15,
+        confidence_level=DEFAULT_CONFIDENCE,
+        timeout_seconds=DEFAULT_FIND_TIMEOUT,
         description="开始扫描按钮",
     ):
         return "[ERROR] 未能找到'开始扫描按钮'，或点击按钮失败，请查看最新日志溯源。"
@@ -284,8 +298,8 @@ def scan_virus():
     debug_print(f"[Step 3] 检测是否正在查杀病毒")
     if find_image_on_screen(
         PAUSE_BUTTON_IMAGE,
-        confidence_level=0.8,
-        timeout_seconds=15,
+        confidence_level=DEFAULT_CONFIDENCE,
+        timeout_seconds=DEFAULT_FIND_TIMEOUT,
         description="查杀暂停按钮",
     ):
         debug_print("正在执行病毒查杀。")
@@ -295,12 +309,12 @@ def scan_virus():
     time.sleep(SLEEP_TIME_LONG)
 
     # 4. 检测是否扫描完成
-    interval = 300  # 5分钟
+    interval = SCAN_COMPLETE_TIMEOUT
     debug_print(f"[Step 4] 检测是否扫描完成（时长{interval}s，可调节）")
     start_time = time.time()
     img_loc = find_image_on_screen(
         SCAN_COMPLETE_IMAGE,
-        confidence_level=0.8,
+        confidence_level=DEFAULT_CONFIDENCE,
         timeout_seconds=interval,
         description="扫描完成",
     )
@@ -319,13 +333,18 @@ def main():
     global HRKILL_PATH, DEBUG_MODE, LOG_NAME
     parser = argparse.ArgumentParser(description="hrkill MCP工具")
     parser.add_argument(
-        "--hrkill-path", type=str, required=True, help="hrkill软件的完整路径"
+        "--hrkill-path",
+        type=str,
+        required=False,
+        default=SETTINGS.get("tools", {}).get("hrkill", {}).get("exe_path", ""),
+        help="hrkill软件的完整路径（可在配置文件 tools.hrkill.exe_path 中设置）",
     )
     parser.add_argument("--debug", action="store_true", help="调试模式")
     args = parser.parse_args()
     HRKILL_PATH = args.hrkill_path
     DEBUG_MODE = args.debug
-    LOG_NAME = setup_log("logs/hrkill")
+    _log_dir = SETTINGS.get("logging", {}).get("hrkill", {}).get("log_dir", "logs/hrkill")
+    LOG_NAME = setup_log(_log_dir)
 
     # 1. 检查VS code权限
     debug_print("--- VS code 管理员权限检查 ---")
@@ -343,7 +362,7 @@ def main():
         scan_virus()
     else:
         debug_print("--- 当前处于MCP运行模式 ---")
-        mcp.run(transport="stdio")
+        mcp.run(transport=_mcp_cfg.get("transport", "stdio"))
 
 
 # --- 主程序入口 ---

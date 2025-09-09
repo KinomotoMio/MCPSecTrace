@@ -25,8 +25,11 @@ try:
 except ImportError:
     debug_print('[致命错误] 请先运行: uv add "mcp[cli]" httpx')
     sys.exit(1)
+from mcpsectrace.utils import get_settings
 
-mcp = FastMCP("browser_tools", log_level="ERROR")
+SETTINGS = get_settings()
+_mcp_cfg = SETTINGS.get("mcp", {}).get("browser", {})
+mcp = FastMCP(_mcp_cfg.get("name", "browser_tools"), log_level=_mcp_cfg.get("log_level", "ERROR"))
 
 
 def _get_user_profile_path_sync() -> Optional[Path]:

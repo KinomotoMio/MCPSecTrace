@@ -1,0 +1,141 @@
+# 配置文件（TOML）——集中管理项目中的硬编码参数
+# 使用说明：
+# 1) 小白用户只需根据中文注释修改即可；
+# 2) 如无特别说明，路径可使用相对项目根目录的相对路径；
+# 3) 修改后运行脚本会动态读取，无需修改代码。
+
+[app]
+# 应用名称（仅用于展示/日志）
+name = "MCPSecTrace"
+# 运行环境：dev / prod / test
+env = "dev"
+
+[logging.hrkill]
+# hrkill 模块日志目录（自动创建）
+# 建议放到 data/logs 下统一管理
+log_dir = "data/logs/hrkill"
+
+[mcp.hrkill]
+# MCP 服务名称（在客户端侧展示）
+name = "hrkill"
+# MCP 对外监听端口（仅在 socket/网络模式使用；stdio 模式下忽略）
+port = 8888
+# MCP 日志级别：DEBUG/INFO/WARNING/ERROR
+log_level = "ERROR"
+# 传输层：stdio（推荐）
+transport = "stdio"
+
+[tools.hrkill]
+# hrkill 可执行程序的完整路径（可留空，在命令行通过 --hrkill-path 传入）
+exe_path = ""
+
+[hrkill.images]
+# UI 自动化匹配所需的截图路径（相对项目根目录）
+start_scan = "assets/screenshots/hrkill/start_scan_button.png"
+pause = "assets/screenshots/hrkill/pause_button.png"
+scan_complete = "assets/screenshots/hrkill/scan_complete.png"
+
+[hrkill.tuning]
+# 设备性能档位：1(低) / 2(中) / 3(高)
+device_level = 1
+# 等待时间（秒），会按 device_level 做线性放大
+sleep_short = 1
+sleep_medium = 3
+sleep_long = 5
+# 图像匹配默认置信度（0~1）
+confidence = 0.8
+# 常规查找超时（秒）
+find_timeout = 15
+# 扫描完成状态的最大等待时间（秒）
+scan_complete_timeout = 300
+
+# Focus Pack 配置
+[logging.focus_pack]
+log_dir = "data/logs/focus_pack"
+
+[mcp.focus_pack]
+name = "focus_pack"
+port = 8888
+log_level = "ERROR"
+transport = "stdio"
+
+[tools.focus_pack]
+exe_path = ""
+
+[focus_pack.images]
+quick_scan = "assets/screenshots/focus_pack/quick_scan_button.png"
+quick_scan_mode = "assets/screenshots/focus_pack/quick_scan_mode.png"
+quick_scan_complete = "assets/screenshots/focus_pack/quick_scan_complete.png"
+
+[focus_pack.tuning]
+device_level = 1
+sleep_short = 1
+sleep_medium = 3
+sleep_long = 5
+confidence = 0.8
+find_timeout = 15
+quick_scan_timeout = 600
+
+# 火绒（Huorong）配置
+[logging.huorong]
+log_dir = "data/logs/huorong"
+
+[mcp.huorong]
+name = "huorong"
+port = 8888
+log_level = "ERROR"
+transport = "stdio"
+
+[tools.huorong]
+exe_path = ""
+
+[huorong.images]
+quick_scan_button = "assets/screenshots/huorong/huorong_quick_scan_button.png"
+pause_button = "assets/screenshots/huorong/huorong_pause_button.png"
+scan_complete_button = "assets/screenshots/huorong/huorong_complete_button.png"
+quarantine_button = "assets/screenshots/huorong/huorong_quarantine_button.png"
+maximize_button = "assets/screenshots/huorong/huorong_maximize_button.png"
+security_log = "assets/screenshots/huorong/huorong_security_log.png"
+export_log_button = "assets/screenshots/huorong/huorong_export_log_button.png"
+filename_input_box = "assets/screenshots/huorong/huorong_filename_input_box.png"
+save_button = "assets/screenshots/huorong/huorong_save_button.png"
+save_mark = "assets/screenshots/huorong/huorong_save_mark.png"
+export_complete_mark = "assets/screenshots/huorong/huorong_export_complete.png"
+
+[huorong.tuning]
+device_level = 1
+sleep_short = 1
+sleep_medium = 3
+sleep_long = 5
+confidence = 0.6
+find_timeout = 15
+scan_complete_timeout = 300
+
+[huorong.paths]
+quarantine_db = "C:/ProgramData/Huorong/Sysdiag/QuarantineEx.db"
+trust_db = "C:/ProgramData/Huorong/Sysdiag/wlfile.db"
+trust_db_wal = "C:/ProgramData/Huorong/Sysdiag/wlfile.db-wal"
+export_output_dir = "./"
+
+# IOC 爬取工具配置（Selenium）
+[selenium]
+chrome_exe_path = ""
+chromedriver_exe_path = ""
+user_data_dir = ""
+page_load_wait_seconds = 10
+
+[ioc.output]
+# 旧版/新版分别的输出目录
+html_output_dir = "data/logs/ioc/html"
+pic_output_dir = "data/logs/ioc/ioc_pic"
+
+[mcp.ioc]
+name = "ioc"
+port = 8888
+log_level = "ERROR"
+transport = "stdio"
+
+# 浏览器取证工具配置
+[mcp.browser]
+name = "browser_tools"
+log_level = "ERROR"

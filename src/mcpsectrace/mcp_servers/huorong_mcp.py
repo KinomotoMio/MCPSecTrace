@@ -13,6 +13,7 @@ from typing import Optional
 
 import pyautogui
 from PIL import Image
+from mcpsectrace.utils import get_settings
 
 # --- 输出使用utf-8编码 --
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -25,44 +26,58 @@ except ImportError:
     debug_print('[致命错误] 请先运行: uv add "mcp[cli]" httpx')
     sys.exit(1)
 
-mcp = FastMCP("huorong", log_level="ERROR", port=8888)
+SETTINGS = get_settings()
+_mcp_cfg = SETTINGS.get("mcp", {}).get("huorong", {})
+mcp = FastMCP(
+    _mcp_cfg.get("name", "huorong"),
+    log_level=_mcp_cfg.get("log_level", "ERROR"),
+    port=_mcp_cfg.get("port", 8888),
+)
 
 # --- 设备性能与等待时间 ---
-DEVICE_LEVEL = 1  # 1: 低性能设备，2: 中性能设备，3: 高性能设备
-SLEEP_TIME_SHORT = 1 * DEVICE_LEVEL
-SLEEP_TIME_MEDIUM = 3 * DEVICE_LEVEL
-SLEEP_TIME_LONG = 5 * DEVICE_LEVEL
+_tuning = SETTINGS.get("huorong", {}).get("tuning", {})
+DEVICE_LEVEL = _tuning.get("device_level", 1)
+SLEEP_TIME_SHORT = _tuning.get("sleep_short", 1) * DEVICE_LEVEL
+SLEEP_TIME_MEDIUM = _tuning.get("sleep_medium", 3) * DEVICE_LEVEL
+SLEEP_TIME_LONG = _tuning.get("sleep_long", 5) * DEVICE_LEVEL
 
 # 病毒查杀功能对应的图片
-QUICK_SCAN_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_quick_scan_button_me.png"
+_img = SETTINGS.get("huorong", {}).get("images", {})
+QUICK_SCAN_BUTTON_IMAGE = _img.get(
+    "quick_scan_button", "assets/screenshots/huorong/huorong_quick_scan_button.png"
 )
-PAUSE_BUTTON_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_pause_button_me.png"
-SCAN_COMPLETE_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_complete_button_me.png"
+PAUSE_BUTTON_IMAGE = _img.get(
+    "pause_button", "assets/screenshots/huorong/huorong_pause_button.png"
+)
+SCAN_COMPLETE_IMAGE = _img.get(
+    "scan_complete_button", "assets/screenshots/huorong/huorong_complete_button.png"
 )
 
 # 查看隔离区
-QUARANTINE_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_quarantine_button_me.png"
+QUARANTINE_BUTTON_IMAGE = _img.get(
+    "quarantine_button", "assets/screenshots/huorong/huorong_quarantine_button.png"
 )
-MAXIMIZE_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_maximize_button_me.png"
+MAXIMIZE_BUTTON_IMAGE = _img.get(
+    "maximize_button", "assets/screenshots/huorong/huorong_maximize_button.png"
 )
 
 # 获取安全日志
-SECURITY_LOG_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_security_log_me.png"
-LOG_CHECK_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_log_check.png"  ## ?
-EXPORT_LOG_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_export_log_button_me.png"
+SECURITY_LOG_IMAGE = _img.get(
+    "security_log", "assets/screenshots/huorong/huorong_security_log.png"
 )
-FILENAME_INPUT_BOX_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_filename_input_box_me.png"
+LOG_CHECK_IMAGE = _img.get("log_check", "")
+EXPORT_LOG_BUTTON_IMAGE = _img.get(
+    "export_log_button", "assets/screenshots/huorong/huorong_export_log_button.png"
 )
-SAVE_BUTTON_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_save_button_me.png"
-SAVE_MARK_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_save_mark_me.png"
-EXPORT_COMPLETE_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_export_complete_me.png"
+FILENAME_INPUT_BOX_IMAGE = _img.get(
+    "filename_input_box", "assets/screenshots/huorong/huorong_filename_input_box.png"
+)
+SAVE_BUTTON_IMAGE = _img.get(
+    "save_button", "assets/screenshots/huorong/huorong_save_button.png"
+)
+SAVE_MARK_IMAGE = _img.get("save_mark", "assets/screenshots/huorong/huorong_save_mark.png")
+EXPORT_COMPLETE_IMAGE = _img.get(
+    "export_complete_mark", "assets/screenshots/huorong/huorong_export_complete.png"
 )
 
 
