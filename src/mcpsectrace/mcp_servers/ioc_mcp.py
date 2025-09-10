@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from mcpsectrace.config import get_config_value
 from mcp.server.fastmcp import FastMCP
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -14,6 +13,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+from mcpsectrace.config import get_config_value
 
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
 
@@ -52,9 +53,13 @@ class SeleniumDriver:
         user_data_dir = get_config_value("chrome.user_data_dir", default="")
 
         # 检查路径是否存在
-        if chrome_exe_path and chrome_exe_path != "chrome" and not os.path.exists(chrome_exe_path):
+        if (
+            chrome_exe_path
+            and chrome_exe_path != "chrome"
+            and not os.path.exists(chrome_exe_path)
+        ):
             raise FileNotFoundError(f"Chrome 路径不存在 -> {chrome_exe_path}")
-        
+
         if chromedriver_exe_path and not os.path.exists(chromedriver_exe_path):
             raise FileNotFoundError(
                 f"ChromeDriver 路径不存在 -> {chromedriver_exe_path}"
@@ -85,7 +90,7 @@ class SeleniumDriver:
 
         # 创建WebDriver实例
         self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        
+
         # 从配置获取窗口大小
         window_size = get_config_value("ioc.window_size", default=[1920, 1200])
         self.driver.set_window_size(window_size[0], window_size[1])
@@ -160,7 +165,7 @@ class ElementScreenshot:
             ElementScreenshot.scroll_to_element_and_wait(driver, element)
 
             # 生成安全的文件名
-            sanitized_target = re.sub(r'[\\/:*?"<>|]', '_', target_value)
+            sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", target_value)
             screenshot_path = os.path.join(
                 output_dir, f"{sanitized_target}_{config.filename_suffix}.png"
             )
@@ -190,33 +195,32 @@ class ThreatBookAnalyzer:
         pic_output_dir = get_config_value(
             "screenshot_path", default="./logs/ioc/ioc_pic"
         )
-        
+
         os.makedirs(output_dir, exist_ok=True)
         os.makedirs(pic_output_dir, exist_ok=True)
         return output_dir, pic_output_dir
 
     @staticmethod
-    def expand_threat_panels(driver: webdriver.Chrome, target_value: str, output_dir: str) -> str:
+    def expand_threat_panels(
+        driver: webdriver.Chrome, target_value: str, output_dir: str
+    ) -> str:
         """展开威胁情报面板并截图"""
         md_content = ""
-        
+
         # 生成安全的文件名
-        sanitized_target = re.sub(r'[\\/:*?"<>|]', '_', target_value)
+        sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", target_value)
 
         try:
             # 从配置获取折叠面板选择器
             collapse_selector = get_config_value(
-                "ioc.css_selectors.collapse_container", 
-                default=".ant-collapse.ant-collapse-borderless"
+                "ioc.css_selectors.collapse_container",
+                default=".ant-collapse.ant-collapse-borderless",
             )
             collapse_item_selector = get_config_value(
-                "ioc.css_selectors.collapse_item", 
-                default=".ant-collapse-item"
+                "ioc.css_selectors.collapse_item", default=".ant-collapse-item"
             )
-            
-            collapse_container = driver.find_element(
-                By.CSS_SELECTOR, collapse_selector
-            )
+
+            collapse_container = driver.find_element(By.CSS_SELECTOR, collapse_selector)
 
             collapse_items = collapse_container.find_elements(
                 By.CSS_SELECTOR, collapse_item_selector
@@ -248,7 +252,7 @@ class ThreatBookAnalyzer:
                     # 点击展开面板
                     header_selector = get_config_value(
                         "ioc.css_selectors.collapse_header",
-                        default="ant-collapse-header"
+                        default="ant-collapse-header",
                     )
                     header = item.find_element(By.CLASS_NAME, header_selector)
                     is_active = "ant-collapse-item-active" in item.get_attribute(
@@ -349,8 +353,8 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
         # 生成报告头部
         # 生成安全的文件名
-        sanitized_target = re.sub(r'[\\/:*?"<>|]', '_', config.target_value)
-        
+        sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", config.target_value)
+
         report_content = f"""# {config.target_type.upper()} 威胁分析报告
 
 **目标**: {config.target_value}  
