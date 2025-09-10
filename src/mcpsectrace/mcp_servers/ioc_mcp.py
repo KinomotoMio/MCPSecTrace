@@ -211,29 +211,19 @@ class ThreatBookAnalyzer:
         sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", target_value)
 
         try:
-            # 从配置获取折叠面板选择器
-            collapse_selector = get_config_value(
-                "ioc.css_selectors.collapse_container",
-                default=".ant-collapse.ant-collapse-borderless",
+            # 微步网站的固定CSS结构
+            collapse_container = driver.find_element(
+                By.CSS_SELECTOR, ".ant-collapse.ant-collapse-borderless"
             )
-            collapse_item_selector = get_config_value(
-                "ioc.css_selectors.collapse_item", default=".ant-collapse-item"
-            )
-
-            collapse_container = driver.find_element(By.CSS_SELECTOR, collapse_selector)
-
             collapse_items = collapse_container.find_elements(
-                By.CSS_SELECTOR, collapse_item_selector
+                By.CSS_SELECTOR, ".ant-collapse-item"
             )
 
             for i, item in enumerate(collapse_items):
                 try:
                     # 获取clue-type标题
-                    clue_type_selector = get_config_value(
-                        "ioc.css_selectors.clue_type", default="clue-type"
-                    )
                     clue_type_element = item.find_element(
-                        By.CLASS_NAME, clue_type_selector
+                        By.CLASS_NAME, "clue-type"
                     )
                     clue_title = (
                         clue_type_element.text.strip()
@@ -250,11 +240,7 @@ class ThreatBookAnalyzer:
                     )
 
                     # 点击展开面板
-                    header_selector = get_config_value(
-                        "ioc.css_selectors.collapse_header",
-                        default="ant-collapse-header",
-                    )
-                    header = item.find_element(By.CLASS_NAME, header_selector)
+                    header = item.find_element(By.CLASS_NAME, "ant-collapse-header")
                     is_active = "ant-collapse-item-active" in item.get_attribute(
                         "class"
                     )
