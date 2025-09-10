@@ -308,10 +308,7 @@ def quick_scan():
     # 2. 点击 “ 快速扫描 ” 按钮
     debug_print(f"[Step 2] 点击 “ 快速扫描 ” 按钮")
     if not find_and_click(
-        get_config_value(
-            "automation.image_files.focus_pack.quick_scan",
-            default="quick_scan_button.png",
-        ),
+        "quick_scan_button.png",  # Focus Pack界面固定元素
         confidence_level=0.8,
         timeout_seconds=15,
         description="快速扫描按钮",
@@ -322,10 +319,7 @@ def quick_scan():
     # 3. 检测是否正在扫描
     debug_print(f"[Step 3] 检测是否正在扫描")
     if find_image_on_screen(
-        get_config_value(
-            "automation.image_files.focus_pack.quick_scan_mode",
-            default="quick_scan_mode.png",
-        ),
+        "quick_scan_mode.png",  # Focus Pack界面固定元素
         confidence_level=0.8,
         timeout_seconds=15,
         description="快速扫描模式",
@@ -342,10 +336,7 @@ def quick_scan():
     debug_print(f"[Step 4] 检测是否扫描完成（时长为{interval}s,可调节）")
     start_time = time.time()
     img_loc = find_image_on_screen(
-        get_config_value(
-            "automation.image_files.focus_pack.quick_scan_complete",
-            default="quick_scan_complete.png",
-        ),
+        "quick_scan_complete.png",  # Focus Pack界面固定元素
         confidence_level=0.8,
         timeout_seconds=interval,
         description="快速查杀完成",
