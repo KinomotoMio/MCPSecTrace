@@ -3,29 +3,9 @@
 # ===========================================
 
 [browser]
-# 默认查询数量限制
+# 默认查询数量限制 - 用户可能需要调整取证数据量
 max_history_items = 100
 max_download_items = 50
 
-# 临时文件前缀
-temp_file_prefix = "temp_"
-
-# 数据库文件名
-db_filename = "History"
-
-# 最大Profile搜索数量（Chrome Profile 1-N）
+# 最大Profile搜索数量（Chrome Profile 1-N）- 用户环境中的Profile数量不同
 max_profile_search = 10
-
-# 时间戳转换基准时间
-chrome_time_epoch = "1601-01-01T00:00:00Z"
-firefox_time_epoch = "1970-01-01T00:00:00Z"
-
-# Windows下浏览器路径模式
-[browser.path_patterns]
-chrome = "AppData/Local/Google/Chrome/User Data"
-edge = "AppData/Local/Microsoft/Edge/User Data"
-
-# SQL查询模板
-[browser.sql_templates]
-history = "SELECT u.url, u.title, v.visit_time FROM urls u, visits v WHERE u.id = v.url ORDER BY v.visit_time DESC LIMIT ?;"
-downloads = "SELECT target_path, tab_url, mime_type, total_bytes, start_time, end_time, state, danger_type FROM downloads ORDER BY start_time DESC LIMIT ?;"

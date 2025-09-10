@@ -3,48 +3,11 @@
 # ===========================================
 
 [ioc]
-# 浏览器窗口尺寸 [宽度, 高度]
+# 浏览器窗口尺寸 [宽度, 高度] - 用户可能根据屏幕大小调整
 window_size = [1920, 1200]
 
-# 等待时间配置（秒）
+# 等待时间配置（秒）- 用户可能根据网络速度和设备性能调整
 scroll_wait_time = 2
-tab_click_wait_time = 3
-screenshot_wait_time = 2
-element_find_timeout = 10
-
-# Chrome浏览器启动选项
-chrome_options = [
-    "--disable-gpu",
-    "--no-sandbox", 
-    "--start-maximized"
-]
-
-# CSS选择器配置
-[ioc.css_selectors]
-summary_top = "summary-top"
-insight_container = "result-intelInsight_con"
-collapse_container = ".ant-collapse.ant-collapse-icon-position-start.ant-collapse-ghost"
-collapse_item = ".ant-collapse-item"
-collapse_header = ".ant-collapse-header"
-clue_type = "clue-type"
-nav_list = "x-comp-nav-list"
-tab_button = "x-comp-tab-btn"
-tab_content = ".x-comp-tab-content, .tab-content, .related-intel-content"
-
-# 查询URL模板
-[ioc.url_templates]
-ip_query = "https://x.threatbook.com/v5/ip/{target}"
-domain_query = "https://x.threatbook.com/v5/domain/{target}"
-
-# 文件名特殊字符替换规则（确保截图文件名在所有操作系统上有效）
-[ioc.filename_replacements]
-" " = "_"
-"/" = "_"
-":" = "_"
-"\\" = "_"
-"*" = "_"
-"?" = "_"
-'"' = "_"
-"<" = "_"
-">" = "_"
-"|" = "_"
+element_timeout = 10
+page_load_wait_seconds = 10
+panel_expand_wait_time = 2
