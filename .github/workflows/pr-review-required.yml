@@ -76,5 +76,5 @@ jobs:
       
       - name: 运行测试
         run: |
-          # 由于包含Windows专用功能，在Linux环境下只运行部分测试
-          uv run python tests/integration/test_imports.py || echo "⚠️ 部分测试在非Windows环境下无法运行"
+          # 运行完整的pytest测试套件，Windows专用功能在Linux环境下会被跳过
+          uv run pytest -v || (echo "❌ 测试失败，请检查代码" && exit 1)
