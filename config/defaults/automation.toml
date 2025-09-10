@@ -1,0 +1,42 @@
+# ===========================================
+# GUI自动化默认配置
+# ===========================================
+
+[automation]
+# 操作重试次数
+retry_times = 3
+
+# 图像查找超时时间（秒）
+find_timeout = 15
+
+# 默认图像识别置信度
+default_confidence = 0.8
+
+# 等待时间基数（会根据device_level倍数调整）
+sleep_short_base = 1
+sleep_medium_base = 3  
+sleep_long_base = 5
+
+# 火绒安全软件图像文件名
+[automation.image_files.huorong]
+quick_scan = "huorong_quick_scan_button.png"
+pause = "huorong_pause_button.png"
+scan_complete = "huorong_complete_button.png"
+quarantine = "huorong_quarantine_button.png"
+maximize = "huorong_maximize_button.png"
+security_log = "huorong_security_log.png"
+export_log = "huorong_export_log_button.png"
+filename_input = "huorong_filename_input_box.png"
+save = "huorong_save_button.png"
+
+# HRKill工具图像文件名
+[automation.image_files.hrkill]
+start_scan = "start_scan_button.png"
+pause = "pause_button.png"
+scan_complete = "scan_complete.png"
+
+# Focus Pack工具图像文件名
+[automation.image_files.focus_pack]
+quick_scan = "quick_scan_button.png"
+quick_scan_mode = "quick_scan_mode.png"
+quick_scan_complete = "quick_scan_complete.png"

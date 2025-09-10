@@ -1,0 +1,114 @@
+# ===========================================
+# MCPSecTrace 用户配置文件
+# 说明：此文件包含最常需要修改的配置项
+# ===========================================
+
+[app]
+# 项目名称（在日志和报告中显示）
+name = "MCPSecTrace"
+# 运行环境：dev（开发）/ prod（生产）/ test（测试）
+environment = "prod"
+
+[paths]
+# 火绒安全软件主程序路径（必填）
+# 示例：D:\HuoRong\Sysdiag\bin\HipsMain.exe
+huorong_exe = ""
+
+# HRKill工具程序路径（必填）  
+# 示例：tools\hrkill-1.0.0.86.exe
+hrkill_exe = ""
+
+# Focus Pack工具程序路径（必填）
+# 示例：tools\focus_pack.exe
+focus_pack_exe = ""
+
+# Chrome浏览器程序路径（IOC威胁情报查询用，必填）
+# 示例：C:\Program Files\Google\Chrome\Application\chrome.exe
+chrome_exe = ""
+
+# ChromeDriver程序路径（IOC威胁情报查询用，必填）
+# 示例：tools\chromedriver.exe
+chromedriver_exe = ""
+
+# Chrome用户数据目录（IOC查询时保持会话用）
+# 示例：C:\Users\用户名\AppData\Local\Google\Chrome\User Data
+chrome_user_data_dir = ""
+
+[images]
+# GUI自动化所需的截图文件根目录
+# 所有工具的截图文件都应放在此目录下的对应子目录中
+base_dir = "./assets/screenshots"
+
+# 火绒截图文件目录（相对于base_dir）
+huorong_dir = "huorong"
+
+# HRKill截图文件目录（相对于base_dir）
+hrkill_dir = "hrkill" 
+
+# Focus Pack截图文件目录（相对于base_dir）
+focus_pack_dir = "focus_pack"
+
+[output]
+# 分析报告输出目录
+reports_dir = "data/reports"
+
+# 截图文件输出目录  
+screenshots_dir = "data/screenshots"
+
+# 系统日志输出目录
+logs_dir = "data/logs"
+
+# IOC威胁情报HTML输出目录
+ioc_html_dir = "data/logs/ioc"
+
+# IOC威胁情报截图输出目录
+ioc_pics_dir = "data/logs/ioc/ioc_pic"
+
+[performance]
+# 设备性能级别：1=低配置机器 2=中等配置 3=高配置机器
+# 影响程序等待时间和并发处理数量
+device_level = 2
+
+# 网络请求超时时间（秒）
+network_timeout = 30
+
+# 自动化操作图像识别置信度（0.1-1.0，越高越严格）
+automation_confidence = 0.8
+
+# 自动化操作查找超时时间（秒）
+automation_timeout = 15
+
+# IOC查询页面加载等待时间（秒）
+ioc_page_load_wait = 10
+
+[security]
+# 微步在线威胁情报API密钥（选填，用于IOC查询增强）
+# 申请地址：https://x.threatbook.com/
+threatbook_api_key = ""
+
+# 是否启用操作过程自动截图（true启用 / false禁用）
+enable_screenshots = true
+
+# 是否在完成后自动打开报告目录（true启用 / false禁用）
+auto_open_reports = true
+
+[mcp]
+# MCP服务器统一配置
+
+# 默认日志级别：DEBUG/INFO/WARNING/ERROR
+log_level = "ERROR"
+
+# 浏览器取证服务端口
+browser_port = 8801
+
+# 火绒服务端口  
+huorong_port = 8802
+
+# HRKill服务端口
+hrkill_port = 8803
+
+# Focus Pack服务端口
+focus_pack_port = 8804
+
+# IOC威胁情报服务端口
+ioc_port = 8805
