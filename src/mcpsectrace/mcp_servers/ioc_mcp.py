@@ -222,9 +222,7 @@ class ThreatBookAnalyzer:
             for i, item in enumerate(collapse_items):
                 try:
                     # 获取clue-type标题
-                    clue_type_element = item.find_element(
-                        By.CLASS_NAME, "clue-type"
-                    )
+                    clue_type_element = item.find_element(By.CLASS_NAME, "clue-type")
                     clue_title = (
                         clue_type_element.text.strip()
                         .replace("/", "_")
