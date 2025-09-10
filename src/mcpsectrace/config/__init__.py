@@ -17,6 +17,6 @@ MCPSecTrace 配置管理模块
     max_items = get_config_value("browser.max_history_items", default=100)
 """
 
-from .loader import ConfigLoader, get_config_loader, get_config, get_config_value
+from .loader import ConfigLoader, get_config, get_config_loader, get_config_value
 
 __all__ = ["ConfigLoader", "get_config_loader", "get_config", "get_config_value"]
