@@ -11,36 +11,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-# ==============================================================================
-# ---                           CONFIGURATION                            ---
-# ==============================================================================
-# 请在此处修改所有路径和设置
+from mcpsectrace.config import get_config_value
 
-# Chrome 和 ChromeDriver 的可执行文件路径
-CHROME_EXE_PATH = r"D:\OneDrive\NDSS\Selenium_gpt\chrome-win64\chrome.exe"
-CHROMEDRIVER_EXE_PATH = (
-    r"D:\OneDrive\NDSS\Selenium_gpt\chromedriver-win64\chromedriver.exe"
-)
-
-# 持久化的用户数据目录路径
-# 指定一个Chrome用户配置文件夹，脚本将加载并使用其中的Cookies、会话等信息。
-# 如果想从一个全新的状态开始，可以指向一个空文件夹。
-USER_DATA_DIR = r"C:\Users\Sssu\AppData\Local\Google\Chrome for Testing\User Data"
-
-# 页面加载等待时间（秒）
-PAGE_LOAD_WAIT_SECONDS = 10
-
-# 结果输出目录，将结果保存在指定的子文件夹中
-OUTPUT_DIR = "./logs/ioc"
-PIC_OUTPUT_DIR = "./logs/ioc/ioc_pic"
-
-# ==============================================================================
 
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
 
 
-def scroll_to_element_and_wait(driver, element, wait_seconds=2):
+def scroll_to_element_and_wait(driver, element, wait_seconds=None):
     """滚动到元素位置并等待指定时间"""
+    if wait_seconds is None:
+        wait_seconds = get_config_value("ioc.scroll_wait_time", default=2)
     try:
         # 滚动到元素位置
         driver.execute_script(
@@ -62,30 +42,44 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
     Args:
         ip_address (str): 需要查询的 IP 地址。
     """
+    # 获取配置路径
+    chrome_exe_path = get_config_value("chrome.exe_path")
+    chromedriver_exe_path = get_config_value("chrome.driver_path")
+    
     # 检查路径是否存在
-    if not os.path.exists(CHROME_EXE_PATH):
-        return f"错误：Chrome 浏览器路径不存在 -> {CHROME_EXE_PATH}"
-    if not os.path.exists(CHROMEDRIVER_EXE_PATH):
-        return f"错误：ChromeDriver 路径不存在 -> {CHROMEDRIVER_EXE_PATH}"
+    if chrome_exe_path and not os.path.exists(chrome_exe_path):
+        return f"错误：Chrome 浏览器路径不存在 -> {chrome_exe_path}"
+    if chromedriver_exe_path and not os.path.exists(chromedriver_exe_path):
+        return f"错误：ChromeDriver 路径不存在 -> {chromedriver_exe_path}"
 
     # 配置 Chrome 选项
     chrome_options = Options()
-    chrome_options.binary_location = CHROME_EXE_PATH
+    if chrome_exe_path:
+        chrome_options.binary_location = chrome_exe_path
 
     # 使用配置区的用户数据目录路径
-    user_data_dir_abs = os.path.abspath(USER_DATA_DIR)
-    print(f"使用持久化用户数据目录: {user_data_dir_abs}")
-    chrome_options.add_argument(f"--user-data-dir={user_data_dir_abs}")
+    user_data_dir = get_config_value("chrome.user_data_dir")
+    if user_data_dir:
+        user_data_dir_abs = os.path.abspath(user_data_dir)
+        print(f"使用持久化用户数据目录: {user_data_dir_abs}")
+        chrome_options.add_argument(f"--user-data-dir={user_data_dir_abs}")
 
-    # 其他浏览器选项 - 增大窗口尺寸以获得更好的截图效果
-    # chrome_options.add_argument("--headless")  # 如果需要后台运行，请取消此行注释
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--window-size=1920,1200")  # 增加窗口高度
-    chrome_options.add_argument("--start-maximized")  # 最大化窗口
+    # 从配置获取窗口尺寸和Chrome选项
+    window_size = get_config_value("ioc.window_size", default=[1920, 1200])
+    chrome_config_options = get_config_value("ioc.chrome_options", default=[
+        "--disable-gpu", "--no-sandbox", "--start-maximized"
+    ])
+    
+    for option in chrome_config_options:
+        chrome_options.add_argument(option)
+    
+    chrome_options.add_argument(f"--window-size={window_size[0]},{window_size[1]}")
 
     # 配置 ChromeDriver 服务
-    service = Service(executable_path=CHROMEDRIVER_EXE_PATH)
+    if chromedriver_exe_path:
+        service = Service(executable_path=chromedriver_exe_path)
+    else:
+        service = Service()  # 使用系统PATH中的chromedriver
 
     driver = None
     try:
@@ -93,19 +87,26 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
         driver = webdriver.Chrome(service=service, options=chrome_options)
 
         # 设置窗口大小
-        driver.set_window_size(1920, 1200)
+        driver.set_window_size(window_size[0], window_size[1])
 
-        url = f"https://x.threatbook.com/v5/ip/{ip_address}"
+        # 从配置获取URL模板
+        url_template = get_config_value("ioc.url_templates.ip_query", 
+                                       default="https://x.threatbook.com/v5/ip/{target}")
+        url = url_template.format(target=ip_address)
         print(f"正在访问: {url}")
         driver.get(url)
 
         # 使用配置区的等待时间
-        print(f"页面加载中，请等待 {PAGE_LOAD_WAIT_SECONDS} 秒...")
-        time.sleep(PAGE_LOAD_WAIT_SECONDS)
+        page_load_wait = get_config_value("ioc.element_find_timeout", default=10)
+        print(f"页面加载中，请等待 {page_load_wait} 秒...")
+        time.sleep(page_load_wait)
 
         # 创建输出目录
-        output_dir_abs = os.path.abspath(OUTPUT_DIR)
-        pic_output_dir_abs = os.path.abspath(PIC_OUTPUT_DIR)
+        output_dir = get_config_value("output_path", default="./logs/ioc")
+        pic_output_dir = get_config_value("screenshot_path", default="./logs/ioc/ioc_pic")
+        
+        output_dir_abs = os.path.abspath(output_dir)
+        pic_output_dir_abs = os.path.abspath(pic_output_dir)
         os.makedirs(output_dir_abs, exist_ok=True)
         os.makedirs(pic_output_dir_abs, exist_ok=True)
 
@@ -119,12 +120,16 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
         # 截图summary-top元素
         try:
-            summary_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "summary-top"))
+            summary_selector = get_config_value("ioc.css_selectors.summary_top", default="summary-top")
+            element_timeout = get_config_value("ioc.element_find_timeout", default=10)
+            scroll_wait = get_config_value("ioc.scroll_wait_time", default=2)
+            
+            summary_element = WebDriverWait(driver, element_timeout).until(
+                EC.presence_of_element_located((By.CLASS_NAME, summary_selector))
             )
 
             # 滚动到元素并等待
-            scroll_to_element_and_wait(driver, summary_element, 2)
+            scroll_to_element_and_wait(driver, summary_element, scroll_wait)
 
             # 截图并保存
             summary_screenshot_path = os.path.join(
