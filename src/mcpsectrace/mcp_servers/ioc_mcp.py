@@ -14,6 +14,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from mcpsectrace.config import get_config_value
 
 
+def sanitize_filename(filename: str) -> str:
+    """根据配置规则替换文件名中的特殊字符"""
+    replacements = get_config_value("ioc.filename_replacements", default={
+        " ": "_", "/": "_", ":": "_", "\\": "_", "*": "_", 
+        "?": "_", '"': "_", "<": "_", ">": "_", "|": "_"
+    })
+    
+    result = filename
+    for old_char, new_char in replacements.items():
+        result = result.replace(old_char, new_char)
+    return result
+
+
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
 
 
@@ -148,14 +161,14 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
         # 截图result-intelInsight_con元素
         try:
-            insight_element = WebDriverWait(driver, 10).until(
+            insight_element = WebDriverWait(driver, element_timeout).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, "result-intelInsight_con")
+                    (By.CLASS_NAME, get_config_value("ioc.css_selectors.insight_container", default="result-intelInsight_con"))
                 )
             )
 
             # 滚动到元素并等待
-            scroll_to_element_and_wait(driver, insight_element, 2)
+            scroll_to_element_and_wait(driver, insight_element, scroll_wait)
 
             insight_screenshot_path = os.path.join(
                 pic_output_dir_abs, f"{ip_address}_insight.png"
@@ -551,8 +564,8 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
 
         # 截图summary-top元素
         try:
-            summary_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "summary-top"))
+            summary_element = WebDriverWait(driver, element_timeout).until(
+                EC.presence_of_element_located((By.CLASS_NAME, get_config_value("ioc.css_selectors.summary_top", default="summary-top")))
             )
 
             # 滚动到元素并等待
@@ -575,14 +588,14 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
 
         # 截图result-intelInsight_con元素
         try:
-            insight_element = WebDriverWait(driver, 10).until(
+            insight_element = WebDriverWait(driver, element_timeout).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, "result-intelInsight_con")
+                    (By.CLASS_NAME, get_config_value("ioc.css_selectors.insight_container", default="result-intelInsight_con"))
                 )
             )
 
             # 滚动到元素并等待
-            scroll_to_element_and_wait(driver, insight_element, 2)
+            scroll_to_element_and_wait(driver, insight_element, scroll_wait)
 
             insight_screenshot_path = os.path.join(
                 pic_output_dir_abs, f"{domain_name}_insight.png"
