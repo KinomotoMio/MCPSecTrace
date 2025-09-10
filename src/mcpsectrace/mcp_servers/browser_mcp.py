@@ -41,10 +41,8 @@ def _get_user_profile_path_sync() -> Optional[Path]:
 def _convert_chrome_time_sync(chrome_time: int) -> Optional[str]:
     """将 Chrome 时间戳转换为 ISO 8601 格式"""
     if chrome_time > 0:
-        epoch_str = get_config_value(
-            "browser.chrome_time_epoch", default="1601-01-01T00:00:00Z"
-        )
-        epoch_time = datetime.datetime.fromisoformat(epoch_str.replace("Z", "+00:00"))
+        # Chrome时间戳基准：1601年1月1日（Windows文件时间格式）
+        epoch_time = datetime.datetime.fromisoformat("1601-01-01T00:00:00+00:00")
         return (
             epoch_time + datetime.timedelta(microseconds=chrome_time)
         ).isoformat() + "Z"
@@ -79,14 +77,9 @@ def get_chromium_data_sync(
         if not profile_path or platform.system() != "Windows":
             return {"status": "error", "message": "此工具当前仅支持Windows操作系统。"}
 
-        chrome_path = get_config_value(
-            "browser.path_patterns.chrome",
-            default="AppData/Local/Google/Chrome/User Data",
-        )
-        edge_path = get_config_value(
-            "browser.path_patterns.edge",
-            default="AppData/Local/Microsoft/Edge/User Data",
-        )
+        # Windows标准浏览器路径
+        chrome_path = "AppData/Local/Google/Chrome/User Data"
+        edge_path = "AppData/Local/Microsoft/Edge/User Data"
 
         db_locations = {
             "Google Chrome": profile_path / chrome_path,
@@ -107,8 +100,9 @@ def get_chromium_data_sync(
         debug_print(f"[调试] 找到的Profile目录: {[p.name for p in profile_dirs]}")
 
         all_items = []
-        db_filename = get_config_value("browser.db_filename", default="History")
-        temp_prefix = get_config_value("browser.temp_file_prefix", default="temp_")
+        # Chrome/Edge数据库文件名是固定的
+        db_filename = "History"
+        temp_prefix = "temp_"
 
         for p_dir in profile_dirs:
             db_path = p_dir / db_filename
@@ -128,18 +122,11 @@ def get_chromium_data_sync(
                 conn = sqlite3.connect(f"file:{temp_db_path}?mode=ro", uri=True)
                 cursor = conn.cursor()
 
+                # Chrome/Edge数据库结构是固定的，SQL查询不应该让用户修改
                 if data_type == "history":
-                    query_template = get_config_value(
-                        "browser.sql_templates.history",
-                        default="SELECT u.url, u.title, v.visit_time FROM urls u, visits v WHERE u.id = v.url ORDER BY v.visit_time DESC LIMIT ?;",
-                    )
-                    query = query_template.replace("?", str(max_items_per_profile))
+                    query = f"SELECT u.url, u.title, v.visit_time FROM urls u, visits v WHERE u.id = v.url ORDER BY v.visit_time DESC LIMIT {max_items_per_profile};"
                 elif data_type == "downloads":
-                    query_template = get_config_value(
-                        "browser.sql_templates.downloads",
-                        default="SELECT target_path, tab_url, mime_type, total_bytes, start_time, end_time, state, danger_type FROM downloads ORDER BY start_time DESC LIMIT ?;",
-                    )
-                    query = query_template.replace("?", str(max_items_per_profile))
+                    query = f"SELECT target_path, tab_url, mime_type, total_bytes, start_time, end_time, state, danger_type FROM downloads ORDER BY start_time DESC LIMIT {max_items_per_profile};"
 
                 for row in cursor.execute(query):
                     item = {"profile": p_dir.name}
