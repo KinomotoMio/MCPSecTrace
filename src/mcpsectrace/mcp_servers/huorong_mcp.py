@@ -15,9 +15,10 @@ import pyautogui
 from PIL import Image
 from mcpsectrace.utils import get_settings
 
-# --- 输出使用utf-8编码 --
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+# --- 输出使用utf-8编码（仅在非测试环境） --
+if "pytest" not in sys.modules:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 # --- 导入MCP ---
 try:
