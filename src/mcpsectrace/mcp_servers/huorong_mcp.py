@@ -30,8 +30,6 @@ except ImportError:
 mcp = FastMCP("huorong", log_level="ERROR", port=8888)
 
 
-
-
 def debug_print(message: str):
     """仅在调试模式下输出调试信息到标准错误流"""
     debug_mode = get_config_value("debug_mode", default=False)
@@ -42,13 +40,13 @@ def debug_print(message: str):
 def get_sleep_time(base_type: str) -> float:
     """根据设备性能等级和基础时间类型计算实际等待时间"""
     device_level = get_config_value("device_level", default=2)
-    
+
     base_times = {
         "short": get_config_value("automation.sleep_short_base", default=1),
-        "medium": get_config_value("automation.sleep_medium_base", default=3), 
-        "long": get_config_value("automation.sleep_long_base", default=5)
+        "medium": get_config_value("automation.sleep_medium_base", default=3),
+        "long": get_config_value("automation.sleep_long_base", default=5),
     }
-    
+
     base_time = base_times.get(base_type, 1)
     return base_time * device_level
 
@@ -67,10 +65,12 @@ def find_image_on_screen(
         (x, y) 坐标元组，如果未找到则返回 None。
     """
     if confidence_level is None:
-        confidence_level = get_config_value("automation.default_confidence", default=0.8)
+        confidence_level = get_config_value(
+            "automation.default_confidence", default=0.8
+        )
     if timeout_seconds is None:
         timeout_seconds = get_config_value("automation.find_timeout", default=15)
-        
+
     if not description:
         description = image_filename
 
@@ -245,7 +245,10 @@ def scan_virus():
     time.sleep(get_sleep_time("long"))  # 等待应用程序加载
     # 步骤2：点击“快速查杀”按钮
     img_loc = find_image_on_screen(
-        get_config_value("automation.image_files.huorong.quick_scan", default="huorong_quick_scan_button.png"),
+        get_config_value(
+            "automation.image_files.huorong.quick_scan",
+            default="huorong_quick_scan_button.png",
+        ),
         confidence_level=0.6,
         timeout_seconds=15,
         description="快速查杀按钮",
@@ -259,7 +262,9 @@ def scan_virus():
     time.sleep(get_sleep_time("long"))
     # 步骤3：检测是否正在查杀
     if find_image_on_screen(
-        get_config_value("automation.image_files.huorong.pause", default="huorong_pause_button.png"),
+        get_config_value(
+            "automation.image_files.huorong.pause", default="huorong_pause_button.png"
+        ),
         confidence_level=0.6,
         timeout_seconds=15,
         description="暂停按钮",
@@ -273,7 +278,10 @@ def scan_virus():
     interval = 300  # 5分钟
     while time.time() - start_time < interval:
         img_loc = find_image_on_screen(
-            get_config_value("automation.image_files.huorong.scan_complete", default="huorong_complete_button.png"),
+            get_config_value(
+                "automation.image_files.huorong.scan_complete",
+                default="huorong_complete_button.png",
+            ),
             confidence_level=0.6,
             timeout_seconds=15,
             description="快速查杀完成",
@@ -385,7 +393,10 @@ def get_security_log():
 
     # 1.点击首页的安全日志图标
     if not find_and_click(
-        get_config_value("automation.image_files.huorong.security_log", default="huorong_security_log.png"),
+        get_config_value(
+            "automation.image_files.huorong.security_log",
+            default="huorong_security_log.png",
+        ),
         confidence_level=0.6,
         timeout_seconds=20,
         description="安全日志",
@@ -402,7 +413,10 @@ def get_security_log():
     # 3.若不为空，则点击导出日志按钮
     debug_print("尝试点击导出日志按钮...")
     if not find_and_click(
-        get_config_value("automation.image_files.huorong.export_log", default="huorong_export_log_button.png"),
+        get_config_value(
+            "automation.image_files.huorong.export_log",
+            default="huorong_export_log_button.png",
+        ),
         confidence_level=0.9,
         timeout_seconds=15,
         description="导出日志按钮",
@@ -411,7 +425,9 @@ def get_security_log():
     time.sleep(get_sleep_time("medium"))
     # 检查是否点击成功
     if not find_image_on_screen(
-        get_config_value("image_files.huorong.save_mark", default="huorong_save_mark.png"),
+        get_config_value(
+            "image_files.huorong.save_mark", default="huorong_save_mark.png"
+        ),
         confidence_level=0.6,
         timeout_seconds=15,
         description="另存为标记",
@@ -423,7 +439,10 @@ def get_security_log():
     debug_print("尝试点击文件名输入框...")
     # 注意：文件名输入框的截图可能需要精确，或者可以考虑点击 "文件名：" 标签右侧固定偏移量（更复杂）
     if not find_and_click(
-        get_config_value("automation.image_files.huorong.filename_input", default="huorong_filename_input_box.png"),
+        get_config_value(
+            "automation.image_files.huorong.filename_input",
+            default="huorong_filename_input_box.png",
+        ),
         confidence_level=0.6,
         timeout_seconds=15,
         description="文件名输入框",
@@ -442,7 +461,9 @@ def get_security_log():
     # 6.点击"保存"按钮
     debug_print("尝试点击'保存'按钮...")
     if not find_and_click(
-        get_config_value("automation.image_files.huorong.save", default="huorong_save_button.png"),
+        get_config_value(
+            "automation.image_files.huorong.save", default="huorong_save_button.png"
+        ),
         confidence_level=0.6,
         timeout_seconds=15,
         description="保存按钮",
@@ -455,7 +476,9 @@ def get_security_log():
 
     # 7.检查是否导出成功
     if not find_image_on_screen(
-        get_config_value("image_files.huorong.export_complete", default="huorong_export_complete.png"),
+        get_config_value(
+            "image_files.huorong.export_complete", default="huorong_export_complete.png"
+        ),
         confidence_level=0.6,
         timeout_seconds=15,
         description="导出完成标志",

@@ -41,9 +41,13 @@ def _get_user_profile_path_sync() -> Optional[Path]:
 def _convert_chrome_time_sync(chrome_time: int) -> Optional[str]:
     """将 Chrome 时间戳转换为 ISO 8601 格式"""
     if chrome_time > 0:
-        epoch_str = get_config_value("browser.chrome_time_epoch", default="1601-01-01T00:00:00Z")
+        epoch_str = get_config_value(
+            "browser.chrome_time_epoch", default="1601-01-01T00:00:00Z"
+        )
         epoch_time = datetime.datetime.fromisoformat(epoch_str.replace("Z", "+00:00"))
-        return (epoch_time + datetime.timedelta(microseconds=chrome_time)).isoformat() + "Z"
+        return (
+            epoch_time + datetime.timedelta(microseconds=chrome_time)
+        ).isoformat() + "Z"
     return None
 
 
@@ -75,9 +79,15 @@ def get_chromium_data_sync(
         if not profile_path or platform.system() != "Windows":
             return {"status": "error", "message": "此工具当前仅支持Windows操作系统。"}
 
-        chrome_path = get_config_value("browser.path_patterns.chrome", default="AppData/Local/Google/Chrome/User Data")
-        edge_path = get_config_value("browser.path_patterns.edge", default="AppData/Local/Microsoft/Edge/User Data")
-        
+        chrome_path = get_config_value(
+            "browser.path_patterns.chrome",
+            default="AppData/Local/Google/Chrome/User Data",
+        )
+        edge_path = get_config_value(
+            "browser.path_patterns.edge",
+            default="AppData/Local/Microsoft/Edge/User Data",
+        )
+
         db_locations = {
             "Google Chrome": profile_path / chrome_path,
             "Microsoft Edge": profile_path / edge_path,
@@ -99,14 +109,16 @@ def get_chromium_data_sync(
         all_items = []
         db_filename = get_config_value("browser.db_filename", default="History")
         temp_prefix = get_config_value("browser.temp_file_prefix", default="temp_")
-        
+
         for p_dir in profile_dirs:
             db_path = p_dir / db_filename
             debug_print(f"[调试] 正在检查 {db_filename} 文件: {db_path}")
             if not db_path.exists():
                 continue
 
-            temp_db_path = db_path.parent / f"{temp_prefix}{db_path.name}_{os.getpid()}.db"
+            temp_db_path = (
+                db_path.parent / f"{temp_prefix}{db_path.name}_{os.getpid()}.db"
+            )
             debug_print(f"[调试] 准备复制文件到: {temp_db_path}")
             shutil.copy2(db_path, temp_db_path)
             debug_print("[调试] 文件复制成功。")
@@ -115,14 +127,18 @@ def get_chromium_data_sync(
             try:
                 conn = sqlite3.connect(f"file:{temp_db_path}?mode=ro", uri=True)
                 cursor = conn.cursor()
-                
+
                 if data_type == "history":
-                    query_template = get_config_value("browser.sql_templates.history", 
-                        default="SELECT u.url, u.title, v.visit_time FROM urls u, visits v WHERE u.id = v.url ORDER BY v.visit_time DESC LIMIT ?;")
+                    query_template = get_config_value(
+                        "browser.sql_templates.history",
+                        default="SELECT u.url, u.title, v.visit_time FROM urls u, visits v WHERE u.id = v.url ORDER BY v.visit_time DESC LIMIT ?;",
+                    )
                     query = query_template.replace("?", str(max_items_per_profile))
                 elif data_type == "downloads":
-                    query_template = get_config_value("browser.sql_templates.downloads",
-                        default="SELECT target_path, tab_url, mime_type, total_bytes, start_time, end_time, state, danger_type FROM downloads ORDER BY start_time DESC LIMIT ?;")
+                    query_template = get_config_value(
+                        "browser.sql_templates.downloads",
+                        default="SELECT target_path, tab_url, mime_type, total_bytes, start_time, end_time, state, danger_type FROM downloads ORDER BY start_time DESC LIMIT ?;",
+                    )
                     query = query_template.replace("?", str(max_items_per_profile))
 
                 for row in cursor.execute(query):
@@ -187,7 +203,9 @@ async def get_chrome_history(max_items_per_profile: int = None) -> Dict[str, Any
         max_items_per_profile (int): 从每个用户配置中返回历史记录的最大条目数。
     """
     if max_items_per_profile is None:
-        max_items_per_profile = get_config_value("browser.max_history_items", default=100)
+        max_items_per_profile = get_config_value(
+            "browser.max_history_items", default=100
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None, get_chromium_data_sync, "Google Chrome", "history", max_items_per_profile
@@ -204,7 +222,9 @@ async def get_chrome_downloads(max_items_per_profile: int = None) -> Dict[str, A
         max_items_per_profile (int): 从每个用户配置中返回下载记录的最大条目数。
     """
     if max_items_per_profile is None:
-        max_items_per_profile = get_config_value("browser.max_download_items", default=50)
+        max_items_per_profile = get_config_value(
+            "browser.max_download_items", default=50
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
@@ -225,7 +245,9 @@ async def get_edge_history(max_items_per_profile: int = None) -> Dict[str, Any]:
         max_items_per_profile (int): 从每个用户配置中返回历史记录的最大条目数。
     """
     if max_items_per_profile is None:
-        max_items_per_profile = get_config_value("browser.max_history_items", default=100)
+        max_items_per_profile = get_config_value(
+            "browser.max_history_items", default=100
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None, get_chromium_data_sync, "Microsoft Edge", "history", max_items_per_profile
@@ -242,7 +264,9 @@ async def get_edge_downloads(max_items_per_profile: int = None) -> Dict[str, Any
         max_items_per_profile (int): 从每个用户配置中返回下载记录的最大条目数。
     """
     if max_items_per_profile is None:
-        max_items_per_profile = get_config_value("browser.max_download_items", default=50)
+        max_items_per_profile = get_config_value(
+            "browser.max_download_items", default=50
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,

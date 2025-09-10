@@ -16,11 +16,22 @@ from mcpsectrace.config import get_config_value
 
 def sanitize_filename(filename: str) -> str:
     """根据配置规则替换文件名中的特殊字符"""
-    replacements = get_config_value("ioc.filename_replacements", default={
-        " ": "_", "/": "_", ":": "_", "\\": "_", "*": "_", 
-        "?": "_", '"': "_", "<": "_", ">": "_", "|": "_"
-    })
-    
+    replacements = get_config_value(
+        "ioc.filename_replacements",
+        default={
+            " ": "_",
+            "/": "_",
+            ":": "_",
+            "\\": "_",
+            "*": "_",
+            "?": "_",
+            '"': "_",
+            "<": "_",
+            ">": "_",
+            "|": "_",
+        },
+    )
+
     result = filename
     for old_char, new_char in replacements.items():
         result = result.replace(old_char, new_char)
@@ -58,7 +69,7 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
     # 获取配置路径
     chrome_exe_path = get_config_value("chrome.exe_path")
     chromedriver_exe_path = get_config_value("chrome.driver_path")
-    
+
     # 检查路径是否存在
     if chrome_exe_path and not os.path.exists(chrome_exe_path):
         return f"错误：Chrome 浏览器路径不存在 -> {chrome_exe_path}"
@@ -79,13 +90,14 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
     # 从配置获取窗口尺寸和Chrome选项
     window_size = get_config_value("ioc.window_size", default=[1920, 1200])
-    chrome_config_options = get_config_value("ioc.chrome_options", default=[
-        "--disable-gpu", "--no-sandbox", "--start-maximized"
-    ])
-    
+    chrome_config_options = get_config_value(
+        "ioc.chrome_options",
+        default=["--disable-gpu", "--no-sandbox", "--start-maximized"],
+    )
+
     for option in chrome_config_options:
         chrome_options.add_argument(option)
-    
+
     chrome_options.add_argument(f"--window-size={window_size[0]},{window_size[1]}")
 
     # 配置 ChromeDriver 服务
@@ -103,8 +115,10 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
         driver.set_window_size(window_size[0], window_size[1])
 
         # 从配置获取URL模板
-        url_template = get_config_value("ioc.url_templates.ip_query", 
-                                       default="https://x.threatbook.com/v5/ip/{target}")
+        url_template = get_config_value(
+            "ioc.url_templates.ip_query",
+            default="https://x.threatbook.com/v5/ip/{target}",
+        )
         url = url_template.format(target=ip_address)
         print(f"正在访问: {url}")
         driver.get(url)
@@ -116,8 +130,10 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
         # 创建输出目录
         output_dir = get_config_value("output_path", default="./logs/ioc")
-        pic_output_dir = get_config_value("screenshot_path", default="./logs/ioc/ioc_pic")
-        
+        pic_output_dir = get_config_value(
+            "screenshot_path", default="./logs/ioc/ioc_pic"
+        )
+
         output_dir_abs = os.path.abspath(output_dir)
         pic_output_dir_abs = os.path.abspath(pic_output_dir)
         os.makedirs(output_dir_abs, exist_ok=True)
@@ -133,10 +149,12 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
 
         # 截图summary-top元素
         try:
-            summary_selector = get_config_value("ioc.css_selectors.summary_top", default="summary-top")
+            summary_selector = get_config_value(
+                "ioc.css_selectors.summary_top", default="summary-top"
+            )
             element_timeout = get_config_value("ioc.element_find_timeout", default=10)
             scroll_wait = get_config_value("ioc.scroll_wait_time", default=2)
-            
+
             summary_element = WebDriverWait(driver, element_timeout).until(
                 EC.presence_of_element_located((By.CLASS_NAME, summary_selector))
             )
@@ -163,7 +181,13 @@ def query_threatbook_ip_and_save_with_screenshots(ip_address: str) -> str:
         try:
             insight_element = WebDriverWait(driver, element_timeout).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, get_config_value("ioc.css_selectors.insight_container", default="result-intelInsight_con"))
+                    (
+                        By.CLASS_NAME,
+                        get_config_value(
+                            "ioc.css_selectors.insight_container",
+                            default="result-intelInsight_con",
+                        ),
+                    )
                 )
             )
 
@@ -565,7 +589,14 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
         # 截图summary-top元素
         try:
             summary_element = WebDriverWait(driver, element_timeout).until(
-                EC.presence_of_element_located((By.CLASS_NAME, get_config_value("ioc.css_selectors.summary_top", default="summary-top")))
+                EC.presence_of_element_located(
+                    (
+                        By.CLASS_NAME,
+                        get_config_value(
+                            "ioc.css_selectors.summary_top", default="summary-top"
+                        ),
+                    )
+                )
             )
 
             # 滚动到元素并等待
@@ -590,7 +621,13 @@ def query_threatbook_domain_and_save_with_screenshots(domain_name: str) -> str:
         try:
             insight_element = WebDriverWait(driver, element_timeout).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, get_config_value("ioc.css_selectors.insight_container", default="result-intelInsight_con"))
+                    (
+                        By.CLASS_NAME,
+                        get_config_value(
+                            "ioc.css_selectors.insight_container",
+                            default="result-intelInsight_con",
+                        ),
+                    )
                 )
             )
 

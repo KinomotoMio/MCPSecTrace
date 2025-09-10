@@ -34,13 +34,13 @@ mcp = FastMCP("hrkill", log_level="ERROR", port=8888)
 def get_sleep_time(base_type: str) -> float:
     """根据设备性能等级和基础时间类型计算实际等待时间"""
     device_level = get_config_value("device_level", default=2)
-    
+
     base_times = {
         "short": get_config_value("automation.sleep_short_base", default=1),
-        "medium": get_config_value("automation.sleep_medium_base", default=3), 
-        "long": get_config_value("automation.sleep_long_base", default=5)
+        "medium": get_config_value("automation.sleep_medium_base", default=3),
+        "long": get_config_value("automation.sleep_long_base", default=5),
     }
-    
+
     base_time = base_times.get(base_type, 1)
     return base_time * device_level
 
@@ -271,7 +271,9 @@ def scan_virus():
     # 2. 点击'开始扫描按钮'
     debug_print(f"[Step 2] 点击'开始扫描按钮'")
     if not find_and_click(
-        get_config_value("automation.image_files.hrkill.start_scan", default="start_scan_button.png"),
+        get_config_value(
+            "automation.image_files.hrkill.start_scan", default="start_scan_button.png"
+        ),
         confidence_level=0.8,
         timeout_seconds=15,
         description="开始扫描按钮",
@@ -282,7 +284,9 @@ def scan_virus():
     # 3. 检测是否正在查杀病毒
     debug_print(f"[Step 3] 检测是否正在查杀病毒")
     if find_image_on_screen(
-        get_config_value("automation.image_files.hrkill.pause", default="pause_button.png"),
+        get_config_value(
+            "automation.image_files.hrkill.pause", default="pause_button.png"
+        ),
         confidence_level=0.8,
         timeout_seconds=15,
         description="查杀暂停按钮",
@@ -298,7 +302,9 @@ def scan_virus():
     debug_print(f"[Step 4] 检测是否扫描完成（时长{interval}s，可调节）")
     start_time = time.time()
     img_loc = find_image_on_screen(
-        get_config_value("automation.image_files.hrkill.scan_complete", default="scan_complete.png"),
+        get_config_value(
+            "automation.image_files.hrkill.scan_complete", default="scan_complete.png"
+        ),
         confidence_level=0.8,
         timeout_seconds=interval,
         description="扫描完成",
