@@ -24,15 +24,15 @@ focus_pack_exe = ""
 
 # Chrome浏览器程序路径（IOC威胁情报查询用，必填）
 # 示例：C:\Program Files\Google\Chrome\Application\chrome.exe
-chrome_exe = ""
+chrome_exe = "D:/OneDrive/NDSS26-Alert Measurement/Selenium_gpt/chrome-win64/chrome.exe"
 
 # ChromeDriver程序路径（IOC威胁情报查询用，必填）
-# 示例：tools\chromedriver.exe
-chromedriver_exe = ""
+# 示例：tools/chromedriver.exe
+chromedriver_exe = "D:/OneDrive/NDSS26-Alert Measurement/Selenium_gpt/chromedriver-win64/chromedriver.exe"
 
 # Chrome用户数据目录（IOC查询时保持会话用）
 # 示例：C:\Users\用户名\AppData\Local\Google\Chrome\User Data
-chrome_user_data_dir = ""
+chrome_user_data_dir = "C:/Users/User/AppData/Local/Google/Chrome for Testing/User Data"
 
 [images]
 # GUI自动化所需的截图文件根目录

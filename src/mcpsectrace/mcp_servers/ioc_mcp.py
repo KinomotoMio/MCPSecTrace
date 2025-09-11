@@ -48,9 +48,9 @@ class SeleniumDriver:
     def setup_driver(self) -> webdriver.Chrome:
         """设置并返回WebDriver实例"""
         # 从配置获取路径
-        chrome_exe_path = get_config_value("chrome.exe_path", default="")
-        chromedriver_exe_path = get_config_value("chrome.chromedriver_path", default="")
-        user_data_dir = get_config_value("chrome.user_data_dir", default="")
+        chrome_exe_path = get_config_value("paths.chrome_exe", default="")
+        chromedriver_exe_path = get_config_value("paths.chromedriver_exe", default="")
+        user_data_dir = get_config_value("paths.chrome_user_data_dir", default="")
 
         # 检查路径是否存在
         if (
@@ -213,7 +213,7 @@ class ThreatBookAnalyzer:
         try:
             # 微步网站的固定CSS结构
             collapse_container = driver.find_element(
-                By.CSS_SELECTOR, ".ant-collapse.ant-collapse-borderless"
+                By.CSS_SELECTOR, ".ant-collapse.ant-collapse-icon-position-start.ant-collapse-ghost"
             )
             collapse_items = collapse_container.find_elements(
                 By.CSS_SELECTOR, ".ant-collapse-item"
@@ -288,8 +288,8 @@ def analyze_ip_threat(ip_address: str) -> str:
         target_value=ip_address,
         base_url=f"https://x.threatbook.com/v5/ip/{ip_address}",
         screenshot_configs=[
-            ScreenshotConfig("basic-info", "class", "basic_info", "基本信息"),
-            ScreenshotConfig("verdict-info", "class", "verdict_info", "判定信息"),
+            ScreenshotConfig("summary-top", "class", "summary_top", "基本信息"),
+            ScreenshotConfig("result-intelInsight_con", "class", "result_intelInsight_con", "情报洞察"),
         ],
     )
 
@@ -309,8 +309,8 @@ def analyze_domain_threat(domain_name: str) -> str:
         target_value=domain_name,
         base_url=f"https://x.threatbook.com/v5/domain/{domain_name}",
         screenshot_configs=[
-            ScreenshotConfig("basic-info", "class", "basic_info", "基本信息"),
-            ScreenshotConfig("verdict-info", "class", "verdict_info", "判定信息"),
+            ScreenshotConfig("summary-top", "class", "summary_top", "基本信息"),
+            ScreenshotConfig("result-intelInsight_con", "class", "result_intelInsight_con", "情报洞察"),
         ],
     )
 
@@ -386,5 +386,5 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
 if __name__ == "__main__":
     # 测试IP分析
-    result = analyze_ip_threat("8.8.8.8")
+    result = analyze_domain_threat("du.testjj.com")
     print(result)
