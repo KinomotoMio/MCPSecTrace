@@ -1,0 +1,11 @@
+# ===========================================
+# 浏览器取证默认配置
+# ===========================================
+
+[browser]
+# 默认查询数量限制 - 用户可能需要调整取证数据量
+max_history_items = 100
+max_download_items = 50
+
+# 最大Profile搜索数量（Chrome Profile 1-N）- 用户环境中的Profile数量不同
+max_profile_search = 10
