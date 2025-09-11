@@ -18,6 +18,17 @@ from mcpsectrace.config import get_config_value
 
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
 
+def scroll_to_element_and_wait(driver, element, wait_seconds=2):
+    """滚动到元素位置并等待指定时间"""
+    try:
+        # 滚动到元素位置
+        driver.execute_script(
+            "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+            element,
+        )
+        time.sleep(wait_seconds)  # 等待滚动和渲染完成
+    except Exception as e:
+        print(f"滚动到元素时出错: {e}")
 
 @dataclass
 class ScreenshotConfig:
@@ -239,17 +250,15 @@ class ThreatBookAnalyzer:
 
                     # 点击展开面板
                     header = item.find_element(By.CLASS_NAME, "ant-collapse-header")
-                    is_active = "ant-collapse-item-active" in item.get_attribute(
-                        "class"
+                
+                    header.click()
+                    print("点击面板标题")
+                    panel_expand_wait = get_config_value(
+                        "ioc.panel_expand_wait_time", default=2
                     )
-
-                    if not is_active:
-                        header.click()
-                        panel_expand_wait = get_config_value(
-                            "ioc.panel_expand_wait_time", default=2
-                        )
-                        time.sleep(panel_expand_wait)
-
+                    
+                    time.sleep(panel_expand_wait)
+                    scroll_to_element_and_wait(driver, item, 2)
                     # 截图面板
                     sanitized_title = clue_title.replace(" ", "_")
                     panel_screenshot_path = os.path.join(
