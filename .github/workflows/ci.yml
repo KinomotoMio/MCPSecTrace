@@ -48,6 +48,7 @@ jobs:
       - name: 运行测试
         env:
           DISPLAY: ":99"
+          PYAUTOGUI_HEADLESS: "1"
         run: |
           # 运行完整的pytest测试套件，Windows专用功能在Linux环境下会被跳过
           uv run pytest -v || (echo "❌ 测试失败，请检查代码" && exit 1)
