@@ -14,11 +14,12 @@ if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
+from mcpsectrace.config import get_config_value
+
 # --- 全局变量 ---
 LOG_HANDLE = None
 LOG_NAME = None
 FOCUS_PACK_PATH = None
-DEBUG_MODE = None
 
 # --- 导入MCP ---
 try:
@@ -30,16 +31,19 @@ except ImportError:
 # --- 创建MCP Server ---
 mcp = FastMCP("focus_pack", log_level="ERROR", port=8888)
 
-# --- 图片路径 ---
-QUICK_SCAN_BUTTON_IMAGE = "./tag_image/focus_pack/quick_scan_button.png"
-QUICK_SCAN_MODE_IMAGE = "./tag_image/focus_pack/quick_scan_mode.png"
-QUICK_SCAN_COMPLETE_IMAGE = "./tag_image/focus_pack/quick_scan_complete.png"
 
-# --- 设备性能与等待时间 ---
-DEVICE_LEVEL = 1  # 1: 低性能设备，2: 中性能设备，3: 高性能设备
-SLEEP_TIME_SHORT = 1 * DEVICE_LEVEL
-SLEEP_TIME_MEDIUM = 3 * DEVICE_LEVEL
-SLEEP_TIME_LONG = 5 * DEVICE_LEVEL
+def get_sleep_time(base_type: str) -> float:
+    """根据设备性能等级和基础时间类型计算实际等待时间"""
+    device_level = get_config_value("device_level", default=2)
+
+    base_times = {
+        "short": get_config_value("automation.sleep_short_base", default=1),
+        "medium": get_config_value("automation.sleep_medium_base", default=3),
+        "long": get_config_value("automation.sleep_long_base", default=5),
+    }
+
+    base_time = base_times.get(base_type, 1)
+    return base_time * device_level
 
 
 # --- 日志函数 ---
@@ -73,7 +77,8 @@ def debug_print(message: str):
     """
     global LOG_HANDLE, LOG_NAME
 
-    if DEBUG_MODE:
+    debug_mode = get_config_value("debug_mode", default=False)
+    if debug_mode:
         print(message, file=sys.stderr)
 
     # 如果日志文件名未设置，则直接返回
@@ -160,9 +165,9 @@ def find_image_on_screen(
                 debug_print(f"成功找到 '{description}'，坐标: {location}")
                 return location
             else:
-                time.sleep(SLEEP_TIME_SHORT)
+                time.sleep(get_sleep_time("short"))
         except pyautogui.ImageNotFoundException:
-            time.sleep(SLEEP_TIME_SHORT)
+            time.sleep(get_sleep_time("short"))
         except FileNotFoundError:
             debug_print(f"[ERROR] 图像文件 '{image_filename}' 未找到或无法访问！")
             return None
@@ -291,7 +296,7 @@ def quick_scan():
     debug_print(f"[Step 1] 打开Focus_Pack软件")
     if start_app(FOCUS_PACK_PATH) is False:
         return "[ERROR] 启动Focus_Pack软件失败，请检查路径或权限。"
-    time.sleep(SLEEP_TIME_LONG)
+    time.sleep(get_sleep_time("long"))
     debug_print(f"Focus_Pack软件已启动，请确保处于首页，否则后续可能执行失败。")
 
     # 获取当前用户的AppData\Roaming目录
@@ -303,18 +308,18 @@ def quick_scan():
     # 2. 点击 “ 快速扫描 ” 按钮
     debug_print(f"[Step 2] 点击 “ 快速扫描 ” 按钮")
     if not find_and_click(
-        QUICK_SCAN_BUTTON_IMAGE,
+        "quick_scan_button.png",  # Focus Pack界面固定元素
         confidence_level=0.8,
         timeout_seconds=15,
         description="快速扫描按钮",
     ):
         return "[ERROR] 未能找到快速扫描按钮，或点击失败，请查看最新操作日志溯源。"
-    time.sleep(SLEEP_TIME_LONG)
+    time.sleep(get_sleep_time("long"))
 
     # 3. 检测是否正在扫描
     debug_print(f"[Step 3] 检测是否正在扫描")
     if find_image_on_screen(
-        QUICK_SCAN_MODE_IMAGE,
+        "quick_scan_mode.png",  # Focus Pack界面固定元素
         confidence_level=0.8,
         timeout_seconds=15,
         description="快速扫描模式",
@@ -324,14 +329,14 @@ def quick_scan():
         msg = "[ERROR] 未成功执行快速扫描，请查看最新操作日志溯源。"
         debug_print(msg)
         return msg
-    time.sleep(SLEEP_TIME_LONG)
+    time.sleep(get_sleep_time("long"))
 
     # 4. 检测是否扫描完成（时长可调节）
     interval = 600
     debug_print(f"[Step 4] 检测是否扫描完成（时长为{interval}s,可调节）")
     start_time = time.time()
     img_loc = find_image_on_screen(
-        QUICK_SCAN_COMPLETE_IMAGE,
+        "quick_scan_complete.png",  # Focus Pack界面固定元素
         confidence_level=0.8,
         timeout_seconds=interval,
         description="快速查杀完成",
@@ -360,7 +365,7 @@ def main():
     根据是否处于调试模式，执行不同的操作。
     """
     # 获取参数
-    global FOCUS_PACK_PATH, DEBUG_MODE, LOG_NAME
+    global FOCUS_PACK_PATH, LOG_NAME
     parser = argparse.ArgumentParser(description="Focus_Pack MCP工具")
     parser.add_argument(
         "--focus-pack-path", type=str, required=True, help="Focus_Pack软件的完整路径"
@@ -368,7 +373,7 @@ def main():
     parser.add_argument("--debug", action="store_true", help="调试模式")
     args = parser.parse_args()
     FOCUS_PACK_PATH = args.focus_pack_path
-    DEBUG_MODE = args.debug
+    # DEBUG_MODE现在通过配置系统管理
     LOG_NAME = setup_log("logs/focus_pack")
 
     # 1. 检查VS code权限
@@ -382,7 +387,8 @@ def main():
         debug_print("当前已具备管理员权限。")
 
     # 2. 运行
-    if DEBUG_MODE:
+    debug_mode = get_config_value("debug_mode", default=False)
+    if debug_mode:
         print("--- 当前处于调试模式 ---")
         quick_scan()
     else:

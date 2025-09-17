@@ -18,6 +18,7 @@ from PIL import Image
 if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+from mcpsectrace.config import get_config_value
 
 # --- 导入MCP ---
 try:
@@ -28,53 +29,30 @@ except ImportError:
 
 mcp = FastMCP("huorong", log_level="ERROR", port=8888)
 
-# --- 设备性能与等待时间 ---
-DEVICE_LEVEL = 1  # 1: 低性能设备，2: 中性能设备，3: 高性能设备
-SLEEP_TIME_SHORT = 1 * DEVICE_LEVEL
-SLEEP_TIME_MEDIUM = 3 * DEVICE_LEVEL
-SLEEP_TIME_LONG = 5 * DEVICE_LEVEL
-
-# 病毒查杀功能对应的图片
-QUICK_SCAN_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_quick_scan_button_me.png"
-)
-PAUSE_BUTTON_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_pause_button_me.png"
-SCAN_COMPLETE_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_complete_button_me.png"
-)
-
-# 查看隔离区
-QUARANTINE_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_quarantine_button_me.png"
-)
-MAXIMIZE_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_maximize_button_me.png"
-)
-
-# 获取安全日志
-SECURITY_LOG_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_security_log_me.png"
-LOG_CHECK_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_log_check.png"  ## ?
-EXPORT_LOG_BUTTON_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_export_log_button_me.png"
-)
-FILENAME_INPUT_BOX_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_filename_input_box_me.png"
-)
-SAVE_BUTTON_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_save_button_me.png"
-SAVE_MARK_IMAGE = "D:/FTAgent-master/tag_image/huorong/huorong_save_mark_me.png"
-EXPORT_COMPLETE_IMAGE = (
-    "D:/FTAgent-master/tag_image/huorong/huorong_export_complete_me.png"
-)
-
 
 def debug_print(message: str):
     """仅在调试模式下输出调试信息到标准错误流"""
-    if DEBUG_MODE:
+    debug_mode = get_config_value("debug_mode", default=False)
+    if debug_mode:
         print(message, file=sys.stderr)
 
 
+def get_sleep_time(base_type: str) -> float:
+    """根据设备性能等级和基础时间类型计算实际等待时间"""
+    device_level = get_config_value("device_level", default=2)
+
+    base_times = {
+        "short": get_config_value("automation.sleep_short_base", default=1),
+        "medium": get_config_value("automation.sleep_medium_base", default=3),
+        "long": get_config_value("automation.sleep_long_base", default=5),
+    }
+
+    base_time = base_times.get(base_type, 1)
+    return base_time * device_level
+
+
 def find_image_on_screen(
-    image_filename, confidence_level, timeout_seconds=15, description=""
+    image_filename, confidence_level=None, timeout_seconds=None, description=""
 ):
     """
         在屏幕上查找指定的图像。
@@ -86,6 +64,13 @@ def find_image_on_screen(
     Returns:
         (x, y) 坐标元组，如果未找到则返回 None。
     """
+    if confidence_level is None:
+        confidence_level = get_config_value(
+            "automation.default_confidence", default=0.8
+        )
+    if timeout_seconds is None:
+        timeout_seconds = get_config_value("automation.find_timeout", default=15)
+
     if not description:
         description = image_filename
 
@@ -102,9 +87,9 @@ def find_image_on_screen(
                 debug_print(f"找到 '{description}'，坐标: {location}")
                 return location
             else:
-                time.sleep(SLEEP_TIME_SHORT)
+                time.sleep(get_sleep_time("short"))
         except pyautogui.ImageNotFoundException:
-            time.sleep(SLEEP_TIME_SHORT)
+            time.sleep(get_sleep_time("short"))
         except FileNotFoundError:
             debug_print(f"严重错误：图像文件 '{image_filename}' 未找到或无法访问！")
             return None
@@ -257,10 +242,10 @@ def scan_virus():
     # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
     start_huorong(HUORONG_PATH)
     debug_print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
-    time.sleep(SLEEP_TIME_LONG)  # 等待应用程序加载
+    time.sleep(get_sleep_time("long"))  # 等待应用程序加载
     # 步骤2：点击“快速查杀”按钮
     img_loc = find_image_on_screen(
-        QUICK_SCAN_BUTTON_IMAGE,
+        "huorong_quick_scan_button.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=15,
         description="快速查杀按钮",
@@ -271,10 +256,10 @@ def scan_virus():
     else:
         debug_print("点击快速查杀按钮失败。")
         return "点击快速查杀按钮失败。"
-    time.sleep(SLEEP_TIME_LONG)
+    time.sleep(get_sleep_time("long"))
     # 步骤3：检测是否正在查杀
     if find_image_on_screen(
-        PAUSE_BUTTON_IMAGE,
+        "huorong_pause_button.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=15,
         description="暂停按钮",
@@ -288,7 +273,7 @@ def scan_virus():
     interval = 300  # 5分钟
     while time.time() - start_time < interval:
         img_loc = find_image_on_screen(
-            SCAN_COMPLETE_IMAGE,
+            "huorong_complete_button.png",  # 火绒界面固定元素
             confidence_level=0.6,
             timeout_seconds=15,
             description="快速查杀完成",
@@ -297,7 +282,7 @@ def scan_virus():
             debug_print(f"检测到查杀完成标志，坐标为: {img_loc}")
             ret2_top_page()
             return "快速查杀完成。"
-        time.sleep(SLEEP_TIME_MEDIUM)
+        time.sleep(get_sleep_time("medium"))
     # 步骤5：返回查杀结果
     # 待补充（OCR识别查杀结果界面、联动日志查询）
     # 步骤6：点击完成，返回首页
@@ -313,12 +298,12 @@ def get_quarantine_file():
     # 方法1：图像识别
     # 1：打开火绒安全软件
     # start_huorong(HUORONG_PATH)
-    # time.sleep(SLEEP_TIME_LONG)
+    # time.sleep(get_sleep_time("long"))
     # 2：打开隔离区
     # find_and_click(QUARANTINE_BUTTON_IMAGE,"隔离区按钮")
-    # time.sleep(SLEEP_TIME_SHORT)
+    # time.sleep(get_sleep_time("short"))
     # find_and_click(MAXIMIZE_BUTTON_IMAGE,"最大化窗口按钮")
-    # time.sleep(SLEEP_TIME_SHORT)
+    # time.sleep(get_sleep_time("short"))
     # 3：获取文件列表
 
     # 方法2：读取数据库中信息
@@ -395,18 +380,18 @@ def get_security_log():
     """
     # 0.打开火绒
     start_huorong(HUORONG_PATH)
-    time.sleep(SLEEP_TIME_LONG)
+    time.sleep(get_sleep_time("long"))
     debug_print("请确保火绒安全的首页是当前活动窗口，或者至少是可见的。")
 
     # 1.点击首页的安全日志图标
     if not find_and_click(
-        SECURITY_LOG_IMAGE,
+        "huorong_security_log.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=20,
         description="安全日志",
     ):
         return "未能找到安全日志图标。"
-    time.sleep(SLEEP_TIME_MEDIUM)
+    time.sleep(get_sleep_time("medium"))
     debug_print("安全日志界面已打开。")
 
     # 2.检查今日安全日志是否为空
@@ -417,16 +402,16 @@ def get_security_log():
     # 3.若不为空，则点击导出日志按钮
     debug_print("尝试点击导出日志按钮...")
     if not find_and_click(
-        EXPORT_LOG_BUTTON_IMAGE,
+        "huorong_export_log_button.png",  # 火绒界面固定元素
         confidence_level=0.9,
         timeout_seconds=15,
         description="导出日志按钮",
     ):
         return "未能找到导出日志按钮，或点击失败。"
-    time.sleep(SLEEP_TIME_MEDIUM)
+    time.sleep(get_sleep_time("medium"))
     # 检查是否点击成功
     if not find_image_on_screen(
-        SAVE_MARK_IMAGE,
+        "huorong_save_mark.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=15,
         description="另存为标记",
@@ -438,26 +423,26 @@ def get_security_log():
     debug_print("尝试点击文件名输入框...")
     # 注意：文件名输入框的截图可能需要精确，或者可以考虑点击 "文件名：" 标签右侧固定偏移量（更复杂）
     if not find_and_click(
-        FILENAME_INPUT_BOX_IMAGE,
+        "huorong_filename_input_box.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=15,
         description="文件名输入框",
     ):
         debug_print("未能找到文件名输入框。")
         return "未能找到文件名输入框。"
-    time.sleep(SLEEP_TIME_MEDIUM)  # 给输入框获取焦点的时间
+    time.sleep(get_sleep_time("medium"))  # 给输入框获取焦点的时间
 
     # 5.输入文件名
     current_time_str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     debug_print(f"准备输入文件名: {current_time_str}")
     pyautogui.typewrite(current_time_str, interval=0.05)  # interval 控制打字速度
-    time.sleep(SLEEP_TIME_LONG)  # 打字时间
+    time.sleep(get_sleep_time("long"))  # 打字时间
     pyautogui.press("enter")  # 模拟按一次回车（考虑到中文输入法）
 
     # 6.点击"保存"按钮
     debug_print("尝试点击'保存'按钮...")
     if not find_and_click(
-        SAVE_BUTTON_IMAGE,
+        "huorong_save_button.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=15,
         description="保存按钮",
@@ -466,11 +451,11 @@ def get_security_log():
     debug_print(
         f"安全日志导出流程执行完毕，请查看文件D:/Desktop/{current_time_str}.txt。"
     )
-    time.sleep(SLEEP_TIME_MEDIUM)  # 等待保存操作完成
+    time.sleep(get_sleep_time("medium"))  # 等待保存操作完成
 
     # 7.检查是否导出成功
     if not find_image_on_screen(
-        EXPORT_COMPLETE_IMAGE,
+        "huorong_export_complete.png",  # 火绒界面固定元素
         confidence_level=0.6,
         timeout_seconds=15,
         description="导出完成标志",
@@ -487,7 +472,7 @@ def main():
     根据是否处于调试模式，执行不同的操作。
     """
     # 获取参数
-    global HUORONG_PATH, DEBUG_MODE, QUARANTINE_DB_PATH, LOG_NAME
+    global HUORONG_PATH, QUARANTINE_DB_PATH, LOG_NAME
     parser = argparse.ArgumentParser(description="火绒MCP工具")
     parser.add_argument(
         "--huorong-path", type=str, required=True, help="火绒安全软件的完整路径"
@@ -495,7 +480,7 @@ def main():
     parser.add_argument("--debug", action="store_true", help="调试模式")
     args = parser.parse_args()
     HUORONG_PATH = args.huorong_path
-    DEBUG_MODE = args.debug
+    # DEBUG_MODE现在通过配置系统管理
     # LOG_NAME = setup_log("./logs/huorong","huorong")
 
     # init_global_variables(DEBUG_MODE, LOG_NAME)

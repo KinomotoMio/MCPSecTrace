@@ -10,6 +10,8 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from mcpsectrace.config import get_config_value
+
 # --- 调试开关 ---
 DEBUG_MODE = "--debug" in sys.argv
 
@@ -39,8 +41,10 @@ def _get_user_profile_path_sync() -> Optional[Path]:
 def _convert_chrome_time_sync(chrome_time: int) -> Optional[str]:
     """将 Chrome 时间戳转换为 ISO 8601 格式"""
     if chrome_time > 0:
+        # Chrome时间戳基准：1601年1月1日（Windows文件时间格式）
+        epoch_time = datetime.datetime.fromisoformat("1601-01-01T00:00:00+00:00")
         return (
-            datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=chrome_time)
+            epoch_time + datetime.timedelta(microseconds=chrome_time)
         ).isoformat() + "Z"
     return None
 
@@ -54,7 +58,8 @@ def find_chromium_profiles_sync(browser_base_path: Path) -> List[Path]:
     if (browser_base_path / "Default").exists():
         profile_paths.append(browser_base_path / "Default")
 
-    for i in range(1, 11):
+    max_profile_search = get_config_value("browser.max_profile_search", default=10)
+    for i in range(1, max_profile_search + 1):
         profile_dir = browser_base_path / f"Profile {i}"
         if profile_dir.exists():
             profile_paths.append(profile_dir)
@@ -72,9 +77,13 @@ def get_chromium_data_sync(
         if not profile_path or platform.system() != "Windows":
             return {"status": "error", "message": "此工具当前仅支持Windows操作系统。"}
 
+        # Windows标准浏览器路径
+        chrome_path = "AppData/Local/Google/Chrome/User Data"
+        edge_path = "AppData/Local/Microsoft/Edge/User Data"
+
         db_locations = {
-            "Google Chrome": profile_path / "AppData/Local/Google/Chrome/User Data",
-            "Microsoft Edge": profile_path / "AppData/Local/Microsoft/Edge/User Data",
+            "Google Chrome": profile_path / chrome_path,
+            "Microsoft Edge": profile_path / edge_path,
         }
 
         base_path = db_locations.get(browser_name)
@@ -91,13 +100,19 @@ def get_chromium_data_sync(
         debug_print(f"[调试] 找到的Profile目录: {[p.name for p in profile_dirs]}")
 
         all_items = []
+        # Chrome/Edge数据库文件名是固定的
+        db_filename = "History"
+        temp_prefix = "temp_"
+
         for p_dir in profile_dirs:
-            db_path = p_dir / "History"
-            debug_print(f"[调试] 正在检查 History 文件: {db_path}")
+            db_path = p_dir / db_filename
+            debug_print(f"[调试] 正在检查 {db_filename} 文件: {db_path}")
             if not db_path.exists():
                 continue
 
-            temp_db_path = db_path.parent / f"temp_{db_path.name}_{os.getpid()}.db"
+            temp_db_path = (
+                db_path.parent / f"{temp_prefix}{db_path.name}_{os.getpid()}.db"
+            )
             debug_print(f"[调试] 准备复制文件到: {temp_db_path}")
             shutil.copy2(db_path, temp_db_path)
             debug_print("[调试] 文件复制成功。")
@@ -106,7 +121,8 @@ def get_chromium_data_sync(
             try:
                 conn = sqlite3.connect(f"file:{temp_db_path}?mode=ro", uri=True)
                 cursor = conn.cursor()
-                query = ""
+
+                # Chrome/Edge数据库结构是固定的，SQL查询不应该让用户修改
                 if data_type == "history":
                     query = f"SELECT u.url, u.title, v.visit_time FROM urls u, visits v WHERE u.id = v.url ORDER BY v.visit_time DESC LIMIT {max_items_per_profile};"
                 elif data_type == "downloads":
@@ -166,13 +182,17 @@ def get_chromium_data_sync(
 
 
 @mcp.tool()  # 添加资源绑定
-async def get_chrome_history(max_items_per_profile: int = 100) -> Dict[str, Any]:
+async def get_chrome_history(max_items_per_profile: int = None) -> Dict[str, Any]:
     """
     从Google Chrome的所有用户配置中获取浏览历史记录。
 
     Args:
         max_items_per_profile (int): 从每个用户配置中返回历史记录的最大条目数。
     """
+    if max_items_per_profile is None:
+        max_items_per_profile = get_config_value(
+            "browser.max_history_items", default=100
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None, get_chromium_data_sync, "Google Chrome", "history", max_items_per_profile
@@ -181,13 +201,17 @@ async def get_chrome_history(max_items_per_profile: int = 100) -> Dict[str, Any]
 
 
 @mcp.tool()
-async def get_chrome_downloads(max_items_per_profile: int = 50) -> Dict[str, Any]:
+async def get_chrome_downloads(max_items_per_profile: int = None) -> Dict[str, Any]:
     """
     从Google Chrome的所有用户配置中获取下载历史记录。
 
     Args:
         max_items_per_profile (int): 从每个用户配置中返回下载记录的最大条目数。
     """
+    if max_items_per_profile is None:
+        max_items_per_profile = get_config_value(
+            "browser.max_download_items", default=50
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
@@ -200,13 +224,17 @@ async def get_chrome_downloads(max_items_per_profile: int = 50) -> Dict[str, Any
 
 
 @mcp.tool()
-async def get_edge_history(max_items_per_profile: int = 100) -> Dict[str, Any]:
+async def get_edge_history(max_items_per_profile: int = None) -> Dict[str, Any]:
     """
     从Microsoft Edge的所有用户配置中获取浏览历史记录。
 
     Args:
         max_items_per_profile (int): 从每个用户配置中返回历史记录的最大条目数。
     """
+    if max_items_per_profile is None:
+        max_items_per_profile = get_config_value(
+            "browser.max_history_items", default=100
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None, get_chromium_data_sync, "Microsoft Edge", "history", max_items_per_profile
@@ -215,13 +243,17 @@ async def get_edge_history(max_items_per_profile: int = 100) -> Dict[str, Any]:
 
 
 @mcp.tool()
-async def get_edge_downloads(max_items_per_profile: int = 50) -> Dict[str, Any]:
+async def get_edge_downloads(max_items_per_profile: int = None) -> Dict[str, Any]:
     """
     从Microsoft Edge的所有用户配置中获取下载历史记录。
 
     Args:
         max_items_per_profile (int): 从每个用户配置中返回下载记录的最大条目数。
     """
+    if max_items_per_profile is None:
+        max_items_per_profile = get_config_value(
+            "browser.max_download_items", default=50
+        )
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
