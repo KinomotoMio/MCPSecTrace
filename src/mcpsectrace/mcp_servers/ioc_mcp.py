@@ -1,3 +1,4 @@
+import csv
 import os
 import re
 import time
@@ -185,6 +186,96 @@ class ElementScreenshot:
             return False, None, f"## {config.markdown_title}\n{error_msg}\n"
 
 
+class ThreatDataExtractor:
+    """威胁数据提取类"""
+
+    @staticmethod
+    def click_xpath_element(driver: webdriver.Chrome, xpath: str) -> bool:
+        """点击指定XPath元素"""
+        try:
+            element_timeout = get_config_value("ioc.element_timeout", default=10)
+            element = WebDriverWait(driver, element_timeout).until(
+                EC.element_to_be_clickable((By.XPATH, xpath))
+            )
+            driver.execute_script(
+                "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+                element,
+            )
+            time.sleep(get_config_value("ioc.scroll_wait_time", default=2))
+            element.click()
+            return True
+        except Exception as e:
+            print(f"点击XPath元素失败 {xpath}: {e}")
+            return False
+
+    @staticmethod
+    def get_element_text(driver: webdriver.Chrome, xpath: str) -> Optional[str]:
+        """获取指定XPath元素的文本内容"""
+        try:
+            element_timeout = get_config_value("ioc.element_timeout", default=10)
+            element = WebDriverWait(driver, element_timeout).until(
+                EC.presence_of_element_located((By.XPATH, xpath))
+            )
+            return element.text.strip()
+        except Exception as e:
+            print(f"获取XPath元素文本失败 {xpath}: {e}")
+            return None
+
+    @staticmethod
+    def extract_table_data(
+        driver: webdriver.Chrome, tbody_xpath: str, target_value: str, output_dir: str
+    ) -> bool:
+        """提取表格数据并保存为CSV"""
+        try:
+            element_timeout = get_config_value("ioc.element_timeout", default=10)
+            tbody = WebDriverWait(driver, element_timeout).until(
+                EC.presence_of_element_located((By.XPATH, tbody_xpath))
+            )
+            
+            # 查找所有tr元素
+            rows = tbody.find_elements(
+                By.CSS_SELECTOR, "tr.x-antd-comp-table-row.x-antd-comp-table-row-level-0"
+            )
+            
+            if not rows:
+                print("未找到表格数据行")
+                return False
+
+            # CSV数据
+            csv_data = []
+            headers = ["文件名称", "类型", "扫描时间", "SHA256", "多引擎检出", "木马家族和类型", "威胁等级"]
+            csv_data.append(headers)
+
+            # 提取每行数据
+            for row in rows:
+                cells = row.find_elements(By.CSS_SELECTOR, "td.x-antd-comp-table-cell")
+                if len(cells) >= 7:
+                    row_data = []
+                    for cell in cells[:7]:  # 只取前7列
+                        # 获取最里层的文本内容
+                        text = cell.get_attribute("textContent")
+                        if text:
+                            text = text.strip()
+                        row_data.append(text or "")
+                    csv_data.append(row_data)
+
+            # 保存CSV文件
+            sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", target_value)
+            csv_filename = f"{sanitized_target}_threat_data.csv"
+            csv_path = os.path.join(output_dir, csv_filename)
+            
+            with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerows(csv_data)
+            
+            print(f"威胁数据CSV已保存: {csv_path}")
+            return True
+
+        except Exception as e:
+            print(f"提取表格数据失败: {e}")
+            return False
+
+
 class ThreatBookAnalyzer:
     """微步在线威胁分析类"""
 
@@ -365,6 +456,63 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
         if threat_panels_md:
             report_content += "---\n\n## 威胁情报详情\n\n" + threat_panels_md
 
+        # 新增功能：处理特定威胁数据提取
+        try:
+            # 点击指定的XPath元素 (li[8])
+            li_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]"
+            if ThreatDataExtractor.click_xpath_element(driver, li_xpath):
+                print("成功点击目标元素")
+                
+                # 等待页面更新
+                time.sleep(get_config_value("ioc.scroll_wait_time", default=2))
+                
+                # 读取数字内容
+                span_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]/div/span[1]"
+                number_text = ThreatDataExtractor.get_element_text(driver, span_xpath)
+                
+                if number_text:
+                    try:
+                        threat_count = int(number_text)
+                        print(f"检测到威胁数量: {threat_count}")
+                        
+                        # 判断数字是否小于5
+                        if threat_count < 5:
+                            print("威胁数量小于5，开始提取表格数据")
+                            
+                            # 提取表格数据
+                            tbody_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/table/tbody"
+                            if ThreatDataExtractor.extract_table_data(
+                                driver, tbody_xpath, config.target_value, output_dir
+                            ):
+                                report_content += "\n---\n\n## 威胁数据提取\n\n"
+                                report_content += f"✅ 威胁数量: {threat_count} (小于5，已提取详细数据)\n\n"
+                                report_content += f"📊 详细威胁数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
+                            else:
+                                report_content += "\n---\n\n## 威胁数据提取\n\n"
+                                report_content += "⚠️ 表格数据提取失败\n\n"
+                        else:
+                            print(f"威胁数量 {threat_count} >= 5，跳过表格数据提取")
+                            report_content += "\n---\n\n## 威胁数据提取\n\n"
+                            report_content += f"ℹ️ 威胁数量: {threat_count} (>= 5，跳过详细数据提取)\n\n"
+                            
+                    except ValueError:
+                        print(f"无法解析威胁数量数字: {number_text}")
+                        report_content += "\n---\n\n## 威胁数据提取\n\n"
+                        report_content += f"⚠️ 无法解析威胁数量: {number_text}\n\n"
+                else:
+                    print("无法获取威胁数量文本")
+                    report_content += "\n---\n\n## 威胁数据提取\n\n"
+                    report_content += "⚠️ 无法获取威胁数量信息\n\n"
+            else:
+                print("点击目标元素失败")
+                report_content += "\n---\n\n## 威胁数据提取\n\n"
+                report_content += "⚠️ 无法点击目标威胁数据元素\n\n"
+                
+        except Exception as e:
+            print(f"威胁数据提取过程出错: {e}")
+            report_content += "\n---\n\n## 威胁数据提取\n\n"
+            report_content += f"❌ 威胁数据提取失败: {str(e)}\n\n"
+
         # 保存报告
         report_filename = f"{sanitized_target}_{config.target_type}_threat_report.md"
         report_path = os.path.join(output_dir, report_filename)
@@ -385,6 +533,4 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
 
 if __name__ == "__main__":
-    # 测试IP分析
-    result = analyze_ip_threat("8.8.8.8")
-    print(result)
+    mcp.run(transport="stdio")
