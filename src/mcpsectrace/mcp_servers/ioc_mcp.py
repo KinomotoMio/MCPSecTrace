@@ -19,6 +19,7 @@ from mcpsectrace.config import get_config_value
 
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
 
+
 def scroll_to_element_and_wait(driver, element, wait_seconds=2):
     """滚动到元素位置并等待指定时间"""
     try:
@@ -30,6 +31,7 @@ def scroll_to_element_and_wait(driver, element, wait_seconds=2):
         time.sleep(wait_seconds)  # 等待滚动和渲染完成
     except Exception as e:
         print(f"滚动到元素时出错: {e}")
+
 
 @dataclass
 class ScreenshotConfig:
@@ -242,19 +244,28 @@ class ThreatDataExtractor:
             tbody = WebDriverWait(driver, element_timeout).until(
                 EC.presence_of_element_located((By.XPATH, tbody_xpath))
             )
-            
+
             # 查找所有tr元素
             rows = tbody.find_elements(
-                By.CSS_SELECTOR, "tr.x-antd-comp-table-row.x-antd-comp-table-row-level-0"
+                By.CSS_SELECTOR,
+                "tr.x-antd-comp-table-row.x-antd-comp-table-row-level-0",
             )
-            
+
             if not rows:
                 print("未找到表格数据行")
                 return False
 
             # CSV数据
             csv_data = []
-            headers = ["文件名称", "类型", "扫描时间", "SHA256", "多引擎检出", "木马家族和类型", "威胁等级"]
+            headers = [
+                "文件名称",
+                "类型",
+                "扫描时间",
+                "SHA256",
+                "多引擎检出",
+                "木马家族和类型",
+                "威胁等级",
+            ]
             csv_data.append(headers)
 
             # 提取每行数据
@@ -274,11 +285,11 @@ class ThreatDataExtractor:
             sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", target_value)
             csv_filename = f"{sanitized_target}_threat_data.csv"
             csv_path = os.path.join(output_dir, csv_filename)
-            
+
             with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerows(csv_data)
-            
+
             print(f"威胁数据CSV已保存: {csv_path}")
             return True
 
@@ -315,7 +326,8 @@ class ThreatBookAnalyzer:
         try:
             # 微步网站的固定CSS结构
             collapse_container = driver.find_element(
-                By.CSS_SELECTOR, ".ant-collapse.ant-collapse-icon-position-start.ant-collapse-ghost"
+                By.CSS_SELECTOR,
+                ".ant-collapse.ant-collapse-icon-position-start.ant-collapse-ghost",
             )
             collapse_items = collapse_container.find_elements(
                 By.CSS_SELECTOR, ".ant-collapse-item"
@@ -341,13 +353,13 @@ class ThreatBookAnalyzer:
 
                     # 点击展开面板
                     header = item.find_element(By.CLASS_NAME, "ant-collapse-header")
-                
+
                     header.click()
                     print("点击面板标题")
                     panel_expand_wait = get_config_value(
                         "ioc.panel_expand_wait_time", default=2
                     )
-                    
+
                     time.sleep(panel_expand_wait)
                     scroll_to_element_and_wait(driver, item, 2)
                     # 截图面板
@@ -389,7 +401,12 @@ def analyze_ip_threat(ip_address: str) -> str:
         base_url=f"https://x.threatbook.com/v5/ip/{ip_address}",
         screenshot_configs=[
             ScreenshotConfig("summary-top", "class", "summary_top", "基本信息"),
-            ScreenshotConfig("result-intelInsight_con", "class", "result_intelInsight_con", "情报洞察"),
+            ScreenshotConfig(
+                "result-intelInsight_con",
+                "class",
+                "result_intelInsight_con",
+                "情报洞察",
+            ),
         ],
     )
 
@@ -410,7 +427,12 @@ def analyze_domain_threat(domain_name: str) -> str:
         base_url=f"https://x.threatbook.com/v5/domain/{domain_name}",
         screenshot_configs=[
             ScreenshotConfig("summary-top", "class", "summary_top", "基本信息"),
-            ScreenshotConfig("result-intelInsight_con", "class", "result_intelInsight_con", "情报洞察"),
+            ScreenshotConfig(
+                "result-intelInsight_con",
+                "class",
+                "result_intelInsight_con",
+                "情报洞察",
+            ),
         ],
     )
 
@@ -471,23 +493,23 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
             li_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]"
             if ThreatDataExtractor.click_xpath_element(driver, li_xpath):
                 print("成功点击目标元素")
-                
+
                 # 等待页面更新
                 time.sleep(get_config_value("ioc.scroll_wait_time", default=2))
-                
+
                 # 读取数字内容
                 span_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]/div/span[1]"
                 number_text = ThreatDataExtractor.get_element_text(driver, span_xpath)
-                
+
                 if number_text:
                     try:
                         threat_count = int(number_text)
                         print(f"检测到威胁数量: {threat_count}")
-                        
+
                         # 判断数字是否小于5
                         if threat_count < 5:
                             print("威胁数量小于5，开始提取表格数据")
-                            
+
                             # 提取表格数据
                             tbody_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/table/tbody"
                             if ThreatDataExtractor.extract_table_data(
@@ -503,7 +525,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             print(f"威胁数量 {threat_count} >= 5，跳过表格数据提取")
                             report_content += "\n---\n\n## 威胁数据提取\n\n"
                             report_content += f"ℹ️ 威胁数量: {threat_count} (>= 5，跳过详细数据提取)\n\n"
-                            
+
                     except ValueError:
                         print(f"无法解析威胁数量数字: {number_text}")
                         report_content += "\n---\n\n## 威胁数据提取\n\n"
@@ -516,7 +538,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                 print("点击目标元素失败")
                 report_content += "\n---\n\n## 威胁数据提取\n\n"
                 report_content += "⚠️ 无法点击目标威胁数据元素\n\n"
-                
+
         except Exception as e:
             print(f"威胁数据提取过程出错: {e}")
             report_content += "\n---\n\n## 威胁数据提取\n\n"

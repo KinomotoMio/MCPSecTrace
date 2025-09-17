@@ -37,17 +37,23 @@ jobs:
         run: |
           # 安装虚拟显示环境支持GUI测试
           sudo apt-get update
-          sudo apt-get install -y xvfb x11-utils
+          sudo apt-get install -y xvfb x11-utils xauth
           # 启动虚拟显示，设置为2048x1536分辨率以支持Chrome 1920x1200窗口
           export DISPLAY=:99
           Xvfb :99 -screen 0 2048x1536x24 &
           sleep 3
+          # 创建X11认证文件
+          touch ~/.Xauthority
+          xauth add :99 . $(xxd -l 16 -p /dev/urandom)
+          export XAUTHORITY=~/.Xauthority
           # 验证显示环境
           xwininfo -root -tree >/dev/null && echo "✅ 虚拟显示环境设置成功" || echo "❌ 虚拟显示环境设置失败"
       
       - name: 运行测试
         env:
           DISPLAY: ":99"
+          XAUTHORITY: "/home/runner/.Xauthority"
+          PYAUTOGUI_HEADLESS: "1"
         run: |
           # 运行完整的pytest测试套件，Windows专用功能在Linux环境下会被跳过
           uv run pytest -v || (echo "❌ 测试失败，请检查代码" && exit 1)
