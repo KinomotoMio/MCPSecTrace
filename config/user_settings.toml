@@ -11,27 +11,21 @@ environment = "prod"
 
 [paths]
 # 火绒安全软件主程序路径（必填）
-# 示例：D:\HuoRong\Sysdiag\bin\HipsMain.exe
-huorong_exe = ""
+huorong_exe = "D:/HuoRong/Sysdiag/bin/HipsMain.exe"
 
-# HRKill工具程序路径（必填）  
-# 示例：tools\hrkill-1.0.0.86.exe
-hrkill_exe = ""
+# HRKill工具程序路径（必填）
+hrkill_exe = "D:/MCPTools/hrkill-1.0.0.86.exe"
 
 # Focus Pack工具程序路径（必填）
-# 示例：tools\focus_pack.exe
-focus_pack_exe = ""
+focus_pack_exe = "D:/MCPTools/Focus_Pack.exe"
 
 # Chrome浏览器程序路径（IOC威胁情报查询用，必填）
-# 示例：C:\Program Files\Google\Chrome\Application\chrome.exe
 chrome_exe = "D:/OneDrive/NDSS26-Alert Measurement/Selenium_gpt/chrome-win64/chrome.exe"
 
 # ChromeDriver程序路径（IOC威胁情报查询用，必填）
-# 示例：tools/chromedriver.exe
 chromedriver_exe = "D:/OneDrive/NDSS26-Alert Measurement/Selenium_gpt/chromedriver-win64/chromedriver.exe"
 
 # Chrome用户数据目录（IOC查询时保持会话用）
-# 示例：C:\Users\用户名\AppData\Local\Google\Chrome\User Data
 chrome_user_data_dir = "C:/Users/User/AppData/Local/Google/Chrome for Testing/User Data"
 
 [images]
@@ -43,7 +37,7 @@ base_dir = "./assets/screenshots"
 huorong_dir = "huorong"
 
 # HRKill截图文件目录（相对于base_dir）
-hrkill_dir = "hrkill" 
+hrkill_dir = "hrkill"
 
 # Focus Pack截图文件目录（相对于base_dir）
 focus_pack_dir = "focus_pack"
@@ -52,7 +46,7 @@ focus_pack_dir = "focus_pack"
 # 分析报告输出目录
 reports_dir = "data/reports"
 
-# 截图文件输出目录  
+# 截图文件输出目录
 screenshots_dir = "data/screenshots"
 
 # 系统日志输出目录
@@ -101,7 +95,7 @@ log_level = "ERROR"
 # 浏览器取证服务端口
 browser_port = 8801
 
-# 火绒服务端口  
+# 火绒服务端口
 huorong_port = 8802
 
 # HRKill服务端口

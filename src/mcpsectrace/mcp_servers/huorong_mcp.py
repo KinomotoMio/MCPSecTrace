@@ -495,21 +495,10 @@ def main():
     # else:
     #     debug_print("当前已具备管理员权限。")
 
-    # 2. 运行
-    if DEBUG_MODE:
-        print("--- 当前处于调试模式 ---")
-        scan_virus()
-        # get_trust_zone()
-        # get_quarantine_file()
-        # get_security_log()
-    else:
-        print("--- 当前处于正式运行模式 ---")
-        mcp.run(transport="stdio")
+    print("--- 当前处于正式运行模式 ---")
+    mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
 if __name__ == "__main__":
-    try:
-        main()
-    finally:
-        close_log_file()
+    main()
