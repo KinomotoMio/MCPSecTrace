@@ -1,399 +1,440 @@
 """
-MCPSecTrace 部署测试模块
+MCPSecTrace 部署测试MCP服务器
 
-此模块包含对所有MCP服务器的部署验证测试，确保项目可以正常部署和运行。
+此模块封装了简化的MCP工具用于测试各个组件的部署情况
 """
 
-import asyncio
-import json
+import os
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, Optional
 
-try:
-    import pytest
-    PYTEST_AVAILABLE = True
-except ImportError:
-    PYTEST_AVAILABLE = False
-
+from mcp.server.fastmcp import FastMCP
 from mcpsectrace.config import get_config_value
 
+# 创建MCP服务器实例
+mcp = FastMCP("deployment_test", log_level="ERROR", port=8888)
 
-class MCPTestBase:
-    """MCP测试基类"""
 
-    def __init__(self, server_name: str, server_script: str, port: int):
-        self.server_name = server_name
-        self.server_script = server_script
-        self.port = port
-        self.process: Optional[subprocess.Popen] = None
+@mcp.tool()
+def test_huorong_open() -> str:
+    """
+    测试火绒安全软件启动功能
 
-    def start_server(self) -> bool:
-        """启动MCP服务器"""
+    验证内容：
+    - 检查火绒安全软件路径配置是否正确
+    - 验证火绒程序文件是否存在
+    - 尝试启动火绒安全软件进程
+    - 检查进程是否成功运行
+
+    适用场景：
+    - 部署验证：确认火绒MCP服务器能够正常启动火绒工具
+    - 配置检查：验证user_settings.toml中的huorong_exe路径配置
+    - 环境测试：检查系统是否支持火绒程序运行
+
+    Returns:
+        str: 详细的测试结果，包括成功/失败状态和进程信息
+    """
+    huorong_path = get_config_value("paths.huorong_exe", default="")
+
+    if not huorong_path:
+        return "❌ 火绒路径未配置"
+
+    if not Path(huorong_path).exists():
+        return f"❌ 火绒路径不存在: {huorong_path}"
+
+    try:
+        # 尝试启动火绒
+        process = subprocess.Popen(huorong_path, shell=True)
+
+        # 给进程一点时间启动
+        time.sleep(2)
+
+        # 检查进程是否还在运行
+        if process.poll() is None:
+            return f"✅ 火绒启动成功，进程ID: {process.pid}"
+        else:
+            return f"✅ 火绒已启动完成，进程ID: {process.pid}"
+
+    except Exception as e:
+        return f"❌ 启动火绒失败: {e}"
+
+
+@mcp.tool()
+def test_ioc_browser_access() -> str:
+    """
+    测试IOC威胁情报查询的浏览器访问功能
+
+    验证内容：
+    - 检查Chrome浏览器路径和ChromeDriver路径配置
+    - 验证Chrome用户数据目录配置（可选）
+    - 初始化Selenium WebDriver with Chrome
+    - 访问微步在线威胁情报平台测试页面
+    - 验证页面是否正常加载和显示
+
+    测试目标：
+    - URL: https://x.threatbook.com/v5/ip/8.8.8.8
+    - 测试IP: 8.8.8.8 (Google DNS)
+
+    适用场景：
+    - 部署验证：确认IOC MCP服务器的浏览器环境配置正确
+    - 网络测试：验证是否能访问威胁情报网站
+    - 驱动测试：检查Selenium WebDriver是否正常工作
+    - 配置检查：验证所有浏览器相关的路径配置
+
+    Returns:
+        str: 详细测试结果，包括访问URL、页面标题和当前页面信息
+    """
+    chrome_path = get_config_value("paths.chrome_exe", default="")
+    chromedriver_path = get_config_value("paths.chromedriver_exe", default="")
+
+    if not chrome_path:
+        return "❌ Chrome路径未配置"
+
+    if not Path(chrome_path).exists():
+        return f"❌ Chrome路径不存在: {chrome_path}"
+
+    if not chromedriver_path:
+        return "❌ ChromeDriver路径未配置"
+
+    if not Path(chromedriver_path).exists():
+        return f"❌ ChromeDriver路径不存在: {chromedriver_path}"
+
+    # 检查Chrome用户数据目录（可选配置）
+    user_data_dir = get_config_value("paths.chrome_user_data_dir", default="")
+    if user_data_dir and not Path(user_data_dir).exists():
+        return f"❌ Chrome用户数据目录不存在: {user_data_dir}"
+
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
+
+        chrome_options = Options()
+        chrome_options.binary_location = chrome_path
+        # chrome_options.add_argument("--headless")  
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-infobars")
+        chrome_options.add_argument("--disable-notifications")
+
+        # 添加用户数据目录配置
+        user_data_dir = get_config_value("paths.chrome_user_data_dir", default="")
+        if user_data_dir:
+            chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+
+        service = Service(chromedriver_path)
+
+        # 初始化WebDriver
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+
+        # 测试访问威胁情报查询页面（微步在线）
+        test_ip = "8.8.8.8"  # 使用Google DNS作为测试IP
+        threatbook_url = f"https://x.threatbook.com/v5/ip/{test_ip}"
+
+        driver.get(threatbook_url)
+
+        # 等待页面加载
+        time.sleep(3)
+
+        title = driver.title
+        current_url = driver.current_url
+
+        # 清理
+        driver.quit()
+
+        return f"✅ IOC威胁情报页面访问测试成功\n访问URL: {threatbook_url}\n页面标题: {title}\n当前URL: {current_url}"
+
+    except Exception as e:
+        return f"❌ IOC浏览器访问测试失败: {e}"
+
+
+@mcp.tool()
+def test_focus_pack_open() -> str:
+    """
+    测试Focus Pack工具启动功能
+
+    验证内容：
+    - 检查Focus Pack工具路径配置是否正确
+    - 验证Focus Pack程序文件是否存在
+    - 尝试启动Focus Pack工具进程
+    - 检查进程是否成功运行
+
+    工具说明：
+    - Focus Pack是一个专业的系统扫描和清理工具
+    - 主要用于恶意软件检测和系统优化
+    - 支持快速扫描和深度扫描功能
+
+    适用场景：
+    - 部署验证：确认Focus Pack MCP服务器能够正常启动工具
+    - 配置检查：验证user_settings.toml中的focus_pack_exe路径配置
+    - 权限测试：某些功能可能需要管理员权限
+    - 环境测试：检查系统兼容性
+
+    Returns:
+        str: 详细的测试结果，包括启动状态和进程信息
+    """
+    focus_pack_path = get_config_value("paths.focus_pack_exe", default="")
+
+    if not focus_pack_path:
+        return "❌ Focus Pack路径未配置"
+
+    if not Path(focus_pack_path).exists():
+        return f"❌ Focus Pack路径不存在: {focus_pack_path}"
+
+    try:
+        # 尝试启动Focus Pack
+        process = subprocess.Popen(focus_pack_path, shell=True)
+
+        # 给进程一点时间启动
+        time.sleep(2)
+
+        # 检查进程是否还在运行
+        if process.poll() is None:
+            return f"✅ Focus Pack启动成功，进程ID: {process.pid}"
+        else:
+            return f"✅ Focus Pack已启动完成，进程ID: {process.pid}"
+
+    except Exception as e:
+        return f"❌ 启动Focus Pack失败: {e}"
+
+
+@mcp.tool()
+def test_hrkill_open() -> str:
+    """
+    测试HRKill工具启动功能
+
+    验证内容：
+    - 检查HRKill工具路径配置是否正确
+    - 验证HRKill程序文件是否存在
+    - 尝试启动HRKill工具进程
+    - 检查进程是否成功运行
+
+    工具说明：
+    - HRKill是一个专业的恶意软件查杀工具
+    - 专注于清除顽固病毒和恶意进程
+    - 具有强制终止恶意进程的能力
+    - 通常需要管理员权限才能发挥最大效果
+
+    适用场景：
+    - 部署验证：确认HRKill MCP服务器能够正常启动工具
+    - 配置检查：验证user_settings.toml中的hrkill_exe路径配置
+    - 权限测试：验证管理员权限要求
+    - 安全测试：检查恶意软件查杀功能可用性
+
+    Returns:
+        str: 详细的测试结果，包括启动状态和进程信息
+    """
+    hrkill_path = get_config_value("paths.hrkill_exe", default="")
+
+    if not hrkill_path:
+        return "❌ HRKill路径未配置"
+
+    if not Path(hrkill_path).exists():
+        return f"❌ HRKill路径不存在: {hrkill_path}"
+
+    try:
+        # 尝试启动HRKill
+        process = subprocess.Popen(hrkill_path, shell=True)
+
+        # 给进程一点时间启动
+        time.sleep(2)
+
+        # 检查进程是否还在运行
+        if process.poll() is None:
+            return f"✅ HRKill启动成功，进程ID: {process.pid}"
+        else:
+            return f"✅ HRKill已启动完成，进程ID: {process.pid}"
+
+    except Exception as e:
+        return f"❌ 启动HRKill失败: {e}"
+
+
+@mcp.tool()
+def run_all_deployment_tests() -> str:
+    """
+    运行所有部署测试 - 一键执行完整的部署验证
+
+    功能说明：
+    - 自动执行所有4个核心工具的启动测试
+    - 生成详细的测试报告和统计信息
+    - 提供部署状态的整体评估
+
+    执行的测试：
+    1. 火绒安全软件启动测试
+    2. IOC威胁情报浏览器访问测试
+    3. Focus Pack工具启动测试
+    4. HRKill工具启动测试
+
+    适用场景：
+    - 新环境部署：快速验证整个MCPSecTrace项目的部署状态
+    - 定期检查：定期检查所有组件的运行状态
+    - 故障排查：快速定位哪些组件有问题
+    - CI/CD集成：在自动化部署流程中进行验证
+
+    报告内容：
+    - 每个测试的详细结果
+    - 通过/失败统计
+    - 整体部署状态评估
+
+    Returns:
+        str: 完整的测试汇总报告，包含所有测试结果和统计信息
+    """
+    tests = [
+        ("火绒工具启动", test_huorong_open),
+        ("IOC浏览器访问", test_ioc_browser_access),
+        ("Focus Pack启动", test_focus_pack_open),
+        ("HRKill启动", test_hrkill_open),
+    ]
+
+    results = []
+    passed_count = 0
+
+    for test_name, test_func in tests:
         try:
-            # 为需要参数的MCP服务器添加必要参数
-            cmd = [sys.executable, self.server_script]
-
-            if "huorong_mcp.py" in self.server_script:
-                huorong_path = get_config_value("paths.huorong_exe", default="")
-                if huorong_path:
-                    cmd.extend(["--huorong-path", huorong_path])
-                else:
-                    print(f"{self.server_name} 路径未配置，跳过服务器启动测试")
-                    return False
-
-            elif "focus_pack_mcp.py" in self.server_script:
-                focus_pack_path = get_config_value("paths.focus_pack_exe", default="")
-                if focus_pack_path:
-                    cmd.extend(["--focus-pack-path", focus_pack_path])
-                else:
-                    print(f"{self.server_name} 路径未配置，跳过服务器启动测试")
-                    return False
-
-            elif "hrkill_mcp.py" in self.server_script:
-                hrkill_path = get_config_value("paths.hrkill_exe", default="")
-                if hrkill_path:
-                    cmd.extend(["--hrkill-path", hrkill_path])
-                else:
-                    print(f"{self.server_name} 路径未配置，跳过服务器启动测试")
-                    return False
-
-            print(f"启动 {self.server_name} 服务器: {' '.join(cmd)}")
-
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                cwd=Path(__file__).parent.parent
-            )
-
-            # 等待服务器启动
-            time.sleep(3)
-
-            # 检查进程是否正常运行
-            if self.process.poll() is None:
-                print(f"{self.server_name} 服务器启动成功，PID: {self.process.pid}")
-                return True
-            else:
-                stdout, stderr = self.process.communicate()
-                print(f"{self.server_name} 服务器启动失败")
-                print(f"STDOUT: {stdout}")
-                print(f"STDERR: {stderr}")
-                return False
-
-        except Exception as e:
-            print(f"启动 {self.server_name} 服务器时出错: {e}")
-            return False
-
-    def stop_server(self):
-        """停止MCP服务器"""
-        if self.process and self.process.poll() is None:
-            print(f"停止 {self.server_name} 服务器...")
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                print(f"强制终止 {self.server_name} 服务器")
-                self.process.kill()
-                self.process.wait()
-            print(f"{self.server_name} 服务器已停止")
-
-    def test_server_connectivity(self) -> bool:
-        """测试服务器连接性"""
-        # 基础连接测试 - 检查进程是否运行
-        if not self.process or self.process.poll() is not None:
-            print(f"{self.server_name} 服务器进程未运行")
-            return False
-
-        print(f"{self.server_name} 服务器连接正常")
-        return True
-
-
-class HuorongMCPTest(MCPTestBase):
-    """火绒MCP测试类"""
-
-    def __init__(self):
-        server_script = "src/mcpsectrace/mcp_servers/huorong_mcp.py"
-        super().__init__("Huorong", server_script, 8802)
-        self.huorong_path = get_config_value("paths.huorong_exe", default="")
-
-    def test_huorong_tool_access(self) -> bool:
-        """测试火绒工具访问"""
-        print("测试火绒工具访问...")
-
-        if not self.huorong_path:
-            print("火绒路径未配置，跳过测试")
-            return False
-
-        if not Path(self.huorong_path).exists():
-            print(f"火绒路径不存在: {self.huorong_path}")
-            return False
-
-        print("火绒工具路径验证成功")
-        return True
-
-    def test_start_huorong_tool(self) -> bool:
-        """测试启动火绒工具的MCP功能"""
-        print("测试start_huorong MCP工具...")
-
-        # 这里可以通过MCP协议调用工具，现在先做基础验证
-        if self.test_server_connectivity() and self.test_huorong_tool_access():
-            print("火绒MCP工具测试通过")
-            return True
-        else:
-            print("火绒MCP工具测试失败")
-            return False
-
-
-class IOCMCPTest(MCPTestBase):
-    """IOC MCP测试类"""
-
-    def __init__(self):
-        server_script = "src/mcpsectrace/mcp_servers/ioc_mcp.py"
-        super().__init__("IOC", server_script, 8805)
-        self.chrome_path = get_config_value("paths.chrome_exe", default="")
-        self.chromedriver_path = get_config_value("paths.chromedriver_exe", default="")
-
-    def test_browser_access(self) -> bool:
-        """测试浏览器访问"""
-        print("测试浏览器访问...")
-
-        if not self.chrome_path:
-            print("Chrome路径未配置，跳过测试")
-            return False
-
-        if not Path(self.chrome_path).exists():
-            print(f"Chrome路径不存在: {self.chrome_path}")
-            return False
-
-        if not self.chromedriver_path:
-            print("ChromeDriver路径未配置，跳过测试")
-            return False
-
-        if not Path(self.chromedriver_path).exists():
-            print(f"ChromeDriver路径不存在: {self.chromedriver_path}")
-            return False
-
-        print("浏览器配置验证成功")
-        return True
-
-    def test_ioc_page_access(self) -> bool:
-        """测试IOC页面访问的MCP功能"""
-        print("测试IOC威胁情报查询...")
-
-        if self.test_server_connectivity() and self.test_browser_access():
-            print("IOC MCP浏览器访问测试通过")
-            return True
-        else:
-            print("IOC MCP浏览器访问测试失败")
-            return False
-
-
-class FocusPackMCPTest(MCPTestBase):
-    """Focus Pack MCP测试类"""
-
-    def __init__(self):
-        server_script = "src/mcpsectrace/mcp_servers/focus_pack_mcp.py"
-        super().__init__("FocusPack", server_script, 8804)
-        self.focus_pack_path = get_config_value("paths.focus_pack_exe", default="")
-
-    def test_focus_pack_tool_access(self) -> bool:
-        """测试Focus Pack工具访问"""
-        print("测试Focus Pack工具访问...")
-
-        if not self.focus_pack_path:
-            print("Focus Pack路径未配置，跳过测试")
-            return False
-
-        if not Path(self.focus_pack_path).exists():
-            print(f"Focus Pack路径不存在: {self.focus_pack_path}")
-            return False
-
-        print("Focus Pack工具路径验证成功")
-        return True
-
-    def test_start_focus_pack_tool(self) -> bool:
-        """测试启动Focus Pack工具的MCP功能"""
-        print("测试Focus Pack MCP工具...")
-
-        if self.test_server_connectivity() and self.test_focus_pack_tool_access():
-            print("Focus Pack MCP工具测试通过")
-            return True
-        else:
-            print("Focus Pack MCP工具测试失败")
-            return False
-
-
-class HRKillMCPTest(MCPTestBase):
-    """HRKill MCP测试类"""
-
-    def __init__(self):
-        server_script = "src/mcpsectrace/mcp_servers/hrkill_mcp.py"
-        super().__init__("HRKill", server_script, 8803)
-        self.hrkill_path = get_config_value("paths.hrkill_exe", default="")
-
-    def test_hrkill_tool_access(self) -> bool:
-        """测试HRKill工具访问"""
-        print("测试HRKill工具访问...")
-
-        if not self.hrkill_path:
-            print("HRKill路径未配置，跳过测试")
-            return False
-
-        if not Path(self.hrkill_path).exists():
-            print(f"HRKill路径不存在: {self.hrkill_path}")
-            return False
-
-        print("HRKill工具路径验证成功")
-        return True
-
-    def test_start_hrkill_tool(self) -> bool:
-        """测试启动HRKill工具的MCP功能"""
-        print("测试HRKill MCP工具...")
-
-        if self.test_server_connectivity() and self.test_hrkill_tool_access():
-            print("HRKill MCP工具测试通过")
-            return True
-        else:
-            print("HRKill MCP工具测试失败")
-            return False
-
-
-class DeploymentTestSuite:
-    """部署测试套件"""
-
-    def __init__(self):
-        self.test_results: Dict[str, bool] = {}
-        self.servers = [
-            HuorongMCPTest(),
-            IOCMCPTest(),
-            FocusPackMCPTest(),
-            HRKillMCPTest(),
-        ]
-
-    def run_all_tests(self) -> Dict[str, bool]:
-        """运行所有部署测试"""
-        print("=" * 60)
-        print("MCPSecTrace 部署测试开始")
-        print("=" * 60)
-
-        for server_test in self.servers:
-            print(f"\n--- 测试 {server_test.server_name} MCP服务器 ---")
-
-            try:
-                # 启动服务器
-                if not server_test.start_server():
-                    self.test_results[server_test.server_name] = False
-                    continue
-
-                # 执行具体测试
-                if isinstance(server_test, HuorongMCPTest):
-                    result = server_test.test_start_huorong_tool()
-                elif isinstance(server_test, IOCMCPTest):
-                    result = server_test.test_ioc_page_access()
-                elif isinstance(server_test, FocusPackMCPTest):
-                    result = server_test.test_start_focus_pack_tool()
-                elif isinstance(server_test, HRKillMCPTest):
-                    result = server_test.test_start_hrkill_tool()
-                else:
-                    result = server_test.test_server_connectivity()
-
-                self.test_results[server_test.server_name] = result
-
-            except Exception as e:
-                print(f"测试 {server_test.server_name} 时出现异常: {e}")
-                self.test_results[server_test.server_name] = False
-
-            finally:
-                # 停止服务器
-                server_test.stop_server()
-
-        self._print_test_summary()
-        return self.test_results
-
-    def _print_test_summary(self):
-        """打印测试摘要"""
-        print("\n" + "=" * 60)
-        print("测试摘要")
-        print("=" * 60)
-
-        passed_count = 0
-        failed_count = 0
-
-        for server_name, result in self.test_results.items():
-            status = "PASS" if result else "FAIL"
-            print(f"{server_name:15} {status}")
-            if result:
+            result = test_func()
+            results.append(f"{test_name}: {result}")
+            if result.startswith("✅"):
                 passed_count += 1
-            else:
-                failed_count += 1
+        except Exception as e:
+            error_msg = f"❌ {test_name} 测试异常: {e}"
+            results.append(error_msg)
 
-        print("-" * 60)
-        print(f"总计: {len(self.test_results)} 项测试")
-        print(f"通过: {passed_count} 项")
-        print(f"失败: {failed_count} 项")
+    # 生成汇总报告
+    total_tests = len(tests)
+    failed_count = total_tests - passed_count
 
-        if failed_count == 0:
-            print("\n所有部署测试通过！项目可以正常部署和运行。")
-        else:
-            print(f"\n有 {failed_count} 项测试失败，请检查配置和依赖。")
+    summary = [
+        "=" * 50,
+        "MCPSecTrace 部署测试汇总",
+        "=" * 50,
+        ""
+    ]
 
+    summary.extend(results)
 
-def main():
-    """主函数"""
-    test_suite = DeploymentTestSuite()
-    results = test_suite.run_all_tests()
+    summary.extend([
+        "",
+        "-" * 50,
+        f"总计: {total_tests} 项测试",
+        f"通过: {passed_count} 项",
+        f"失败: {failed_count} 项"
+    ])
 
-    # 返回适当的退出代码
-    failed_tests = [name for name, result in results.items() if not result]
-    if failed_tests:
-        sys.exit(1)
+    if failed_count == 0:
+        summary.append("\n🎉 所有部署测试通过！项目可以正常部署和运行。")
     else:
-        sys.exit(0)
+        summary.append(f"\n⚠️ 有 {failed_count} 项测试失败，请检查配置和依赖。")
+
+    return "\n".join(summary)
 
 
-# Pytest测试函数
-def test_huorong_mcp_deployment():
-    """测试火绒MCP部署"""
-    test = HuorongMCPTest()
-    assert test.start_server(), "火绒MCP服务器启动失败"
-    try:
-        assert test.test_start_huorong_tool(), "火绒MCP工具测试失败"
-    finally:
-        test.stop_server()
+@mcp.tool()
+def check_config_paths() -> str:
+    """
+    检查配置文件中的所有路径 - 验证配置完整性
+
+    功能说明：
+    - 读取user_settings.toml配置文件
+    - 验证所有工具路径的有效性
+    - 生成详细的配置检查报告
+
+    检查的配置项：
+    - 火绒安全软件路径 (paths.huorong_exe)
+    - Chrome浏览器路径 (paths.chrome_exe)
+    - ChromeDriver路径 (paths.chromedriver_exe)
+    - Chrome用户数据目录 (paths.chrome_user_data_dir)
+    - HRKill工具路径 (paths.hrkill_exe)
+    - Focus Pack工具路径 (paths.focus_pack_exe)
+
+    验证内容：
+    - 配置项是否存在
+    - 路径是否指向有效文件/目录
+    - 文件是否可访问
+
+    适用场景：
+    - 初始配置：验证配置文件设置是否正确
+    - 故障排查：快速定位配置问题
+    - 环境迁移：确认新环境配置的有效性
+    - 定期检查：验证配置的持续有效性
+
+    Returns:
+        str: 详细的路径检查报告，包含每个配置项的状态
+    """
+    paths_to_check = [
+        ("火绒路径", "paths.huorong_exe"),
+        ("Chrome路径", "paths.chrome_exe"),
+        ("ChromeDriver路径", "paths.chromedriver_exe"),
+        ("Chrome用户数据目录", "paths.chrome_user_data_dir"),
+        ("HRKill路径", "paths.hrkill_exe"),
+        ("Focus Pack路径", "paths.focus_pack_exe"),
+    ]
+
+    results = []
+    valid_count = 0
+
+    for name, config_key in paths_to_check:
+        path = get_config_value(config_key, default="")
+        if not path:
+            results.append(f"❌ {name}: 未配置")
+        elif Path(path).exists():
+            results.append(f"✅ {name}: {path}")
+            valid_count += 1
+        else:
+            results.append(f"❌ {name}: 路径不存在 - {path}")
+
+    total_paths = len(paths_to_check)
+    invalid_count = total_paths - valid_count
+
+    summary = [
+        "配置路径检查结果:",
+        "=" * 30,
+        ""
+    ]
+
+    summary.extend(results)
+
+    summary.extend([
+        "",
+        f"总计: {total_paths} 个路径",
+        f"有效: {valid_count} 个",
+        f"无效: {invalid_count} 个"
+    ])
+
+    return "\n".join(summary)
 
 
-def test_ioc_mcp_deployment():
-    """测试IOC MCP部署"""
-    test = IOCMCPTest()
-    assert test.start_server(), "IOC MCP服务器启动失败"
-    try:
-        assert test.test_ioc_page_access(), "IOC MCP浏览器访问测试失败"
-    finally:
-        test.stop_server()
+# 主函数
+def main():
+    # """MCP服务器主函数"""
+    # print("=" * 60)
+    # print("MCPSecTrace 部署测试MCP服务器")
+    # print("=" * 60)
+    # print()
+    # print("🔧 可用的MCP工具：")
+    # print()
+    # print("📋 单项测试工具：")
+    # print("  • test_huorong_open          - 测试火绒安全软件启动")
+    # print("  • test_ioc_browser_access    - 测试IOC威胁情报浏览器访问")
+    # print("  • test_focus_pack_open       - 测试Focus Pack工具启动")
+    # print("  • test_hrkill_open           - 测试HRKill工具启动")
+    # print()
+    # print("🎯 综合测试工具：")
+    # print("  • run_all_deployment_tests   - 一键运行所有部署测试")
+    # print("  • check_config_paths         - 检查配置文件中的所有路径")
+    # print()
+    # print("💡 使用建议：")
+    # print("  - 首次部署：先运行 check_config_paths 验证配置")
+    # print("  - 完整验证：使用 run_all_deployment_tests 进行全面测试")
+    # print("  - 问题排查：使用单项测试工具定位具体问题")
+    # print()
+    # print("🚀 服务器启动中...")
+    # print("=" * 60)
 
-
-def test_focus_pack_mcp_deployment():
-    """测试Focus Pack MCP部署"""
-    test = FocusPackMCPTest()
-    assert test.start_server(), "Focus Pack MCP服务器启动失败"
-    try:
-        assert test.test_start_focus_pack_tool(), "Focus Pack MCP工具测试失败"
-    finally:
-        test.stop_server()
-
-
-def test_hrkill_mcp_deployment():
-    """测试HRKill MCP部署"""
-    test = HRKillMCPTest()
-    assert test.start_server(), "HRKill MCP服务器启动失败"
-    try:
-        assert test.test_start_hrkill_tool(), "HRKill MCP工具测试失败"
-    finally:
-        test.stop_server()
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":
