@@ -1,8 +1,9 @@
-import pyautogui
-import pygetwindow as gw
+import os
 import subprocess
 import time
-import os
+
+import pyautogui
+import pygetwindow as gw
 
 
 class HuorongController:
