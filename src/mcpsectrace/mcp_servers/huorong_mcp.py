@@ -495,8 +495,6 @@ def main():
     # else:
     #     debug_print("当前已具备管理员权限。")
 
-
-    
     print("--- 当前处于正式运行模式 ---")
     mcp.run(transport="stdio")
 
@@ -504,4 +502,3 @@ def main():
 # --- 主程序入口 ---
 if __name__ == "__main__":
     main()
-

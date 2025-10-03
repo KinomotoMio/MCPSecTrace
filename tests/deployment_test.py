@@ -113,7 +113,7 @@ def test_ioc_browser_access() -> str:
 
         chrome_options = Options()
         chrome_options.binary_location = chrome_path
-        # chrome_options.add_argument("--headless")  
+        # chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
@@ -307,22 +307,19 @@ def run_all_deployment_tests() -> str:
     total_tests = len(tests)
     failed_count = total_tests - passed_count
 
-    summary = [
-        "=" * 50,
-        "MCPSecTrace 部署测试汇总",
-        "=" * 50,
-        ""
-    ]
+    summary = ["=" * 50, "MCPSecTrace 部署测试汇总", "=" * 50, ""]
 
     summary.extend(results)
 
-    summary.extend([
-        "",
-        "-" * 50,
-        f"总计: {total_tests} 项测试",
-        f"通过: {passed_count} 项",
-        f"失败: {failed_count} 项"
-    ])
+    summary.extend(
+        [
+            "",
+            "-" * 50,
+            f"总计: {total_tests} 项测试",
+            f"通过: {passed_count} 项",
+            f"失败: {failed_count} 项",
+        ]
+    )
 
     if failed_count == 0:
         summary.append("\n🎉 所有部署测试通过！项目可以正常部署和运行。")
@@ -389,20 +386,18 @@ def check_config_paths() -> str:
     total_paths = len(paths_to_check)
     invalid_count = total_paths - valid_count
 
-    summary = [
-        "配置路径检查结果:",
-        "=" * 30,
-        ""
-    ]
+    summary = ["配置路径检查结果:", "=" * 30, ""]
 
     summary.extend(results)
 
-    summary.extend([
-        "",
-        f"总计: {total_paths} 个路径",
-        f"有效: {valid_count} 个",
-        f"无效: {invalid_count} 个"
-    ])
+    summary.extend(
+        [
+            "",
+            f"总计: {total_paths} 个路径",
+            f"有效: {valid_count} 个",
+            f"无效: {invalid_count} 个",
+        ]
+    )
 
     return "\n".join(summary)
 
