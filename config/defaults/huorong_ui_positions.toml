@@ -1,0 +1,73 @@
+# ===========================================
+# 火绒安全软件 UI 元素相对位置配置
+# ===========================================
+# 说明：
+# - 相对位置使用窗口宽高的百分比表示（0.0 - 1.0）
+# - 坐标原点为窗口左上角
+# - 格式：[x_ratio, y_ratio]
+
+[window]
+# 窗口固定尺寸配置（用于可调整大小的窗口）
+default_width = 1280
+default_height = 720
+
+# 窗口是否可调整大小
+# 主窗口可调整，弹窗一般不可调整
+main_window_resizable = true
+dialog_window_resizable = false
+
+[positions]
+# 主界面按钮位置
+
+# 快速查杀按钮
+# 原图片：huorong_quick_scan_button.png
+quick_scan_button = [0.2, 0.4]
+
+# 暂停按钮（查杀过程中）
+# 原图片：huorong_pause_button.png
+pause_button = [0.5, 0.6]
+
+# 完成按钮（查杀完成后）
+# 原图片：huorong_complete_button.png
+complete_button = [0.5, 0.75]
+
+# 完成按钮（备用）
+# 原图片：huorong_complete_button_me.png
+complete_button_alt = [0.5, 0.8]
+
+# 安全日志图标
+# 原图片：huorong_security_log.png
+security_log_icon = [0.2, 0.15]
+
+# 导出日志按钮
+# 原图片：huorong_export_log_button.png
+export_log_button = [0.85, 0.1]
+
+# 另存为对话框中的标记
+# 原图片：huorong_save_mark.png
+save_dialog_mark = [0.3, 0.15]
+
+# 文件名输入框
+# 原图片：huorong_filename_input_box.png
+filename_input_box = [0.5, 0.5]
+
+# 保存按钮
+# 原图片：huorong_save_button.png
+save_button = [0.7, 0.85]
+
+# 导出完成标志
+# 原图片：huorong_export_complete.png
+export_complete_mark = [0.5, 0.5]
+
+# 隔离区按钮（注释中提到但未使用）
+quarantine_button = [0.3, 0.15]
+
+# 最大化窗口按钮（注释中提到但未使用）
+maximize_button = [0.95, 0.05]
+
+[tolerances]
+# 点击容差（像素），用于处理轻微的位置偏差
+click_tolerance = 10
+
+# 窗口尺寸容差（像素），用于判断窗口是否已调整到目标大小
+window_size_tolerance = 5

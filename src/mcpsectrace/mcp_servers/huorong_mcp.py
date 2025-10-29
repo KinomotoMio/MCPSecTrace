@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import io
 import os
@@ -9,9 +8,10 @@ import sys
 import time
 import urllib.request
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 
 import pyautogui
+import pygetwindow as gw
 from PIL import Image
 
 # --- 输出使用utf-8编码（仅在非测试环境） --
@@ -35,6 +35,215 @@ def debug_print(message: str):
     debug_mode = get_config_value("debug_mode", default=False)
     if debug_mode:
         print(message, file=sys.stderr)
+
+
+def load_ui_position(element_name: str) -> Tuple[float, float]:
+    """
+    从配置文件中加载UI元素的相对位置。
+
+    Args:
+        element_name: UI元素名称（在配置文件中的键名）
+
+    Returns:
+        (x_ratio, y_ratio) 相对位置元组
+    """
+    position = get_config_value(f"positions.{element_name}", default=[0.5, 0.5])
+    return tuple(position)
+
+
+def get_window_info(window_title: str) -> Optional[gw.Win32Window]:
+    """
+    获取指定标题的窗口对象。
+
+    Args:
+        window_title: 窗口标题（支持部分匹配）
+
+    Returns:
+        窗口对象，如果未找到则返回 None
+    """
+    try:
+        windows = gw.getWindowsWithTitle(window_title)
+        if windows:
+            return windows[0]
+        debug_print(f"未找到标题包含 '{window_title}' 的窗口")
+        return None
+    except Exception as e:
+        debug_print(f"获取窗口信息时出错: {e}")
+        return None
+
+
+def is_window_resizable(window) -> bool:
+    """
+    检查窗口是否可调整大小（通过检查窗口样式）。
+
+    Args:
+        window: pygetwindow 窗口对象
+
+    Returns:
+        如果窗口可调整大小返回 True，否则返回 False
+    """
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        # Windows API 常量
+        GWL_STYLE = -16
+        WS_SIZEBOX = 0x00040000
+
+        # 获取窗口句柄
+        hwnd = window._hWnd
+
+        # 获取窗口样式
+        user32 = ctypes.windll.user32
+        style = user32.GetWindowLongW(hwnd, GWL_STYLE)
+
+        # 检查是否有 WS_SIZEBOX 标志
+        return bool(style & WS_SIZEBOX)
+    except Exception as e:
+        debug_print(f"检查窗口样式时出错: {e}，默认返回可调整")
+        return True
+
+
+def adjust_window_size(window, target_width: int, target_height: int) -> bool:
+    """
+    调整窗口到指定大小。
+
+    Args:
+        window: pygetwindow 窗口对象
+        target_width: 目标宽度
+        target_height: 目标高度
+
+    Returns:
+        调整成功返回 True，否则返回 False
+    """
+    try:
+        tolerance = get_config_value("tolerances.window_size_tolerance", default=5)
+
+        # 检查当前尺寸
+        current_width = window.width
+        current_height = window.height
+
+        # 如果尺寸已经接近目标值，则不需要调整
+        if (abs(current_width - target_width) <= tolerance and
+            abs(current_height - target_height) <= tolerance):
+            debug_print(f"窗口尺寸已接近目标值 ({current_width}x{current_height})")
+            return True
+
+        # 调整窗口大小
+        window.resizeTo(target_width, target_height)
+        time.sleep(0.5)  # 等待窗口调整完成
+
+        # 验证调整结果
+        new_width = window.width
+        new_height = window.height
+
+        if (abs(new_width - target_width) <= tolerance and
+            abs(new_height - target_height) <= tolerance):
+            debug_print(f"窗口已调整为 {new_width}x{new_height}")
+            return True
+        else:
+            debug_print(f"窗口调整失败: 目标 {target_width}x{target_height}, 实际 {new_width}x{new_height}")
+            return False
+
+    except Exception as e:
+        debug_print(f"调整窗口大小时出错: {e}")
+        return False
+
+
+def calculate_absolute_position(window, x_ratio: float, y_ratio: float) -> Tuple[int, int]:
+    """
+    根据相对位置计算绝对屏幕坐标。
+
+    Args:
+        window: pygetwindow 窗口对象
+        x_ratio: X轴相对位置（0.0 - 1.0）
+        y_ratio: Y轴相对位置（0.0 - 1.0）
+
+    Returns:
+        (x, y) 绝对屏幕坐标
+    """
+    try:
+        # 获取窗口位置和尺寸
+        win_left = window.left
+        win_top = window.top
+        win_width = window.width
+        win_height = window.height
+
+        # 计算绝对坐标
+        abs_x = int(win_left + win_width * x_ratio)
+        abs_y = int(win_top + win_height * y_ratio)
+
+        debug_print(f"相对位置 ({x_ratio:.2f}, {y_ratio:.2f}) -> 绝对坐标 ({abs_x}, {abs_y})")
+        return (abs_x, abs_y)
+
+    except Exception as e:
+        debug_print(f"计算绝对坐标时出错: {e}")
+        # 返回屏幕中心作为备用
+        screen_width, screen_height = pyautogui.size()
+        return (screen_width // 2, screen_height // 2)
+
+
+def find_element_by_position(element_name: str, window_title: str = "火绒安全软件",
+                            timeout_seconds: int = None) -> Optional[Tuple[int, int]]:
+    """
+    根据元素名称和窗口标题，使用相对位置定位UI元素。
+
+    Args:
+        element_name: UI元素名称（在配置文件中的键名）
+        window_title: 窗口标题
+        timeout_seconds: 超时时间（秒）
+
+    Returns:
+        (x, y) 绝对屏幕坐标，如果失败则返回 None
+    """
+    if timeout_seconds is None:
+        timeout_seconds = get_config_value("automation.find_timeout", default=15)
+
+    debug_print(f"正在定位元素: '{element_name}'，时间限制为 {timeout_seconds} 秒...")
+    start_time = time.time()
+
+    while time.time() - start_time < timeout_seconds:
+        try:
+            # 获取窗口
+            window = get_window_info(window_title)
+            if not window:
+                debug_print(f"未找到窗口 '{window_title}'，等待中...")
+                time.sleep(1)
+                continue
+
+            # 激活窗口
+            try:
+                window.activate()
+            except:
+                pass  # 如果窗口已经是活动的，忽略错误
+
+            # 检查窗口是否可调整大小
+            if is_window_resizable(window):
+                # 获取目标尺寸
+                target_width = get_config_value("window.default_width", default=1280)
+                target_height = get_config_value("window.default_height", default=720)
+
+                # 调整窗口大小
+                if not adjust_window_size(window, target_width, target_height):
+                    debug_print("窗口调整失败，使用当前尺寸继续")
+            else:
+                debug_print("窗口不可调整大小，使用当前尺寸")
+
+            # 加载相对位置
+            x_ratio, y_ratio = load_ui_position(element_name)
+
+            # 计算绝对坐标
+            abs_pos = calculate_absolute_position(window, x_ratio, y_ratio)
+
+            debug_print(f"找到元素 '{element_name}'，坐标: {abs_pos}")
+            return abs_pos
+
+        except Exception as e:
+            debug_print(f"定位元素 '{element_name}' 时发生错误: {e}")
+            time.sleep(1)
+
+    debug_print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{element_name}'")
+    return None
 
 
 def get_sleep_time(base_type: str) -> float:
@@ -124,6 +333,32 @@ def click_image_at_location(location, description=""):
         return False
 
 
+def find_and_click_by_position(element_name: str, description: str = "",
+                               window_title: str = "火绒安全软件",
+                               timeout_seconds: int = 15) -> bool:
+    """
+    根据元素名称定位并点击UI元素（使用相对位置）。
+
+    Args:
+        element_name: UI元素名称（在配置文件中的键名）
+        description: 元素描述（用于日志）
+        window_title: 窗口标题
+        timeout_seconds: 超时时间（秒）
+
+    Returns:
+        点击成功返回 True，否则返回 False
+    """
+    if not description:
+        description = element_name
+
+    location = find_element_by_position(element_name, window_title, timeout_seconds)
+    if location:
+        return click_image_at_location(location, description)
+    else:
+        debug_print(f"未找到 '{description}'，点击失败")
+        return False
+
+
 def find_and_click(image_filename, confidence_level, timeout_seconds, description):
     """
     查找屏幕上的图片并点击。若成功，则返回true，否则返回false。
@@ -147,19 +382,14 @@ def ret2_top_page():
     """
     执行完功能后，返回首页。
     """
-    global COMPLETE_BUTTON_IMAGE
-    COMPLETE_BUTTON_IMAGE = (
-        "D:/FTAgent-master/tag_image/huorong/huorong_complete_button_me.png"
-    )
-    img_loc = find_image_on_screen(
-        COMPLETE_BUTTON_IMAGE,
-        confidence_level=0.6,
-        timeout_seconds=15,
+    if find_and_click_by_position(
+        element_name="complete_button_alt",
         description="完成按钮",
-    )
-    if img_loc:
-        click_image_at_location(img_loc, description="完成按钮")
+        timeout_seconds=15
+    ):
         debug_print("已经返回首页。")
+    else:
+        debug_print("未能点击完成按钮返回首页。")
 
 
 def read_QuarantineEx_db(db_path, file_path):
@@ -243,49 +473,47 @@ def scan_virus():
     start_huorong(HUORONG_PATH)
     debug_print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("long"))  # 等待应用程序加载
-    # 步骤2：点击“快速查杀”按钮
-    img_loc = find_image_on_screen(
-        "huorong_quick_scan_button.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
+
+    # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
+    if not find_and_click_by_position(
+        element_name="quick_scan_button",
         description="快速查杀按钮",
-    )
-    if img_loc:
-        click_image_at_location(img_loc, description="快速查杀按钮")
-        debug_print("点击快速查杀按钮成功。")
-    else:
+        timeout_seconds=15
+    ):
         debug_print("点击快速查杀按钮失败。")
         return "点击快速查杀按钮失败。"
+
+    debug_print("点击快速查杀按钮成功。")
     time.sleep(get_sleep_time("long"))
-    # 步骤3：检测是否正在查杀
-    if find_image_on_screen(
-        "huorong_pause_button.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
-        description="暂停按钮",
+
+    # 步骤3：检测是否正在查杀（检查暂停按钮位置）
+    if find_element_by_position(
+        element_name="pause_button",
+        timeout_seconds=15
     ):
         debug_print("正在执行快速查杀。")
     else:
         debug_print("未找到暂停按钮，说明未成功执行快速查杀。")
         return "未找到暂停按钮，说明未成功执行快速查杀。"
+
     # 步骤4：检测查杀是否完成
     start_time = time.time()
     interval = 300  # 5分钟
     while time.time() - start_time < interval:
-        img_loc = find_image_on_screen(
-            "huorong_complete_button.png",  # 火绒界面固定元素
-            confidence_level=0.6,
-            timeout_seconds=15,
-            description="快速查杀完成",
+        location = find_element_by_position(
+            element_name="complete_button",
+            timeout_seconds=15
         )
-        if img_loc:
-            debug_print(f"检测到查杀完成标志，坐标为: {img_loc}")
+        if location:
+            debug_print(f"检测到查杀完成标志，坐标为: {location}")
             ret2_top_page()
             return "快速查杀完成。"
         time.sleep(get_sleep_time("medium"))
+
     # 步骤5：返回查杀结果
     # 待补充（OCR识别查杀结果界面、联动日志查询）
     # 步骤6：点击完成，返回首页
+    return "快速查杀超时。"
 
 
 @mcp.tool()
@@ -383,53 +611,53 @@ def get_security_log():
     time.sleep(get_sleep_time("long"))
     debug_print("请确保火绒安全的首页是当前活动窗口，或者至少是可见的。")
 
-    # 1.点击首页的安全日志图标
-    if not find_and_click(
-        "huorong_security_log.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=20,
+    # 1.点击首页的安全日志图标（使用相对位置定位）
+    if not find_and_click_by_position(
+        element_name="security_log_icon",
         description="安全日志",
+        timeout_seconds=20
     ):
         return "未能找到安全日志图标。"
+
     time.sleep(get_sleep_time("medium"))
     debug_print("安全日志界面已打开。")
 
     # 2.检查今日安全日志是否为空
-    # if find_image_on_screen(LOG_CHECK_IMAGE, confidence_level=0.6, timeout_seconds=15, description="今日安全日志检查"):
+    # if find_element_by_position("log_check_mark", timeout_seconds=15):
     #     debug_print("由总项目数可知，今日没有安全日志，无法导出。")
     #     return "由总项目数可知，今日没有安全日志，无法导出。"
 
-    # 3.若不为空，则点击导出日志按钮
+    # 3.若不为空，则点击导出日志按钮（使用相对位置定位）
     debug_print("尝试点击导出日志按钮...")
-    if not find_and_click(
-        "huorong_export_log_button.png",  # 火绒界面固定元素
-        confidence_level=0.9,
-        timeout_seconds=15,
+    if not find_and_click_by_position(
+        element_name="export_log_button",
         description="导出日志按钮",
+        timeout_seconds=15
     ):
         return "未能找到导出日志按钮，或点击失败。"
+
     time.sleep(get_sleep_time("medium"))
-    # 检查是否点击成功
-    if not find_image_on_screen(
-        "huorong_save_mark.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
-        description="另存为标记",
+
+    # 检查是否点击成功（检查另存为对话框标记）
+    if not find_element_by_position(
+        element_name="save_dialog_mark",
+        window_title="另存为",
+        timeout_seconds=15
     ):
         debug_print("未能找到'另存为'标记。")
         return "未能找到'另存为'标记，说明点击'导出日志'按钮失败。"
 
-    # 4.点击文件名输入框
+    # 4.点击文件名输入框（使用相对位置定位）
     debug_print("尝试点击文件名输入框...")
-    # 注意：文件名输入框的截图可能需要精确，或者可以考虑点击 "文件名：" 标签右侧固定偏移量（更复杂）
-    if not find_and_click(
-        "huorong_filename_input_box.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
+    if not find_and_click_by_position(
+        element_name="filename_input_box",
         description="文件名输入框",
+        window_title="另存为",
+        timeout_seconds=15
     ):
         debug_print("未能找到文件名输入框。")
         return "未能找到文件名输入框。"
+
     time.sleep(get_sleep_time("medium"))  # 给输入框获取焦点的时间
 
     # 5.输入文件名
@@ -439,29 +667,29 @@ def get_security_log():
     time.sleep(get_sleep_time("long"))  # 打字时间
     pyautogui.press("enter")  # 模拟按一次回车（考虑到中文输入法）
 
-    # 6.点击"保存"按钮
+    # 6.点击"保存"按钮（使用相对位置定位）
     debug_print("尝试点击'保存'按钮...")
-    if not find_and_click(
-        "huorong_save_button.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
+    if not find_and_click_by_position(
+        element_name="save_button",
         description="保存按钮",
+        window_title="另存为",
+        timeout_seconds=15
     ):
         return "未能找到保存按钮。"
+
     debug_print(
         f"安全日志导出流程执行完毕，请查看文件D:/Desktop/{current_time_str}.txt。"
     )
     time.sleep(get_sleep_time("medium"))  # 等待保存操作完成
 
     # 7.检查是否导出成功
-    if not find_image_on_screen(
-        "huorong_export_complete.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
-        description="导出完成标志",
+    if not find_element_by_position(
+        element_name="export_complete_mark",
+        timeout_seconds=15
     ):
         debug_print("导出日志失败，未找到导出完成标志。")
         return "导出日志失败，未找到导出完成标志。"
+
     return f"日志导出成功，请查看文件{current_time_str}.txt，默认在Desktop目录下。"
     # 不足：其他人的日志存储路径不一定在 D:/Desktop/。
 
@@ -471,34 +699,32 @@ def main():
     """
     根据是否处于调试模式，执行不同的操作。
     """
-    # 获取参数
-    global HUORONG_PATH, QUARANTINE_DB_PATH, LOG_NAME
-    parser = argparse.ArgumentParser(description="火绒MCP工具")
-    parser.add_argument(
-        "--huorong-path", type=str, required=True, help="火绒安全软件的完整路径"
-    )
-    parser.add_argument("--debug", action="store_true", help="调试模式")
-    args = parser.parse_args()
-    HUORONG_PATH = args.huorong_path
-    # DEBUG_MODE现在通过配置系统管理
-    # LOG_NAME = setup_log("./logs/huorong","huorong")
+    # 从配置文件读取火绒路径
+    global HUORONG_PATH
+    HUORONG_PATH = get_config_value("paths.huorong_exe", default="")
 
-    # init_global_variables(DEBUG_MODE, LOG_NAME)
+    # 验证火绒路径
+    if not HUORONG_PATH:
+        error_msg = "错误：未配置火绒路径。请在 config/user_settings.toml 中设置 paths.huorong_exe"
+        print(error_msg, file=sys.stderr)
+        debug_print(error_msg)
+    elif not os.path.exists(HUORONG_PATH):
+        warning_msg = f"警告：火绒路径不存在: {HUORONG_PATH}"
+        print(warning_msg, file=sys.stderr)
+        debug_print(warning_msg)
+    else:
+        debug_print(f"已从配置文件加载火绒路径: {HUORONG_PATH}")
 
-    # 1. 检查VS code权限
-    # debug_print("--- VS code 管理员权限检查 ---")
-    # if not is_admin():
-    #     msg = "未检测到管理员权限，为了使用huorong MCP，请以管理员身份打开VS Code。"
-    #     debug_print(msg)
-    #     print(msg, file=sys.stderr)
-    #     return msg
-    # else:
-    #     debug_print("当前已具备管理员权限。")
+    print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
+    debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
+    debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
 
-    print("--- 当前处于正式运行模式 ---")
     mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
 if __name__ == "__main__":
-    main()
+    global HUORONG_PATH
+    HUORONG_PATH = get_config_value("paths.huorong_exe", default="")
+    # main()
+    scan_virus()
