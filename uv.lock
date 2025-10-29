@@ -277,13 +277,13 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
-    { name = "isort" },
     { name = "mcp" },
     { name = "numpy" },
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "pyautogui" },
     { name = "pydantic" },
+    { name = "pygetwindow" },
     { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "selenium" },
 ]
@@ -301,7 +301,6 @@ dev = [
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "isort", specifier = ">=6.0.1" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=5.13.0" },
     { name = "mcp", specifier = ">=1.0.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
@@ -310,6 +309,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pyautogui", specifier = ">=0.9.54" },
     { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "pygetwindow", specifier = ">=0.0.9" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=311" },
