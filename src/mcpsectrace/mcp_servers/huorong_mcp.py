@@ -74,7 +74,7 @@ def find_image_on_screen(
     if not description:
         description = f"位置({x_ratio:.2f}, {y_ratio:.2f})"
 
-    debug_print(
+    print(
         f"正在定位元素: '{description}' (相对位置: {x_ratio:.2f}, {y_ratio:.2f})，时间限制为{timeout_seconds}秒..."
     )
     start_time = time.time()
@@ -83,7 +83,7 @@ def find_image_on_screen(
             # 获取前台窗口句柄
             hwnd = win32gui.GetForegroundWindow()
             if not hwnd:
-                debug_print("未找到前台窗口，重试中...")
+                print("未找到前台窗口，重试中...")
                 time.sleep(get_sleep_time("short"))
                 continue
 
@@ -98,15 +98,15 @@ def find_image_on_screen(
             abs_y = int(win_top + win_height * y_ratio)
             location = (abs_x, abs_y)
 
-            debug_print(f"找到 '{description}'，绝对坐标: {location}")
-            debug_print(f"  窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
+            print(f"找到 '{description}'，绝对坐标: {location}")
+            print(f"  窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
             return location
 
         except Exception as e:
-            debug_print(f"定位元素 '{description}' 时发生错误: {e}")
+            print(f"定位元素 '{description}' 时发生错误: {e}")
             time.sleep(get_sleep_time("short"))
 
-    debug_print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{description}'。")
+    print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{description}'。")
     return None
 
 
@@ -220,19 +220,19 @@ def start_huorong(path):
     """
     try:
         if not path or not os.path.exists(path):
-            debug_print(
+            print(
                 f"错误：应用程序路径 '{path}' 无效或不存在。\n\
                         请确保 HUORONG_PATH 变量已正确设置为火绒安全的启动程序路径。\n\
                         脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。"
             )
             return None
-        debug_print(f"正在尝试启动火绒: {path}")
+        print(f"正在尝试启动火绒: {path}")
         app = subprocess.Popen(path)
-        debug_print(f"应用程序已启动 (进程ID: {app.pid})。")
+        print(f"应用程序已启动 (进程ID: {app.pid})。")
         return app.pid
     except Exception as e:
-        debug_print(f"启动应用程序 '{path}' 时发生错误: {e}")
-        debug_print("脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。")
+        print(f"启动应用程序 '{path}' 时发生错误: {e}")
+        print("脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。")
         return None
 
 
@@ -245,11 +245,11 @@ def scan_virus():
     """
     # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
     start_huorong(HUORONG_PATH)
-    debug_print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
+    print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("long"))  # 等待应用程序加载
 
     # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
-    quick_scan_pos = get_config_value("positions.huorong.quick_scan_button", default=[0.4, 0.3])
+    quick_scan_pos = get_config_value("positions.huorong.quick_scan_button", default=[0.2, 0.4])
     img_loc = find_image_on_screen(
         x_ratio=quick_scan_pos[0],
         y_ratio=quick_scan_pos[1],
@@ -258,9 +258,9 @@ def scan_virus():
     )
     if img_loc:
         click_image_at_location(img_loc, description="快速查杀按钮")
-        debug_print("点击快速查杀按钮成功。")
+        print("点击快速查杀按钮成功。")
     else:
-        debug_print("点击快速查杀按钮失败。")
+        print("点击快速查杀按钮失败。")
         return "点击快速查杀按钮失败。"
     time.sleep(get_sleep_time("long"))
 
