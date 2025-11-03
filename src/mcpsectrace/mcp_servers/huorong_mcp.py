@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import io
 import os
@@ -28,6 +27,9 @@ except ImportError:
     sys.exit(1)
 
 mcp = FastMCP("huorong", log_level="ERROR", port=8888)
+
+# --- 全局变量 ---
+HUORONG_PATH = ""  # 将在main()中从配置文件加载
 
 
 def debug_print(message: str):
@@ -471,31 +473,26 @@ def main():
     """
     根据是否处于调试模式，执行不同的操作。
     """
-    # 获取参数
-    global HUORONG_PATH, QUARANTINE_DB_PATH, LOG_NAME
-    parser = argparse.ArgumentParser(description="火绒MCP工具")
-    parser.add_argument(
-        "--huorong-path", type=str, required=True, help="火绒安全软件的完整路径"
-    )
-    parser.add_argument("--debug", action="store_true", help="调试模式")
-    args = parser.parse_args()
-    HUORONG_PATH = args.huorong_path
-    # DEBUG_MODE现在通过配置系统管理
-    # LOG_NAME = setup_log("./logs/huorong","huorong")
+    # 从配置文件读取火绒路径
+    global HUORONG_PATH
+    HUORONG_PATH = get_config_value("paths.huorong_exe", default="")
 
-    # init_global_variables(DEBUG_MODE, LOG_NAME)
+    # 验证火绒路径
+    if not HUORONG_PATH:
+        error_msg = "错误：未配置火绒路径。请在 config/user_settings.toml 中设置 paths.huorong_exe"
+        print(error_msg, file=sys.stderr)
+        debug_print(error_msg)
+    elif not os.path.exists(HUORONG_PATH):
+        warning_msg = f"警告：火绒路径不存在: {HUORONG_PATH}"
+        print(warning_msg, file=sys.stderr)
+        debug_print(warning_msg)
+    else:
+        debug_print(f"已从配置文件加载火绒路径: {HUORONG_PATH}")
 
-    # 1. 检查VS code权限
-    # debug_print("--- VS code 管理员权限检查 ---")
-    # if not is_admin():
-    #     msg = "未检测到管理员权限，为了使用huorong MCP，请以管理员身份打开VS Code。"
-    #     debug_print(msg)
-    #     print(msg, file=sys.stderr)
-    #     return msg
-    # else:
-    #     debug_print("当前已具备管理员权限。")
+    print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
+    debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
+    debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
 
-    print("--- 当前处于正式运行模式 ---")
     mcp.run(transport="stdio")
 
 
