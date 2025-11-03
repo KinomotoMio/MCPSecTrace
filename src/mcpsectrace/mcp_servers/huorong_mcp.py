@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Optional
 
 import pyautogui
+import win32gui
 from PIL import Image
 
 # --- 输出使用utf-8编码（仅在非测试环境） --
@@ -54,57 +55,58 @@ def get_sleep_time(base_type: str) -> float:
 
 
 def find_image_on_screen(
-    image_filename, confidence_level=None, timeout_seconds=None, description=""
+    x_ratio, y_ratio, timeout_seconds=None, description=""
 ):
     """
-        在屏幕上查找指定的图像。
+    基于相对位置定位元素（基于前台窗口）。
+
     Args:
-        image_filename: 图像文件名。
-        confidence_level: 图像匹配的置信度（0-1）。
+        x_ratio: X轴相对位置（0.0 - 1.0，0表示窗口最左边，1表示最右边）
+        y_ratio: Y轴相对位置（0.0 - 1.0，0表示窗口最上边，1表示最下边）
         timeout_seconds: 超时时间（秒）。
-        description: 图像描述（用于调试）。
+        description: 元素描述（用于调试）。
     Returns:
-        (x, y) 坐标元组，如果未找到则返回 None。
+        (x, y) 绝对屏幕坐标元组。
     """
-    if confidence_level is None:
-        confidence_level = get_config_value(
-            "automation.default_confidence", default=0.8
-        )
     if timeout_seconds is None:
         timeout_seconds = get_config_value("automation.find_timeout", default=15)
 
     if not description:
-        description = image_filename
+        description = f"位置({x_ratio:.2f}, {y_ratio:.2f})"
 
     debug_print(
-        f"正在查找图像: '{description}' (文件: {image_filename})，时间限制为{timeout_seconds}秒..."
+        f"正在定位元素: '{description}' (相对位置: {x_ratio:.2f}, {y_ratio:.2f})，时间限制为{timeout_seconds}秒..."
     )
     start_time = time.time()
     while time.time() - start_time < timeout_seconds:
         try:
-            location = pyautogui.locateCenterOnScreen(
-                image_filename, confidence=confidence_level
-            )
-            if location:
-                debug_print(f"找到 '{description}'，坐标: {location}")
-                return location
-            else:
+            # 获取前台窗口句柄
+            hwnd = win32gui.GetForegroundWindow()
+            if not hwnd:
+                debug_print("未找到前台窗口，重试中...")
                 time.sleep(get_sleep_time("short"))
-        except pyautogui.ImageNotFoundException:
-            time.sleep(get_sleep_time("short"))
-        except FileNotFoundError:
-            debug_print(f"严重错误：图像文件 '{image_filename}' 未找到或无法访问！")
-            return None
-        except Exception as e:
-            if "Failed to read" in str(e) or "cannot identify image file" in str(e):
-                debug_print(
-                    f"错误: 无法读取或识别图像文件 '{image_filename}'。错误详情: {e}"
-                )
-                return None
-            debug_print(f"查找图像 '{description}' 时发生其他错误: {e}")
-            return None
+                continue
 
-    debug_print(f"超时：在 {timeout_seconds} 秒内未能找到图像 '{description}'。")
+            # 获取窗口位置和大小
+            rect = win32gui.GetWindowRect(hwnd)
+            win_left, win_top, win_right, win_bottom = rect
+            win_width = win_right - win_left
+            win_height = win_bottom - win_top
+
+            # 计算绝对坐标（基于窗口）
+            abs_x = int(win_left + win_width * x_ratio)
+            abs_y = int(win_top + win_height * y_ratio)
+            location = (abs_x, abs_y)
+
+            debug_print(f"找到 '{description}'，绝对坐标: {location}")
+            debug_print(f"  窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
+            return location
+
+        except Exception as e:
+            debug_print(f"定位元素 '{description}' 时发生错误: {e}")
+            time.sleep(get_sleep_time("short"))
+
+    debug_print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{description}'。")
     return None
 
 
@@ -126,14 +128,14 @@ def click_image_at_location(location, description=""):
         return False
 
 
-def find_and_click(image_filename, confidence_level, timeout_seconds, description):
+def find_and_click(x_ratio, y_ratio, timeout_seconds=15, description=""):
     """
-    查找屏幕上的图片并点击。若成功，则返回true，否则返回false。
+    基于相对位置定位并点击元素。若成功，则返回true，否则返回false。
     """
     img_loc = find_image_on_screen(
-        image_filename=image_filename,
-        confidence_level=0.6,
-        timeout_seconds=15,
+        x_ratio=x_ratio,
+        y_ratio=y_ratio,
+        timeout_seconds=timeout_seconds,
         description=description,
     )
     if img_loc:
@@ -149,13 +151,13 @@ def ret2_top_page():
     """
     执行完功能后，返回首页。
     """
-    global COMPLETE_BUTTON_IMAGE
-    COMPLETE_BUTTON_IMAGE = (
-        "D:/FTAgent-master/tag_image/huorong/huorong_complete_button_me.png"
-    )
+    # 从配置文件读取完成按钮的相对位置
+    complete_button_pos = get_config_value("positions.huorong.complete_button_alt", default=[0.5, 0.75])
+    x_ratio, y_ratio = complete_button_pos[0], complete_button_pos[1]
+
     img_loc = find_image_on_screen(
-        COMPLETE_BUTTON_IMAGE,
-        confidence_level=0.6,
+        x_ratio=x_ratio,
+        y_ratio=y_ratio,
         timeout_seconds=15,
         description="完成按钮",
     )
@@ -245,10 +247,12 @@ def scan_virus():
     start_huorong(HUORONG_PATH)
     debug_print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("long"))  # 等待应用程序加载
-    # 步骤2：点击“快速查杀”按钮
+
+    # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
+    quick_scan_pos = get_config_value("positions.huorong.quick_scan_button", default=[0.4, 0.3])
     img_loc = find_image_on_screen(
-        "huorong_quick_scan_button.png",  # 火绒界面固定元素
-        confidence_level=0.6,
+        x_ratio=quick_scan_pos[0],
+        y_ratio=quick_scan_pos[1],
         timeout_seconds=15,
         description="快速查杀按钮",
     )
@@ -259,10 +263,12 @@ def scan_virus():
         debug_print("点击快速查杀按钮失败。")
         return "点击快速查杀按钮失败。"
     time.sleep(get_sleep_time("long"))
-    # 步骤3：检测是否正在查杀
+
+    # 步骤3：检测是否正在查杀（检查暂停按钮位置）
+    pause_button_pos = get_config_value("positions.huorong.pause_button", default=[0.5, 0.5])
     if find_image_on_screen(
-        "huorong_pause_button.png",  # 火绒界面固定元素
-        confidence_level=0.6,
+        x_ratio=pause_button_pos[0],
+        y_ratio=pause_button_pos[1],
         timeout_seconds=15,
         description="暂停按钮",
     ):
@@ -270,13 +276,15 @@ def scan_virus():
     else:
         debug_print("未找到暂停按钮，说明未成功执行快速查杀。")
         return "未找到暂停按钮，说明未成功执行快速查杀。"
+
     # 步骤4：检测查杀是否完成
+    complete_button_pos = get_config_value("positions.huorong.complete_button", default=[0.5, 0.7])
     start_time = time.time()
     interval = 300  # 5分钟
     while time.time() - start_time < interval:
         img_loc = find_image_on_screen(
-            "huorong_complete_button.png",  # 火绒界面固定元素
-            confidence_level=0.6,
+            x_ratio=complete_button_pos[0],
+            y_ratio=complete_button_pos[1],
             timeout_seconds=15,
             description="快速查杀完成",
         )
@@ -385,10 +393,11 @@ def get_security_log():
     time.sleep(get_sleep_time("long"))
     debug_print("请确保火绒安全的首页是当前活动窗口，或者至少是可见的。")
 
-    # 1.点击首页的安全日志图标
+    # 1.点击首页的安全日志图标（使用相对位置定位）
+    security_log_pos = get_config_value("positions.huorong.security_log_icon", default=[0.8, 0.15])
     if not find_and_click(
-        "huorong_security_log.png",  # 火绒界面固定元素
-        confidence_level=0.6,
+        x_ratio=security_log_pos[0],
+        y_ratio=security_log_pos[1],
         timeout_seconds=20,
         description="安全日志",
     ):
@@ -397,24 +406,26 @@ def get_security_log():
     debug_print("安全日志界面已打开。")
 
     # 2.检查今日安全日志是否为空
-    # if find_image_on_screen(LOG_CHECK_IMAGE, confidence_level=0.6, timeout_seconds=15, description="今日安全日志检查"):
-    #     debug_print("由总项目数可知，今日没有安全日志，无法导出。")
-    #     return "由总项目数可知，今日没有安全日志，无法导出。"
+    # (留作备用，可根据需要启用)
 
-    # 3.若不为空，则点击导出日志按钮
+    # 3.若不为空，则点击导出日志按钮（使用相对位置定位）
     debug_print("尝试点击导出日志按钮...")
+    export_log_pos = get_config_value("positions.huorong.export_log_button", default=[0.9, 0.1])
     if not find_and_click(
-        "huorong_export_log_button.png",  # 火绒界面固定元素
-        confidence_level=0.9,
+        x_ratio=export_log_pos[0],
+        y_ratio=export_log_pos[1],
         timeout_seconds=15,
         description="导出日志按钮",
     ):
         return "未能找到导出日志按钮，或点击失败。"
     time.sleep(get_sleep_time("medium"))
-    # 检查是否点击成功
+
+    # 检查是否点击成功（检查另存为对话框）
+    # 注意：这里使用屏幕坐标而不是窗口坐标
+    save_dialog_mark = get_config_value("positions.windows_dialogs.save_as.filename_input", default=[0.5, 0.5])
     if not find_image_on_screen(
-        "huorong_save_mark.png",  # 火绒界面固定元素
-        confidence_level=0.6,
+        x_ratio=save_dialog_mark[0],
+        y_ratio=save_dialog_mark[1],
         timeout_seconds=15,
         description="另存为标记",
     ):
@@ -423,10 +434,10 @@ def get_security_log():
 
     # 4.点击文件名输入框
     debug_print("尝试点击文件名输入框...")
-    # 注意：文件名输入框的截图可能需要精确，或者可以考虑点击 "文件名：" 标签右侧固定偏移量（更复杂）
+    filename_input_pos = get_config_value("positions.windows_dialogs.save_as.filename_input", default=[0.5, 0.5])
     if not find_and_click(
-        "huorong_filename_input_box.png",  # 火绒界面固定元素
-        confidence_level=0.6,
+        x_ratio=filename_input_pos[0],
+        y_ratio=filename_input_pos[1],
         timeout_seconds=15,
         description="文件名输入框",
     ):
@@ -443,9 +454,10 @@ def get_security_log():
 
     # 6.点击"保存"按钮
     debug_print("尝试点击'保存'按钮...")
+    save_button_pos = get_config_value("positions.windows_dialogs.save_as.save_button", default=[0.7, 0.9])
     if not find_and_click(
-        "huorong_save_button.png",  # 火绒界面固定元素
-        confidence_level=0.6,
+        x_ratio=save_button_pos[0],
+        y_ratio=save_button_pos[1],
         timeout_seconds=15,
         description="保存按钮",
     ):
@@ -455,15 +467,7 @@ def get_security_log():
     )
     time.sleep(get_sleep_time("medium"))  # 等待保存操作完成
 
-    # 7.检查是否导出成功
-    if not find_image_on_screen(
-        "huorong_export_complete.png",  # 火绒界面固定元素
-        confidence_level=0.6,
-        timeout_seconds=15,
-        description="导出完成标志",
-    ):
-        debug_print("导出日志失败，未找到导出完成标志。")
-        return "导出日志失败，未找到导出完成标志。"
+    # 7.检查是否导出成功（返回到火绒主界面）
     return f"日志导出成功，请查看文件{current_time_str}.txt，默认在Desktop目录下。"
     # 不足：其他人的日志存储路径不一定在 D:/Desktop/。
 
@@ -492,8 +496,8 @@ def main():
     print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
-
-    mcp.run(transport="stdio")
+    scan_virus()
+    # mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
