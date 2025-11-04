@@ -9,14 +9,17 @@
 # 快速查杀按钮
 quick_scan_button = [0.2, 0.4]
 
+# 全盘查杀按钮
+full_scan_button = [0.2, 0.5]
+
 # 暂停按钮（查杀时显示）
-pause_button = [0.5, 0.5]
+pause_button = [0.9, 0.128]
 
 # 完成按钮（查杀完成时显示）
-complete_button = [0.5, 0.7]
+complete_button = [0.9, 0.128]
 
 # 完成按钮备选位置（某些界面版本）
-complete_button_alt = [0.5, 0.75]
+complete_button_alt = [0.9, 0.128]
 
 # 安全日志图标
 security_log_icon = [0.8, 0.15]

@@ -203,7 +203,7 @@ def ret2_top_page():
     执行完功能后，返回首页。
     """
     # 从配置文件读取完成按钮的相对位置
-    complete_button_pos = get_config_value("positions.huorong.complete_button_alt", default=[0.5, 0.75])
+    complete_button_pos = get_config_value("positions.huorong.complete_button_alt", default=[0.9, 0.128])
     x_ratio, y_ratio = complete_button_pos[0], complete_button_pos[1]
 
     img_loc = find_image_on_screen(
@@ -288,7 +288,7 @@ def start_huorong(path):
 
 
 @mcp.tool()
-def scan_virus():
+def quick_scan():
     """
         执行火绒安全软件的快速查杀功能。
     Args：
@@ -301,6 +301,7 @@ def scan_virus():
 
     # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
     quick_scan_pos = get_config_value("positions.huorong.quick_scan_button", default=[0.2, 0.4])
+    print(quick_scan_pos)
     img_loc = find_image_on_screen(
         x_ratio=quick_scan_pos[0],
         y_ratio=quick_scan_pos[1],
@@ -391,6 +392,112 @@ def scan_virus():
     # 超时返回
     debug_print("查杀监控超时（10分钟）")
     return f"查杀监控超时，最后的截图保存在: {log_dir}"
+
+
+@mcp.tool()
+def full_scan():
+    """
+        执行火绒安全软件的全盘查杀功能。
+    Args：
+        None
+    """
+    # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
+    start_huorong(HUORONG_PATH)
+    print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
+    time.sleep(get_sleep_time("short"))  # 等待应用程序加载
+
+    # 步骤2：点击"全盘查杀"按钮（使用相对位置定位）
+    full_scan_pos = get_config_value("positions.huorong.full_scan_button", default=[0.2, 0.5])
+    img_loc = find_image_on_screen(
+        x_ratio=full_scan_pos[0],
+        y_ratio=full_scan_pos[1],
+        timeout_seconds=15,
+        description="全盘查杀按钮",
+    )
+    if img_loc:
+        click_image_at_location(img_loc, description="全盘查杀按钮")
+        print("点击全盘查杀按钮成功。")
+    else:
+        print("点击全盘查杀按钮失败。")
+        return "点击全盘查杀按钮失败。"
+    time.sleep(get_sleep_time("short"))
+
+    # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
+    # 创建 mcp_servers/logs/huorong 目录
+    log_dir = Path(__file__).parent / "logs" / "huorong"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 截取右上部分（从50%宽度到100%，从0%高度到50%）
+    screenshot_path = log_dir / f"full_scan_check_{datetime.now().strftime('%Y%m%d')}.png"
+    region_img = capture_window_region(
+        x_start_ratio=0.5,
+        y_start_ratio=0.0,
+        x_end_ratio=1.0,
+        y_end_ratio=0.5,
+        save_path=str(screenshot_path)
+    )
+
+    if region_img is None:
+        debug_print("截取窗口右上部分失败。")
+        return "截取窗口右上部分失败。"
+
+    # 使用OCR识别截图中是否包含"暂停"字符串
+    try:
+        recognizer = ImageRecognition()
+        if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
+            print(f"检测到'暂停'字符，说明正在执行全盘查杀。截图已保存到: {screenshot_path}")
+        else:
+            print(f"未找到'暂停'字符，说明未成功执行全盘查杀。截图已保存到: {screenshot_path}")
+            return f"未找到'暂停'字符，说明未成功执行全盘查杀。截图路径: {screenshot_path}"
+    except Exception as e:
+        import traceback
+        error_msg = f"OCR识别过程中出错: {e}\n{traceback.format_exc()}"
+        debug_print(error_msg)
+        return error_msg
+
+    # 步骤4：检测查杀是否完成（每10秒截取右上角，使用OCR识别"完成"字符串）
+    start_time = time.time()
+    interval = 3600  # 60分钟（全盘查杀耗时较长）
+    check_interval = 10  # 每10秒检测一次
+    last_check_time = 0
+    recognizer = ImageRecognition()
+
+    print("开始监控全盘查杀进度，每10秒检测一次...")
+    while time.time() - start_time < interval:
+        current_time = time.time()
+
+        # 每10秒检测一次
+        if current_time - last_check_time >= check_interval:
+            last_check_time = current_time
+            elapsed_time = current_time - start_time
+
+            # 截取右上部分
+            screenshot_path = log_dir / f"full_scan_progress_{datetime.now().strftime('%Y%m%d')}.png"
+            region_img = capture_window_region(
+                x_start_ratio=0.5,
+                y_start_ratio=0.0,
+                x_end_ratio=1.0,
+                y_end_ratio=0.5,
+                save_path=str(screenshot_path)
+            )
+
+            if region_img is None:
+                debug_print("截取窗口右上部分失败。")
+                continue
+
+            # 使用OCR识别是否包含"完成"字符串
+            if recognizer.contains_text(str(screenshot_path), "完成", case_sensitive=False):
+                print(f"检测到'完成'字符，说明全盘查杀已完成。耗时: {int(elapsed_time)}秒")
+                ret2_top_page()
+                return f"全盘查杀完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
+
+            print(f"[{int(elapsed_time)}s] 继续等待全盘查杀完成...")
+
+        time.sleep(1)
+
+    # 超时返回
+    debug_print("全盘查杀监控超时（60分钟）")
+    return f"全盘查杀监控超时，最后的截图保存在: {log_dir}"
 
 
 @mcp.tool()
@@ -591,7 +698,7 @@ def main():
     print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
-    scan_virus()
+    quick_scan()
     # mcp.run(transport="stdio")
 
 
