@@ -8,6 +8,7 @@ import sys
 import time
 import urllib.request
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 import pyautogui
@@ -19,6 +20,7 @@ if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 from mcpsectrace.config import get_config_value
+from mcpsectrace.utils.image_recognition import ImageRecognition
 
 # --- 导入MCP ---
 try:
@@ -99,7 +101,7 @@ def find_image_on_screen(
             location = (abs_x, abs_y)
 
             print(f"找到 '{description}'，绝对坐标: {location}")
-            print(f"  窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
+            print(f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
             return location
 
         except Exception as e:
@@ -145,6 +147,55 @@ def find_and_click(x_ratio, y_ratio, timeout_seconds=15, description=""):
     else:
         debug_print("未找到{0}，点击失败。".format(description))
         return False
+
+
+def capture_window_region(x_start_ratio=0.5, y_start_ratio=0.0, x_end_ratio=1.0, y_end_ratio=1.0, save_path=None):
+    """
+    截取前台窗口的指定区域
+
+    Args:
+        x_start_ratio: 起始X坐标比例（0.0-1.0）
+        y_start_ratio: 起始Y坐标比例（0.0-1.0）
+        x_end_ratio: 结束X坐标比例（0.0-1.0）
+        y_end_ratio: 结束Y坐标比例（0.0-1.0）
+        save_path: 保存路径，如果为None则不保存
+
+    Returns:
+        PIL.Image 对象或 None
+    """
+    try:
+        # 获取前台窗口句柄
+        hwnd = win32gui.GetForegroundWindow()
+        if not hwnd:
+            print("未找到前台窗口")
+            return None
+
+        # 获取窗口位置和大小
+        rect = win32gui.GetWindowRect(hwnd)
+        win_left, win_top, win_right, win_bottom = rect
+        win_width = win_right - win_left
+        win_height = win_bottom - win_top
+
+        # 计算区域坐标
+        crop_left = int(win_left + win_width * x_start_ratio)
+        crop_top = int(win_top + win_height * y_start_ratio)
+        crop_right = int(win_left + win_width * x_end_ratio)
+        crop_bottom = int(win_top + win_height * y_end_ratio)
+
+        # 截取屏幕
+        screenshot = pyautogui.screenshot()
+        cropped = screenshot.crop((crop_left, crop_top, crop_right, crop_bottom))
+
+        # 保存截图
+        if save_path:
+            cropped.save(save_path)
+            debug_print(f"截图已保存到: {save_path}")
+
+        return cropped
+
+    except Exception as e:
+        print(f"截取窗口区域时出错: {e}")
+        return None
 
 
 def ret2_top_page():
@@ -246,7 +297,7 @@ def scan_virus():
     # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
     start_huorong(HUORONG_PATH)
     print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
-    time.sleep(get_sleep_time("long"))  # 等待应用程序加载
+    time.sleep(get_sleep_time("short"))  # 等待应用程序加载
 
     # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
     quick_scan_pos = get_config_value("positions.huorong.quick_scan_button", default=[0.2, 0.4])
@@ -262,40 +313,84 @@ def scan_virus():
     else:
         print("点击快速查杀按钮失败。")
         return "点击快速查杀按钮失败。"
-    time.sleep(get_sleep_time("long"))
+    time.sleep(get_sleep_time("short"))
 
-    # 步骤3：检测是否正在查杀（检查暂停按钮位置）
-    pause_button_pos = get_config_value("positions.huorong.pause_button", default=[0.5, 0.5])
-    if find_image_on_screen(
-        x_ratio=pause_button_pos[0],
-        y_ratio=pause_button_pos[1],
-        timeout_seconds=15,
-        description="暂停按钮",
-    ):
-        debug_print("正在执行快速查杀。")
-    else:
-        debug_print("未找到暂停按钮，说明未成功执行快速查杀。")
-        return "未找到暂停按钮，说明未成功执行快速查杀。"
+    # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
+    # 创建 mcp_servers/logs/huorong 目录
+    log_dir = Path(__file__).parent / "logs" / "huorong"
+    log_dir.mkdir(parents=True, exist_ok=True)
 
-    # 步骤4：检测查杀是否完成
-    complete_button_pos = get_config_value("positions.huorong.complete_button", default=[0.5, 0.7])
+    # 截取右上部分（从50%宽度到100%，从0%高度到50%）
+    screenshot_path = log_dir / f"scan_check_{datetime.now().strftime('%Y%m%d')}.png"
+    region_img = capture_window_region(
+        x_start_ratio=0.5,
+        y_start_ratio=0.0,
+        x_end_ratio=1.0,
+        y_end_ratio=0.5,
+        save_path=str(screenshot_path)
+    )
+
+    if region_img is None:
+        debug_print("截取窗口右上部分失败。")
+        return "截取窗口右上部分失败。"
+
+    # 使用OCR识别截图中是否包含"暂停"字符串
+    try:
+        recognizer = ImageRecognition()
+        if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
+            print(f"检测到'暂停'字符，说明正在执行快速查杀。截图已保存到: {screenshot_path}")
+        else:
+            print(f"未找到'暂停'字符，说明未成功执行快速查杀。截图已保存到: {screenshot_path}")
+            return f"未找到'暂停'字符，说明未成功执行快速查杀。截图路径: {screenshot_path}"
+    except Exception as e:
+        import traceback
+        error_msg = f"OCR识别过程中出错: {e}\n{traceback.format_exc()}"
+        debug_print(error_msg)
+        return error_msg
+
+    # 步骤4：检测查杀是否完成（每10秒截取右上角，使用OCR识别"完成"字符串）
     start_time = time.time()
-    interval = 300  # 5分钟
+    interval = 600  # 10分钟
+    check_interval = 10  # 每10秒检测一次
+    last_check_time = 0
+    recognizer = ImageRecognition()
+
+    print("开始监控查杀进度，每10秒检测一次...")
     while time.time() - start_time < interval:
-        img_loc = find_image_on_screen(
-            x_ratio=complete_button_pos[0],
-            y_ratio=complete_button_pos[1],
-            timeout_seconds=15,
-            description="快速查杀完成",
-        )
-        if img_loc:
-            debug_print(f"检测到查杀完成标志，坐标为: {img_loc}")
-            ret2_top_page()
-            return "快速查杀完成。"
-        time.sleep(get_sleep_time("medium"))
-    # 步骤5：返回查杀结果
-    # 待补充（OCR识别查杀结果界面、联动日志查询）
-    # 步骤6：点击完成，返回首页
+        current_time = time.time()
+
+        # 每10秒检测一次
+        if current_time - last_check_time >= check_interval:
+            last_check_time = current_time
+            elapsed_time = current_time - start_time
+
+            # 截取右上部分
+            screenshot_path = log_dir / f"scan_progress_{datetime.now().strftime('%Y%m%d')}.png"
+            region_img = capture_window_region(
+                x_start_ratio=0.5,
+                y_start_ratio=0.0,
+                x_end_ratio=1.0,
+                y_end_ratio=0.5,
+                save_path=str(screenshot_path)
+            )
+
+            if region_img is None:
+                debug_print("截取窗口右上部分失败。")
+                continue
+
+            # 使用OCR识别是否包含"完成"字符串
+            if recognizer.contains_text(str(screenshot_path), "完成", case_sensitive=False):
+                print(f"检测到'完成'字符，说明查杀已完成。耗时: {int(elapsed_time)}秒")
+                ret2_top_page()
+                return f"快速查杀完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
+
+            print(f"[{int(elapsed_time)}s] 继续等待查杀完成...")
+
+        time.sleep(1)
+
+    # 超时返回
+    debug_print("查杀监控超时（10分钟）")
+    return f"查杀监控超时，最后的截图保存在: {log_dir}"
 
 
 @mcp.tool()
