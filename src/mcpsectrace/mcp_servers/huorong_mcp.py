@@ -406,20 +406,37 @@ def full_scan():
     print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("short"))  # 等待应用程序加载
 
-    # 步骤2：点击"全盘查杀"按钮（使用相对位置定位）
+    # 步骤2：点击"全盘查杀"按钮（分为两步）
+    # 步骤2.1：点击下拉菜单
+    dropdown_menu_pos = get_config_value("positions.huorong.scan_dropdown_menu", default=[0.2, 0.4])
+    dropdown_loc = find_image_on_screen(
+        x_ratio=dropdown_menu_pos[0],
+        y_ratio=dropdown_menu_pos[1],
+        timeout_seconds=15,
+        description="查杀下拉菜单",
+    )
+    if dropdown_loc:
+        click_image_at_location(dropdown_loc, description="查杀下拉菜单")
+        print("点击查杀下拉菜单成功。")
+    else:
+        print("点击查杀下拉菜单失败。")
+        return "点击查杀下拉菜单失败。"
+    time.sleep(get_sleep_time("short"))
+
+    # 步骤2.2：点击下拉菜单中的"全盘查杀"选项
     full_scan_pos = get_config_value("positions.huorong.full_scan_button", default=[0.2, 0.5])
-    img_loc = find_image_on_screen(
+    full_scan_loc = find_image_on_screen(
         x_ratio=full_scan_pos[0],
         y_ratio=full_scan_pos[1],
         timeout_seconds=15,
-        description="全盘查杀按钮",
+        description="全盘查杀选项",
     )
-    if img_loc:
-        click_image_at_location(img_loc, description="全盘查杀按钮")
-        print("点击全盘查杀按钮成功。")
+    if full_scan_loc:
+        click_image_at_location(full_scan_loc, description="全盘查杀选项")
+        print("点击全盘查杀选项成功。")
     else:
-        print("点击全盘查杀按钮失败。")
-        return "点击全盘查杀按钮失败。"
+        print("点击全盘查杀选项失败。")
+        return "点击全盘查杀选项失败。"
     time.sleep(get_sleep_time("short"))
 
     # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
