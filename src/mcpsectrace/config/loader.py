@@ -152,7 +152,8 @@ class ConfigLoader:
         config_mappings = {
             "browser": ["browser_settings", "forensics"],
             "ioc": ["threat_intel", "ioc_settings", "chrome"],
-            "automation": ["gui", "automation", "device_level"],
+            "automation": ["gui", "automation", "device_level", "positions"],
+            "positions": ["positions"],
             "base": ["system", "paths", "output"],
         }
 
