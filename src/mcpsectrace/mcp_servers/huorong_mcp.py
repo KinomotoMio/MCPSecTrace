@@ -383,11 +383,29 @@ def quick_scan():
                 debug_print("截取窗口右上部分失败。")
                 continue
 
-            # 使用OCR识别是否包含"完成"字符串
+            # 使用OCR识别是否包含"完成"或"立即处理"字符串
             if recognizer.contains_text(str(screenshot_path), "完成", case_sensitive=False):
                 print(f"检测到'完成'字符，说明查杀已完成。耗时: {int(elapsed_time)}秒")
                 ret2_top_page()
                 return f"快速查杀完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
+
+            elif recognizer.contains_text(str(screenshot_path), "立即处理", case_sensitive=False):
+                print(f"检测到'立即处理'字符。耗时: {int(elapsed_time)}秒，正在处理...")
+                # 点击"立即处理"按钮（同样位置）
+                complete_button_pos = get_config_value("positions.huorong.complete_button", default=[0.5, 0.7])
+                handle_loc = find_image_on_screen(
+                    x_ratio=complete_button_pos[0],
+                    y_ratio=complete_button_pos[1],
+                    timeout_seconds=5,
+                    description="立即处理按钮",
+                )
+                if handle_loc:
+                    click_image_at_location(handle_loc, description="立即处理按钮")
+                    print("点击'立即处理'按钮成功。")
+                    time.sleep(get_sleep_time("short"))
+
+                ret2_top_page()
+                return f"快速查杀完成（已处理风险项）。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
 
             print(f"[{int(elapsed_time)}s] 继续等待查杀完成...")
 
@@ -506,11 +524,29 @@ def full_scan():
                 debug_print("截取窗口右上部分失败。")
                 continue
 
-            # 使用OCR识别是否包含"完成"字符串
+            # 使用OCR识别是否包含"完成"或"立即处理"字符串
             if recognizer.contains_text(str(screenshot_path), "完成", case_sensitive=False):
                 print(f"检测到'完成'字符，说明全盘查杀已完成。耗时: {int(elapsed_time)}秒")
                 ret2_top_page()
                 return f"全盘查杀完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
+
+            elif recognizer.contains_text(str(screenshot_path), "立即处理", case_sensitive=False):
+                print(f"检测到'立即处理'字符。耗时: {int(elapsed_time)}秒，正在处理...")
+                # 点击"立即处理"按钮（同样位置）
+                complete_button_pos = get_config_value("positions.huorong.complete_button", default=[0.5, 0.7])
+                handle_loc = find_image_on_screen(
+                    x_ratio=complete_button_pos[0],
+                    y_ratio=complete_button_pos[1],
+                    timeout_seconds=5,
+                    description="立即处理按钮",
+                )
+                if handle_loc:
+                    click_image_at_location(handle_loc, description="立即处理按钮")
+                    print("点击'立即处理'按钮成功。")
+                    time.sleep(get_sleep_time("short"))
+
+                ret2_top_page()
+                return f"全盘查杀完成（已处理风险项）。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
 
             print(f"[{int(elapsed_time)}s] 继续等待全盘查杀完成...")
 
@@ -719,8 +755,8 @@ def main():
     print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
-    full_scan()
-    # mcp.run(transport="stdio")
+    # full_scan()
+    mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
