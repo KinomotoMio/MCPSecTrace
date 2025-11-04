@@ -19,19 +19,49 @@ logger = logging.getLogger(__name__)
 
 
 class ImageRecognition:
-    """图像识别和GUI自动化辅助类"""
+    """图像识别和GUI自动化辅助类（单例模式）"""
 
-    def __init__(self, assets_dir: Union[str, Path] = "assets/screenshots"):
-        """
-        初始化图像识别器
+    _instance = None
+    _ocr_instance = None
+    _ocr_initialized = False
 
-        Args:
-            assets_dir: 截图资源目录
-        """
+    def __new__(cls, assets_dir: Union[str, Path] = "assets/screenshots"):
+        """实现单例模式"""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._init_attributes(assets_dir)
+        return cls._instance
+
+    def _init_attributes(self, assets_dir: Union[str, Path]):
+        """初始化属性"""
         self.assets_dir = Path(assets_dir)
         self.confidence_threshold = 0.8
-        self.ocr = None
-        self._ocr_initialized = False
+
+    @classmethod
+    def get_ocr(cls):
+        """获取全局 OCR 实例（延迟初始化）"""
+        if not cls._ocr_initialized:
+            cls._init_ocr()
+            cls._ocr_initialized = True
+        return cls._ocr_instance
+
+    @classmethod
+    def _init_ocr(cls):
+        """初始化 PaddleOCR 识别器（仅执行一次）"""
+        if PaddleOCR is None:
+            logger.warning("PaddleOCR 未安装，OCR 功能不可用")
+            return
+
+        try:
+            # 初始化 PaddleOCR（中文，关闭不必要的模块以提速）
+            cls._ocr_instance = PaddleOCR(
+                use_doc_orientation_classify=False,
+                use_doc_unwarping=False
+            )
+            logger.info("PaddleOCR 初始化成功")
+        except Exception as e:
+            logger.error(f"PaddleOCR 初始化失败: {e}")
+            cls._ocr_instance = None
 
     def find_image_on_screen(
         self, image_name: str, tool_name: str, confidence: float = None
@@ -166,25 +196,6 @@ class ImageRecognition:
 
         return save_path
 
-    def _init_ocr(self) -> None:
-        """
-        初始化 PaddleOCR 识别器
-        """
-        if PaddleOCR is None:
-            logger.warning("PaddleOCR 未安装，OCR 功能不可用")
-            return
-
-        try:
-            # 初始化 PaddleOCR（中文，关闭不必要的模块以提速）
-            self.ocr = PaddleOCR(
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False
-            )
-            logger.info("PaddleOCR 初始化成功")
-        except Exception as e:
-            logger.error(f"PaddleOCR 初始化失败: {e}")
-            self.ocr = None
-
     def recognize_text_in_image(self, image_path: Union[str, Path]) -> List[str]:
         """
         从图片中识别文本
@@ -195,17 +206,15 @@ class ImageRecognition:
         Returns:
             识别出的文本列表
         """
-        # 延迟初始化 OCR
-        if not self._ocr_initialized:
-            self._init_ocr()
-            self._ocr_initialized = True
+        # 获取全局 OCR 实例
+        ocr = self.get_ocr()
 
-        if self.ocr is None:
+        if ocr is None:
             logger.error("PaddleOCR 初始化失败")
             return []
 
         try:
-            result = self.ocr.predict(str(image_path))
+            result = ocr.predict(str(image_path))
             # 提取识别文本
             texts = [res['rec_texts'] for res in result]
             return texts

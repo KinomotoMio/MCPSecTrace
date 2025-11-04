@@ -408,7 +408,7 @@ def full_scan():
 
     # 步骤2：点击"全盘查杀"按钮（分为两步）
     # 步骤2.1：点击下拉菜单
-    dropdown_menu_pos = get_config_value("positions.huorong.scan_dropdown_menu", default=[0.2, 0.4])
+    dropdown_menu_pos = get_config_value("positions.huorong.scan_dropdown_menu", default=[0.3, 0.4])
     dropdown_loc = find_image_on_screen(
         x_ratio=dropdown_menu_pos[0],
         y_ratio=dropdown_menu_pos[1],
@@ -424,7 +424,7 @@ def full_scan():
     time.sleep(get_sleep_time("short"))
 
     # 步骤2.2：点击下拉菜单中的"全盘查杀"选项
-    full_scan_pos = get_config_value("positions.huorong.full_scan_button", default=[0.2, 0.5])
+    full_scan_pos = get_config_value("positions.huorong.full_scan_button", default=[0.2, 0.45])
     full_scan_loc = find_image_on_screen(
         x_ratio=full_scan_pos[0],
         y_ratio=full_scan_pos[1],
@@ -715,7 +715,7 @@ def main():
     print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
-    quick_scan()
+    full_scan()
     # mcp.run(transport="stdio")
 
 

@@ -7,13 +7,13 @@
 # 火绒安全软件相关按钮位置
 [positions.huorong]
 # 查杀下拉菜单
-scan_dropdown_menu = [0.2, 0.4]
+scan_dropdown_menu = [0.3, 0.4]
 
 # 快速查杀按钮
 quick_scan_button = [0.2, 0.4]
 
 # 全盘查杀按钮（下拉菜单中的选项）
-full_scan_button = [0.2, 0.5]
+full_scan_button = [0.2, 0.45]
 
 # 暂停按钮（查杀时显示）
 pause_button = [0.9, 0.128]
