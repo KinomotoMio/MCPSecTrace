@@ -1,0 +1,67 @@
+# ===========================================
+# GUI自动化工具按钮相对位置配置
+# 说明：所有位置值为相对坐标（0.0-1.0）
+#      0.0表示窗口最左/最上，1.0表示窗口最右/最下
+# ===========================================
+
+# 火绒安全软件相关按钮位置
+[positions.huorong]
+# 快速查杀按钮
+quick_scan_button = [0.2, 0.4]
+
+# 暂停按钮（查杀时显示）
+pause_button = [0.5, 0.5]
+
+# 完成按钮（查杀完成时显示）
+complete_button = [0.5, 0.7]
+
+# 完成按钮备选位置（某些界面版本）
+complete_button_alt = [0.5, 0.75]
+
+# 安全日志图标
+security_log_icon = [0.8, 0.15]
+
+# 导出日志按钮
+export_log_button = [0.9, 0.1]
+
+
+# HRKill工具相关按钮位置
+[positions.hrkill]
+# 启动查杀按钮
+start_scan_button = [0.5, 0.5]
+
+# 查杀完成确认按钮
+confirm_complete_button = [0.7, 0.8]
+
+
+# Focus Pack工具相关按钮位置
+[positions.focus_pack]
+# 启动按钮
+start_button = [0.5, 0.5]
+
+# 确认按钮
+confirm_button = [0.7, 0.8]
+
+
+# Windows系统对话框相关按钮位置
+[positions.windows_dialogs.save_as]
+# 文件名输入框
+filename_input = [0.5, 0.5]
+
+# 保存按钮
+save_button = [0.7, 0.9]
+
+# 取消按钮
+cancel_button = [0.3, 0.9]
+
+
+# 通用按钮位置
+[positions.common]
+# 确认按钮
+ok_button = [0.7, 0.85]
+
+# 取消按钮
+cancel_button = [0.3, 0.85]
+
+# 关闭按钮
+close_button = [0.95, 0.05]
