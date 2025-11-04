@@ -122,9 +122,9 @@ def click_image_at_location(location, description=""):
         bool: 如果成功点击图像，返回True；否则返回False。
     """
     if location:
-        # 先将鼠标移动到目标位置
-        pyautogui.moveTo(location[0], location[1], duration=0.2)
-        time.sleep(0.1)  # 等待鼠标位置稳定
+        # 先将鼠标移动到目标位置（可见的移动，便于调试）
+        pyautogui.moveTo(location[0], location[1], duration=0.5)
+        time.sleep(0.2)  # 等待鼠标位置稳定
         # 再点击
         pyautogui.click()
         debug_print(f"成功点击 '{description}' 在坐标: {location}")
