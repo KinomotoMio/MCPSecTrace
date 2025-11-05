@@ -564,45 +564,35 @@ def get_quarantine_file():
     Args:
         None
     """
-    # 方法1：图像识别
-    # 1：打开火绒安全软件
-    # start_huorong(HUORONG_PATH)
-    # time.sleep(get_sleep_time("long"))
-    # 2：打开隔离区
-    # find_and_click(QUARANTINE_BUTTON_IMAGE,"隔离区按钮")
-    # time.sleep(get_sleep_time("short"))
-    # find_and_click(MAXIMIZE_BUTTON_IMAGE,"最大化窗口按钮")
-    # time.sleep(get_sleep_time("short"))
-    # 3：获取文件列表
-
-    # 方法2：读取数据库中信息
+    # 读取数据库中信息
     source_db_path = r"C:/ProgramData/Huorong/Sysdiag/QuarantineEx.db"
-    target_dir = r"./"  # 目标目录
+    target_dir = r"./src/mcpsectrace/mcp_servers/logs/huorong/"  # 目标目录
     target_db_path = os.path.join(target_dir, "QuarantineEx.db")
-    log_path = "quarantine_files.log"
+    log_path = "./src/mcpsectrace/mcp_servers/logs/huorong/quarantine_files.log"
     try:
         # 1. 复制数据库到目标目录下
         if not os.path.exists(source_db_path):
-            debug_print(f"[ERR]隔离区数据库文件不存在: {source_db_path}")
+            print(f"[ERR]隔离区数据库文件不存在: {source_db_path}")
             return f"[ERR]隔离区数据库文件不存在: {source_db_path}"
         shutil.copy(source_db_path, target_dir)
-        debug_print(f"已复制到目标目录下: {source_db_path}")
+        print(f"已复制到目标目录下: {source_db_path}")
 
         # 2. 读取数据库内容到log中
         read_QuarantineEx_db(target_db_path, log_path)
-        debug_print(f"已读取隔离区内容到: {log_path}")
+        print(f"已读取隔离区内容到: {target_db_path}")
 
     except Exception as e:
+        print(f"[ERR]执行失败，错误信息: {e}")
         return f"[ERR]执行失败，错误信息: {e}"
 
     finally:
-        # 3. 删除临时数据库文件（存在才删）
+        # 3. 删除临时数据库文件
         if os.path.exists(target_db_path):
             try:
                 os.remove(target_db_path)
-                debug_print(f"已删除临时数据库文件: {target_db_path}")
+                print(f"已删除临时数据库文件: {target_db_path}")
             except Exception as e:
-                debug_print(f"[ERR]删除临时数据库文件失败: {e}")
+                print(f"[ERR]删除临时数据库文件失败: {e}")
 
     return f"已获取当前隔离区内的文件列表，见 {log_path}。"
 
@@ -756,7 +746,8 @@ def main():
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
     # full_scan()
-    mcp.run(transport="stdio")
+    get_quarantine_file()
+    # mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
