@@ -13,6 +13,7 @@ from typing import Optional
 
 import pyautogui
 import win32gui
+import pyperclip
 from PIL import Image
 
 # --- 输出使用utf-8编码（仅在非测试环境） --
@@ -565,7 +566,7 @@ def get_quarantine_file():
         None
     """
     # 读取数据库中信息
-    source_db_path = r"C:/ProgramData/Huorong/Sysdiag/QuarantineEx.db"
+    source_db_path = r"C:/ProgramData/Huorong/Sysdiag/log.db"
     target_dir = r"./src/mcpsectrace/mcp_servers/logs/huorong/"  # 目标目录
     target_db_path = os.path.join(target_dir, "QuarantineEx.db")
     log_path = "./src/mcpsectrace/mcp_servers/logs/huorong/quarantine_files.log"
@@ -604,9 +605,8 @@ def get_trust_zone():
     Args:
         None
     """
-    # 不足：缺乏错误处理,db中的其他表也可以读取
     # 1：复制相关文件到当前目录下（存在才复制）
-    target_dir = r"./"
+    target_dir = r"./src/mcpsectrace/mcp_servers/logs/huorong/"
     files = [
         r"C:/ProgramData/Huorong/Sysdiag/wlfile.db",
         r"C:/ProgramData/Huorong/Sysdiag/wlfile.db-wal",
@@ -619,9 +619,9 @@ def get_trust_zone():
             debug_print(f"文件复制失败: {f}, 错误: {e}")
             return f"复制文件失败: {f}, 错误: {e}"
     # 2：读取表内容
-    file_path = "trust_files.log"
-    read_wlfile_db("./wlfile.db", file_path)
-    # 3：删除复制的文件（存在才删）
+    file_path = "./src/mcpsectrace/mcp_servers/logs/huorong/trust_files.log"
+    read_wlfile_db(target_dir + "wlfile.db", file_path)
+    # 3：删除复制的文件
     for f in ["wlfile.db", "wlfile.db-wal"]:
         f_path = os.path.join(target_dir, f)
         if os.path.exists(f_path):
@@ -635,15 +635,15 @@ def get_trust_zone():
 @mcp.tool()
 def get_security_log():
     """
-    执行火绒的获取今日安全日志功能，具体为导出今日的安全日志为txt文件，注意导出后还要进行读取分析工作。
+    执行火绒的获取今日安全日志功能，具体为导出今日的安全日志为txt文件。
     """
     # 0.打开火绒
     start_huorong(HUORONG_PATH)
-    time.sleep(get_sleep_time("long"))
+    time.sleep(get_sleep_time("short"))
     debug_print("请确保火绒安全的首页是当前活动窗口，或者至少是可见的。")
 
     # 1.点击首页的安全日志图标（使用相对位置定位）
-    security_log_pos = get_config_value("positions.huorong.security_log_icon", default=[0.8, 0.15])
+    security_log_pos = get_config_value("positions.huorong.security_log_icon", default=[0.85, 0.25])
     if not find_and_click(
         x_ratio=security_log_pos[0],
         y_ratio=security_log_pos[1],
@@ -651,15 +651,12 @@ def get_security_log():
         description="安全日志",
     ):
         return "未能找到安全日志图标。"
-    time.sleep(get_sleep_time("medium"))
+    time.sleep(get_sleep_time("short"))
     debug_print("安全日志界面已打开。")
 
-    # 2.检查今日安全日志是否为空
-    # (留作备用，可根据需要启用)
-
-    # 3.若不为空，则点击导出日志按钮（使用相对位置定位）
+    # 2.若不为空，则点击导出日志按钮（使用相对位置定位）
     debug_print("尝试点击导出日志按钮...")
-    export_log_pos = get_config_value("positions.huorong.export_log_button", default=[0.9, 0.1])
+    export_log_pos = get_config_value("positions.huorong.export_log_button", default=[0.935, 0.954])
     if not find_and_click(
         x_ratio=export_log_pos[0],
         y_ratio=export_log_pos[1],
@@ -669,21 +666,101 @@ def get_security_log():
         return "未能找到导出日志按钮，或点击失败。"
     time.sleep(get_sleep_time("medium"))
 
-    # 检查是否点击成功（检查另存为对话框）
-    # 注意：这里使用屏幕坐标而不是窗口坐标
-    save_dialog_mark = get_config_value("positions.windows_dialogs.save_as.filename_input", default=[0.5, 0.5])
-    if not find_image_on_screen(
-        x_ratio=save_dialog_mark[0],
-        y_ratio=save_dialog_mark[1],
-        timeout_seconds=15,
-        description="另存为标记",
-    ):
-        debug_print("未能找到'另存为'标记。")
-        return "未能找到'另存为'标记，说明点击'导出日志'按钮失败。"
+    # 3.检查是否点击成功（检查另存为对话框）
+    debug_print("检查是否出现'另存为'对话框...")
+    recognizer = ImageRecognition()
+
+    # 截取左上角部分，检测"另存为"文本
+    save_as_detected = False
+    logs_dir = Path(__file__).parent / "logs" / "huorong"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
+    for attempt in range(15):  # 15次重试，每次等待1秒
+        try:
+            # 获取前台窗口句柄
+            hwnd = win32gui.GetForegroundWindow()
+            if not hwnd:
+                debug_print(f"未找到前台窗口，重试中... ({attempt + 1}/15)")
+                time.sleep(1)
+                continue
+
+            # 获取窗口位置和大小
+            rect = win32gui.GetWindowRect(hwnd)
+            win_left, win_top, win_right, win_bottom = rect
+            win_width = win_right - win_left
+            win_height = win_bottom - win_top
+
+            # 截取窗口的左上角部分（宽度的40%，高度的20%）
+            screenshot = pyautogui.screenshot(
+                region=(win_left, win_top, int(win_width * 0.4), int(win_height * 0.2))
+            )
+
+            # 保存截图，带上时间戳
+            timestamp = datetime.now().strftime("%Y%m%d")
+            temp_screenshot_path = logs_dir / f"save_as_check_{timestamp}.png"
+            screenshot.save(str(temp_screenshot_path))
+
+            # 使用OCR检测"另存为"
+            if recognizer.contains_text(str(temp_screenshot_path), "另存为", case_sensitive=False):
+                debug_print("检测到'另存为'对话框，点击成功。")
+                save_as_detected = True
+                break
+
+            debug_print(f"未检测到'另存为'，重试中... ({attempt + 1}/15)")
+            time.sleep(1)
+
+        except Exception as e:
+            debug_print(f"检查'另存为'对话框时出错: {e}")
+            time.sleep(1)
+
+    if not save_as_detected:
+        debug_print("超时：未能检测到'另存为'对话框。")
+        return "未能检测到'另存为'对话框，说明点击'导出日志'按钮失败。"
+
+    # 3.5 确定文件输出位置
+    debug_print("设置文件输出位置...")
+
+    # 获取前台窗口信息，计算绝对坐标
+    hwnd = win32gui.GetForegroundWindow()
+    rect = win32gui.GetWindowRect(hwnd)
+    win_left, win_top, win_right, win_bottom = rect
+    win_width = win_right - win_left
+    win_height = win_bottom - win_top
+
+    # 点击浏览按钮 [0.77, 0.15]
+    browse_x = int(win_left + win_width * 0.77)
+    browse_y = int(win_top + win_height * 0.15)
+    pyautogui.moveTo(browse_x, browse_y, duration=0.5)
+    time.sleep(0.2)
+    pyautogui.click()
+    debug_print(f"点击浏览按钮 ({browse_x}, {browse_y})")
+    time.sleep(get_sleep_time("medium"))
+
+    # 输入路径（使用剪贴板粘贴）
+    log_path = r"D:\MCPSecTrace\src\mcpsectrace\mcp_servers\logs\huorong"
+    debug_print(f"输入日志输出路径: {log_path}")
+
+    # 复制路径到剪贴板
+    pyperclip.copy(log_path)
+    time.sleep(0.2)
+
+    # 使用 Ctrl+V 粘贴
+    pyautogui.hotkey("ctrl", "v")
+    debug_print("已粘贴路径")
+    time.sleep(get_sleep_time("short"))
+
+    # 点击确定按钮 [0.95, 0.15]
+    confirm_x = int(win_left + win_width * 0.95)
+    confirm_y = int(win_top + win_height * 0.15)
+    pyautogui.moveTo(confirm_x, confirm_y, duration=0.5)
+    time.sleep(0.2)
+    pyautogui.click()
+    debug_print(f"点击确定按钮 ({confirm_x}, {confirm_y})")
+    time.sleep(get_sleep_time("medium"))
 
     # 4.点击文件名输入框
     debug_print("尝试点击文件名输入框...")
-    filename_input_pos = get_config_value("positions.windows_dialogs.save_as.filename_input", default=[0.5, 0.5])
+    filename_input_pos = get_config_value("positions.windows_dialogs.save_as.filename_input", default=[0.28, 0.9])
     if not find_and_click(
         x_ratio=filename_input_pos[0],
         y_ratio=filename_input_pos[1],
@@ -694,16 +771,23 @@ def get_security_log():
         return "未能找到文件名输入框。"
     time.sleep(get_sleep_time("medium"))  # 给输入框获取焦点的时间
 
-    # 5.输入文件名
-    current_time_str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    debug_print(f"准备输入文件名: {current_time_str}")
-    pyautogui.typewrite(current_time_str, interval=0.05)  # interval 控制打字速度
-    time.sleep(get_sleep_time("long"))  # 打字时间
-    pyautogui.press("enter")  # 模拟按一次回车（考虑到中文输入法）
+    # 5.输入文件名（使用剪贴板粘贴）
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"huorong_securitylog_{timestamp}"
+    debug_print(f"准备输入文件名: {filename}")
+
+    # 复制文件名到剪贴板
+    pyperclip.copy(filename)
+    time.sleep(0.2)
+
+    # 使用 Ctrl+V 粘贴
+    pyautogui.hotkey("ctrl", "v")
+    debug_print("已粘贴文件名")
+    time.sleep(get_sleep_time("long"))  
 
     # 6.点击"保存"按钮
     debug_print("尝试点击'保存'按钮...")
-    save_button_pos = get_config_value("positions.windows_dialogs.save_as.save_button", default=[0.7, 0.9])
+    save_button_pos = get_config_value("positions.windows_dialogs.save_as.save_button", default=[0.8, 0.9])
     if not find_and_click(
         x_ratio=save_button_pos[0],
         y_ratio=save_button_pos[1],
@@ -712,13 +796,31 @@ def get_security_log():
     ):
         return "未能找到保存按钮。"
     debug_print(
-        f"安全日志导出流程执行完毕，请查看文件D:/Desktop/{current_time_str}.txt。"
+        f"安全日志导出流程执行完毕，请查看文件{log_path} + {filename}.txt。"
     )
     time.sleep(get_sleep_time("medium"))  # 等待保存操作完成
 
+    # 6.5 点击返回按钮
+    debug_print("点击返回按钮...")
+    # 获取前台窗口信息，计算绝对坐标
+    hwnd = win32gui.GetForegroundWindow()
+    rect = win32gui.GetWindowRect(hwnd)
+    win_left, win_top, win_right, win_bottom = rect
+    win_width = win_right - win_left
+    win_height = win_bottom - win_top
+
+    # 点击返回按钮 [0.855, 0.88]
+    back_x = int(win_left + win_width * 0.855)
+    back_y = int(win_top + win_height * 0.88)
+    pyautogui.moveTo(back_x, back_y, duration=0.5)
+    time.sleep(0.2)
+    pyautogui.click()
+    debug_print(f"已点击返回按钮 ({back_x}, {back_y})")
+    time.sleep(get_sleep_time("medium"))
+
     # 7.检查是否导出成功（返回到火绒主界面）
-    return f"日志导出成功，请查看文件{current_time_str}.txt，默认在Desktop目录下。"
-    # 不足：其他人的日志存储路径不一定在 D:/Desktop/。
+    return f"日志导出成功，请查看文件{log_path} + {filename}.txt。"
+
 
 
 # --- 主函数 ---
@@ -746,7 +848,9 @@ def main():
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
     # full_scan()
-    get_quarantine_file()
+    # get_quarantine_file()
+    # get_trust_zone()
+    get_security_log()
     # mcp.run(transport="stdio")
 
 

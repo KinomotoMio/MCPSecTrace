@@ -25,16 +25,16 @@ complete_button = [0.9, 0.128]
 complete_button_alt = [0.9, 0.128]
 
 # 安全日志图标
-security_log_icon = [0.8, 0.15]
+security_log_icon = [0.25, 0.85]
 
 # 导出日志按钮
-export_log_button = [0.9, 0.1]
+export_log_button = [0.935, 0.954]
 
 
 # HRKill工具相关按钮位置
 [positions.hrkill]
 # 启动查杀按钮
-start_scan_button = [0.5, 0.5]
+start_scan_button = [0.5, 0.72]
 
 # 查杀完成确认按钮
 confirm_complete_button = [0.7, 0.8]
@@ -52,10 +52,10 @@ confirm_button = [0.7, 0.8]
 # Windows系统对话框相关按钮位置
 [positions.windows_dialogs.save_as]
 # 文件名输入框
-filename_input = [0.5, 0.5]
+filename_input = [0.28, 0.9]
 
 # 保存按钮
-save_button = [0.7, 0.9]
+save_button = [0.8, 0.9]
 
 # 取消按钮
 cancel_button = [0.3, 0.9]
