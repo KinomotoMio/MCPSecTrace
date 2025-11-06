@@ -1,4 +1,3 @@
-import argparse
 import ctypes
 import io
 import os
@@ -6,14 +5,17 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
 
 import pyautogui
+import win32gui
 
 # --- 输出使用utf-8编码（仅在非测试环境） --
 if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 from mcpsectrace.config import get_config_value
+from mcpsectrace.utils.image_recognition import ImageRecognition
 
 # --- 全局变量 ---
 LOG_HANDLE = None  # 日志文件句柄
@@ -46,7 +48,7 @@ def get_sleep_time(base_type: str) -> float:
 
 
 # --- 日志函数 ---
-def setup_log(log_dir="logs"):
+def setup_log(log_dir=".\src\mcpsectrace\mcp_servers\logs"):
     # 如果不存在，则创建logs目录
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -96,59 +98,65 @@ def debug_print(message: str):
 
 
 # --- 功能函数 ---
-def find_image_on_screen(
-    image_filename, confidence_level, timeout_seconds=15, description=""
-):
+def find_image_on_screen(x_ratio, y_ratio, timeout_seconds=None, description=""):
     """
-        在屏幕上查找指定的图像。
+    基于相对位置定位元素（基于前台窗口）。
+
     Args:
-        image_filename: 图像文件名。
-        confidence_level: 图像匹配的置信度（0-1）。
+        x_ratio: X轴相对位置（0.0 - 1.0，0表示窗口最左边，1表示最右边）
+        y_ratio: Y轴相对位置（0.0 - 1.0，0表示窗口最上边，1表示最下边）
         timeout_seconds: 超时时间（秒）。
-        description: 图像描述（用于调试）。
+        description: 元素描述（用于调试）。
     Returns:
-        (x, y) 坐标元组，如果未找到则返回 None。
+        (x, y) 绝对屏幕坐标元组。
     """
+    if timeout_seconds is None:
+        timeout_seconds = get_config_value("automation.find_timeout", default=15)
+
     if not description:
-        description = image_filename
+        description = f"位置({x_ratio:.2f}, {y_ratio:.2f})"
 
     debug_print(
-        f"正在查找图像: '{description}' (文件: {image_filename})，时间限制为{timeout_seconds}秒..."
+        f"正在定位元素: '{description}' (相对位置: {x_ratio:.2f}, {y_ratio:.2f})，时间限制为{timeout_seconds}秒..."
     )
     start_time = time.time()
     while time.time() - start_time < timeout_seconds:
         try:
-            location = pyautogui.locateCenterOnScreen(
-                image_filename, confidence=confidence_level
-            )
-            if location:
-                debug_print(f"成功找到 '{description}'，坐标: {location}")
-                return location
-            else:
+            # 获取前台窗口句柄
+            hwnd = win32gui.GetForegroundWindow()
+            if not hwnd:
+                debug_print("未找到前台窗口，重试中...")
                 time.sleep(get_sleep_time("short"))
-        except pyautogui.ImageNotFoundException:
-            time.sleep(get_sleep_time("short"))
-        except FileNotFoundError:
-            debug_print(f"[ERROR] 图像文件 '{image_filename}' 未找到或无法访问！")
-            return None
-        except Exception as e:
-            if "Failed to read" in str(e) or "cannot identify image file" in str(e):
-                debug_print(
-                    f"[ERROR] 无法读取或识别图像文件 '{image_filename}'。错误详情: {e}"
-                )
-                return None
-            debug_print(f"[ERROR] 查找图像 '{description}' 时发生其他错误: {e}")
-            return None
+                continue
 
-    debug_print(
-        f"[ERROR] 超时：在{timeout_seconds}秒内未能找到图像 '{description}',置信度为{confidence_level}。"
-    )
+            # 获取窗口位置和大小
+            rect = win32gui.GetWindowRect(hwnd)
+            win_left, win_top, win_right, win_bottom = rect
+            win_width = win_right - win_left
+            win_height = win_bottom - win_top
+
+            # 计算绝对坐标（基于窗口）
+            abs_x = int(win_left + win_width * x_ratio)
+            abs_y = int(win_top + win_height * y_ratio)
+            location = (abs_x, abs_y)
+
+            debug_print(f"找到 '{description}'，绝对坐标: {location}")
+            debug_print(
+                f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}"
+            )
+            return location
+
+        except Exception as e:
+            debug_print(f"定位元素 '{description}' 时发生错误: {e}")
+            time.sleep(get_sleep_time("short"))
+
+    debug_print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{description}'。")
     return None
 
 
 def click_image_at_location(location, description=""):
     """
-        点击指定屏幕坐标处的图像。
+    点击指定屏幕坐标处的图像。
     Args:
         location: 屏幕坐标元组 (x, y)。
         description: 图像描述。
@@ -156,31 +164,90 @@ def click_image_at_location(location, description=""):
         bool: 如果成功点击图像，返回True；否则返回False。
     """
     if location:
-        pyautogui.click(location)
-        debug_print(f"成功点击 '{description}'，坐标: {location}.")
+        # 先将鼠标移动到目标位置（可见的移动，便于调试）
+        pyautogui.moveTo(location[0], location[1], duration=0.5)
+        time.sleep(0.2)  # 等待鼠标位置稳定
+        # 再点击
+        pyautogui.click()
+        debug_print(f"成功点击 '{description}' 在坐标: {location}")
         return True
     else:
-        debug_print(f"[ERROR] 未能点击 '{description}'，因为未找到坐标。")
+        debug_print(f"未能点击 '{description}'，因为未找到坐标。")
         return False
 
 
-def find_and_click(image_filename, confidence_level, timeout_seconds, description):
+def find_and_click(x_ratio, y_ratio, timeout_seconds=15, description=""):
     """
-    查找屏幕上的图片并点击。若成功，则返回true，否则返回false。
+    基于相对位置定位并点击元素。若成功，则返回True，否则返回False。
     """
-    img_loc = find_image_on_screen(
-        image_filename=image_filename,
-        confidence_level=confidence_level,
+    location = find_image_on_screen(
+        x_ratio=x_ratio,
+        y_ratio=y_ratio,
         timeout_seconds=timeout_seconds,
         description=description,
     )
-    if img_loc:
-        click_image_at_location(img_loc, description)
+    if location:
+        click_image_at_location(location, description)
         debug_print(f"点击{description}成功。")
         return True
     else:
         debug_print(f"[ERROR] 未找到{description}，点击失败。")
         return False
+
+
+def capture_window_region(
+    x_start_ratio=0.5,
+    y_start_ratio=0.0,
+    x_end_ratio=1.0,
+    y_end_ratio=1.0,
+    save_path=None,
+):
+    """
+    截取前台窗口的指定区域
+
+    Args:
+        x_start_ratio: 起始X坐标比例（0.0-1.0）
+        y_start_ratio: 起始Y坐标比例（0.0-1.0）
+        x_end_ratio: 结束X坐标比例（0.0-1.0）
+        y_end_ratio: 结束Y坐标比例（0.0-1.0）
+        save_path: 保存路径，如果为None则不保存
+
+    Returns:
+        PIL.Image 对象或 None
+    """
+    try:
+        # 获取前台窗口句柄
+        hwnd = win32gui.GetForegroundWindow()
+        if not hwnd:
+            debug_print("未找到前台窗口")
+            return None
+
+        # 获取窗口位置和大小
+        rect = win32gui.GetWindowRect(hwnd)
+        win_left, win_top, win_right, win_bottom = rect
+        win_width = win_right - win_left
+        win_height = win_bottom - win_top
+
+        # 计算区域坐标
+        crop_left = int(win_left + win_width * x_start_ratio)
+        crop_top = int(win_top + win_height * y_start_ratio)
+        crop_right = int(win_left + win_width * x_end_ratio)
+        crop_bottom = int(win_top + win_height * y_end_ratio)
+
+        # 截取屏幕
+        screenshot = pyautogui.screenshot()
+        cropped = screenshot.crop((crop_left, crop_top, crop_right, crop_bottom))
+
+        # 保存截图
+        if save_path:
+            cropped.save(save_path)
+            debug_print(f"截图已保存到: {save_path}")
+
+        return cropped
+
+    except Exception as e:
+        debug_print(f"截取窗口区域时出错: {e}")
+        return None
 
 
 # --- 权限相关函数 ---
@@ -202,11 +269,6 @@ def run_as_admin(exe_path=None, params=""):
         params: 程序的参数（可选）。
     """
     try:
-        # if exe_path is None:
-        #     exe_path = sys.executable
-        #     params = f'{os.path.abspath(sys.argv[0])} --hrkill-path "{HRKILL_PATH}"'
-        #     debug_print(f"尝试以管理员身份重新运行当前脚本：{params}")
-        # else:
         debug_print(f"尝试以管理员身份运行指定程序：{exe_path} {params}")
 
         if ctypes.windll.shell32.ShellExecuteW(
@@ -268,45 +330,114 @@ def scan_virus():
         "hrkill软件已启动，请确保处于首页，否则后续可能执行失败。"
     )  # 能否显示在mcp上
 
-    # 2. 点击'开始扫描按钮'
+    # 2. 点击'开始扫描按钮'（使用相对位置定位）
     debug_print(f"[Step 2] 点击'开始扫描按钮'")
-    if not find_and_click(
-        "start_scan_button.png",  # HRKill界面固定元素
-        confidence_level=0.8,
+    start_scan_pos = get_config_value(
+        "positions.hrkill.start_scan_button", default=[0.5, 0.72]
+    )
+    img_loc = find_image_on_screen(
+        x_ratio=start_scan_pos[0],
+        y_ratio=start_scan_pos[1],
         timeout_seconds=15,
         description="开始扫描按钮",
-    ):
-        return "[ERROR] 未能找到'开始扫描按钮'，或点击按钮失败，请查看最新日志溯源。"
-    time.sleep(get_sleep_time("long"))
-
-    # 3. 检测是否正在查杀病毒
-    debug_print(f"[Step 3] 检测是否正在查杀病毒")
-    if find_image_on_screen(
-        "pause_button.png",  # HRKill界面固定元素
-        confidence_level=0.8,
-        timeout_seconds=15,
-        description="查杀暂停按钮",
-    ):
-        debug_print("正在执行病毒查杀。")
-    else:
-        debug_print("[ERROR] 未成功执行病毒查杀，请查看最新日志溯源。")
-        return "[ERROR] 未成功执行病毒查杀，请查看最新日志溯源。"
-    time.sleep(get_sleep_time("long"))
-
-    # 4. 检测是否扫描完成
-    interval = 300  # 5分钟
-    debug_print(f"[Step 4] 检测是否扫描完成（时长{interval}s，可调节）")
-    start_time = time.time()
-    img_loc = find_image_on_screen(
-        "scan_complete.png",  # HRKill界面固定元素
-        confidence_level=0.8,
-        timeout_seconds=interval,
-        description="扫描完成",
     )
     if img_loc:
-        msg = f"[SUCCESS] 检测到完成标志(坐标为{img_loc}, 用时{time.time() - start_time}秒)，病毒查杀已完成。"
-        debug_print(msg)
-        return msg
+        click_image_at_location(img_loc, description="开始扫描按钮")
+        debug_print("点击开始扫描按钮成功。")
+    else:
+        debug_print("点击开始扫描按钮失败。")
+        return "点击开始扫描按钮失败。"
+    time.sleep(get_sleep_time("long"))
+
+    # 3. 检测是否正在查杀病毒（使用OCR识别"暂停"字符串）
+    debug_print(f"[Step 3] 检测是否正在查杀病毒")
+    # 创建 mcp_servers/logs/hrkill 目录
+    log_dir = Path(__file__).parent / "logs" / "hrkill"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 截取右上部分（从50%宽度到100%，从0%高度到50%）
+    screenshot_path = log_dir / f"scan_check.png"
+    region_img = capture_window_region(
+        x_start_ratio=0.5,
+        y_start_ratio=0.0,
+        x_end_ratio=1.0,
+        y_end_ratio=0.5,
+        save_path=str(screenshot_path),
+    )
+
+    if region_img is None:
+        debug_print("截取窗口右上部分失败。")
+        return "截取窗口右上部分失败。"
+
+    # 使用OCR识别截图中是否包含"暂停"字符串
+    try:
+        recognizer = ImageRecognition()
+        if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
+            print(
+                f"检测到'暂停'字符，说明正在执行病毒查杀。截图已保存到: {screenshot_path}"
+            )
+        else:
+            debug_print(
+                f"未找到'暂停'字符，说明未成功执行病毒查杀。截图已保存到: {screenshot_path}"
+            )
+            return (
+                f"未找到'暂停'字符，说明未成功执行病毒查杀。截图路径: {screenshot_path}"
+            )
+    except Exception as e:
+        import traceback
+
+        error_msg = f"OCR识别过程中出错: {e}\n{traceback.format_exc()}"
+        debug_print(error_msg)
+        return error_msg
+    time.sleep(get_sleep_time("long"))
+
+    # 4. 检测是否扫描完成（每30秒截取页面上半部分，使用OCR识别"查杀完成"字符串）
+    start_time = time.time()
+    interval = 600  # 10分钟
+    check_interval = 30  # 每30秒检测一次
+    last_check_time = 0
+    recognizer = ImageRecognition()
+
+    debug_print(f"[Step 4] 检测是否扫描完成（时长{interval}s，可调节）")
+    debug_print("开始监控扫描进度，每30秒检测一次...")
+
+    while time.time() - start_time < interval:
+        current_time = time.time()
+
+        # 每30秒检测一次
+        if current_time - last_check_time >= check_interval:
+            last_check_time = current_time
+            elapsed_time = current_time - start_time
+
+            # 截取页面上半部分
+            screenshot_path = log_dir / f"scan_progress.png"
+            region_img = capture_window_region(
+                x_start_ratio=0.0,
+                y_start_ratio=0.0,
+                x_end_ratio=1.0,
+                y_end_ratio=0.5,
+                save_path=str(screenshot_path),
+            )
+
+            if region_img is None:
+                debug_print("截取窗口上半部分失败。")
+                continue
+
+            # 使用OCR识别是否包含"查杀完成"字符串
+            if recognizer.contains_text(
+                str(screenshot_path), "查杀完成", case_sensitive=False
+            ):
+                msg = f"[SUCCESS] 检测到'查杀完成'字符，病毒查杀已完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
+                print(msg)
+                return msg
+
+            print(f"[{int(elapsed_time)}s] 继续等待扫描完成...")
+
+        time.sleep(1)
+
+    # 超时返回
+    debug_print("扫描监控超时（10分钟）")
+    return f"扫描监控超时，最后的截图保存在: {log_dir}"
 
 
 # --- 主函数 ---
@@ -316,14 +447,22 @@ def main():
     """
     # 参数设置
     global HRKILL_PATH, LOG_NAME
-    parser = argparse.ArgumentParser(description="hrkill MCP工具")
-    parser.add_argument(
-        "--hrkill-path", type=str, required=True, help="hrkill软件的完整路径"
-    )
-    parser.add_argument("--debug", action="store_true", help="调试模式")
-    args = parser.parse_args()
-    HRKILL_PATH = args.hrkill_path
-    # DEBUG_MODE现在通过配置系统管理
+
+    # 从配置文件读取HRKill路径
+    HRKILL_PATH = get_config_value("paths.hrkill_exe", default="")
+
+    # 验证HRKill路径
+    if not HRKILL_PATH:
+        error_msg = "错误：未配置HRKill路径。请在 config/user_settings.toml 中设置 paths.hrkill_exe"
+        print(error_msg, file=sys.stderr)
+        debug_print(error_msg)
+    elif not os.path.exists(HRKILL_PATH):
+        warning_msg = f"警告：HRKill路径不存在: {HRKILL_PATH}"
+        print(warning_msg, file=sys.stderr)
+        debug_print(warning_msg)
+    else:
+        debug_print(f"已从配置文件加载HRKill路径: {HRKILL_PATH}")
+
     LOG_NAME = setup_log("logs/hrkill")
 
     # 1. 检查VS code权限
@@ -343,12 +482,10 @@ def main():
         scan_virus()
     else:
         debug_print("--- 当前处于MCP运行模式 ---")
-        mcp.run(transport="stdio")
+        scan_virus()
+        # mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
 if __name__ == "__main__":
-    try:
-        main()
-    finally:
-        close_log_file()
+    main()
