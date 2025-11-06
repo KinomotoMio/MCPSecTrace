@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Optional
 
 import pyautogui
-import win32gui
 import pyperclip
+import win32gui
 from PIL import Image
 
 # --- 输出使用utf-8编码（仅在非测试环境） --

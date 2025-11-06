@@ -4,7 +4,7 @@ GUI自动化图像识别工具
 
 import logging
 from pathlib import Path
-from typing import Optional, Tuple, Union, Dict, List
+from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np

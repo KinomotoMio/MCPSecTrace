@@ -1,5 +1,6 @@
-import psutil
 import os
+
+import psutil
 from paddleocr import PaddleOCR
 from PIL import Image
 
