@@ -304,9 +304,9 @@ class ThreatBookAnalyzer:
     @staticmethod
     def create_output_directories():
         """创建输出目录"""
-        output_dir = get_config_value("output_path", default="./logs/ioc")
+        output_dir = get_config_value("ioc.output_path", default="./artifacts/ioc")
         pic_output_dir = get_config_value(
-            "screenshot_path", default="./logs/ioc/ioc_pic"
+            "ioc.screenshot_path", default="./artifacts/ioc/ioc_pic"
         )
 
         os.makedirs(output_dir, exist_ok=True)

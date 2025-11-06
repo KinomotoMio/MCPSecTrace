@@ -11,3 +11,7 @@ scroll_wait_time = 2
 element_timeout = 10
 page_load_wait_seconds = 10
 panel_expand_wait_time = 2
+
+# 输出目录配置
+output_path = "./logs/ioc"
+screenshot_path = "./logs/ioc/ioc_pic"

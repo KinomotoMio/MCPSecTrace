@@ -48,8 +48,7 @@ def get_sleep_time(base_type: str) -> float:
 
 
 # --- 日志函数 ---
-def setup_log(log_dir=".\src\mcpsectrace\mcp_servers\logs"):
-    # 如果不存在，则创建logs目录
+def setup_log(log_dir="logs/hrkill"):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     debug_print(f"日志目录: {log_dir}")
@@ -351,8 +350,8 @@ def scan_virus():
 
     # 3. 检测是否正在查杀病毒（使用OCR识别"暂停"字符串）
     debug_print(f"[Step 3] 检测是否正在查杀病毒")
-    # 创建 mcp_servers/logs/hrkill 目录
-    log_dir = Path(__file__).parent / "logs" / "hrkill"
+    # 创建 mcp_servers/artifacts/hrkill 目录
+    log_dir = Path(__file__).parent / "artifacts" / "hrkill"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
@@ -482,8 +481,8 @@ def main():
         scan_virus()
     else:
         debug_print("--- 当前处于MCP运行模式 ---")
-        scan_virus()
-        # mcp.run(transport="stdio")
+        # scan_virus()
+        mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
