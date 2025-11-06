@@ -555,26 +555,24 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                     threat_count = ThreatDataExtractor.parse_threat_count(number_text)
                     if threat_count is not None:
                         print(f"检测到威胁数量: {threat_count} (原始文本: {number_text})")
+                        print("开始提取表格数据")
 
-                        # 判断数字是否小于5
-                        if threat_count < 5:
-                            print("威胁数量小于5，开始提取表格数据")
-
-                            # 提取表格数据
-                            tbody_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/table/tbody"
-                            if ThreatDataExtractor.extract_table_data(
-                                driver, tbody_xpath, config.target_value, output_dir
-                            ):
-                                report_content += "\n---\n\n## 威胁数据提取\n\n"
-                                report_content += f"✅ 威胁数量: {threat_count} (小于5，已提取详细数据)\n\n"
-                                report_content += f"📊 详细威胁数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
-                            else:
-                                report_content += "\n---\n\n## 威胁数据提取\n\n"
-                                report_content += "⚠️ 表格数据提取失败\n\n"
-                        else:
-                            print(f"威胁数量 {threat_count} >= 5，跳过表格数据提取")
+                        # 提取表格数据（无论威胁数量是多少）
+                        tbody_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/table/tbody"
+                        if ThreatDataExtractor.extract_table_data(
+                            driver, tbody_xpath, config.target_value, output_dir
+                        ):
                             report_content += "\n---\n\n## 威胁数据提取\n\n"
-                            report_content += f"ℹ️ 威胁数量: {threat_count} (>= 5，跳过详细数据提取)\n\n"
+                            report_content += f"✅ 威胁数量: {threat_count}\n\n"
+
+                            # 如果数量 >= 5，显示数量限制说明
+                            if threat_count >= 5:
+                                report_content += "📝 由于数量限制，我们只获取第一页的内容。\n\n"
+
+                            report_content += f"📊 详细威胁数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
+                        else:
+                            report_content += "\n---\n\n## 威胁数据提取\n\n"
+                            report_content += "⚠️ 表格数据提取失败\n\n"
                     else:
                         print(f"无法解析威胁数量: {number_text}")
                         report_content += "\n---\n\n## 威胁数据提取\n\n"
