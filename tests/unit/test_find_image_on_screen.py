@@ -66,13 +66,19 @@ def test_config_reading():
         from src.mcpsectrace.config import get_config_value
 
         # 测试读取配置
-        quick_scan_pos = get_config_value("positions.huorong.quick_scan_button", default=[0.4, 0.3])
+        quick_scan_pos = get_config_value(
+            "positions.huorong.quick_scan_button", default=[0.4, 0.3]
+        )
         print(f"✅ 快速查杀按钮位置: {quick_scan_pos}")
 
-        pause_button_pos = get_config_value("positions.huorong.pause_button", default=[0.5, 0.5])
+        pause_button_pos = get_config_value(
+            "positions.huorong.pause_button", default=[0.5, 0.5]
+        )
         print(f"✅ 暂停按钮位置: {pause_button_pos}")
 
-        complete_button_pos = get_config_value("positions.huorong.complete_button", default=[0.5, 0.7])
+        complete_button_pos = get_config_value(
+            "positions.huorong.complete_button", default=[0.5, 0.7]
+        )
         print(f"✅ 完成按钮位置: {complete_button_pos}")
 
         return True

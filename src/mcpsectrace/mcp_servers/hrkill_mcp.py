@@ -98,9 +98,7 @@ def debug_print(message: str):
 
 
 # --- 功能函数 ---
-def find_image_on_screen(
-    x_ratio, y_ratio, timeout_seconds=None, description=""
-):
+def find_image_on_screen(x_ratio, y_ratio, timeout_seconds=None, description=""):
     """
     基于相对位置定位元素（基于前台窗口）。
 
@@ -143,7 +141,9 @@ def find_image_on_screen(
             location = (abs_x, abs_y)
 
             debug_print(f"找到 '{description}'，绝对坐标: {location}")
-            debug_print(f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
+            debug_print(
+                f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}"
+            )
             return location
 
         except Exception as e:
@@ -195,7 +195,13 @@ def find_and_click(x_ratio, y_ratio, timeout_seconds=15, description=""):
         return False
 
 
-def capture_window_region(x_start_ratio=0.5, y_start_ratio=0.0, x_end_ratio=1.0, y_end_ratio=1.0, save_path=None):
+def capture_window_region(
+    x_start_ratio=0.5,
+    y_start_ratio=0.0,
+    x_end_ratio=1.0,
+    y_end_ratio=1.0,
+    save_path=None,
+):
     """
     截取前台窗口的指定区域
 
@@ -326,7 +332,9 @@ def scan_virus():
 
     # 2. 点击'开始扫描按钮'（使用相对位置定位）
     debug_print(f"[Step 2] 点击'开始扫描按钮'")
-    start_scan_pos = get_config_value("positions.hrkill.start_scan_button", default=[0.5, 0.72])
+    start_scan_pos = get_config_value(
+        "positions.hrkill.start_scan_button", default=[0.5, 0.72]
+    )
     img_loc = find_image_on_screen(
         x_ratio=start_scan_pos[0],
         y_ratio=start_scan_pos[1],
@@ -354,7 +362,7 @@ def scan_virus():
         y_start_ratio=0.0,
         x_end_ratio=1.0,
         y_end_ratio=0.5,
-        save_path=str(screenshot_path)
+        save_path=str(screenshot_path),
     )
 
     if region_img is None:
@@ -365,12 +373,19 @@ def scan_virus():
     try:
         recognizer = ImageRecognition()
         if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
-            print(f"检测到'暂停'字符，说明正在执行病毒查杀。截图已保存到: {screenshot_path}")
+            print(
+                f"检测到'暂停'字符，说明正在执行病毒查杀。截图已保存到: {screenshot_path}"
+            )
         else:
-            debug_print(f"未找到'暂停'字符，说明未成功执行病毒查杀。截图已保存到: {screenshot_path}")
-            return f"未找到'暂停'字符，说明未成功执行病毒查杀。截图路径: {screenshot_path}"
+            debug_print(
+                f"未找到'暂停'字符，说明未成功执行病毒查杀。截图已保存到: {screenshot_path}"
+            )
+            return (
+                f"未找到'暂停'字符，说明未成功执行病毒查杀。截图路径: {screenshot_path}"
+            )
     except Exception as e:
         import traceback
+
         error_msg = f"OCR识别过程中出错: {e}\n{traceback.format_exc()}"
         debug_print(error_msg)
         return error_msg
@@ -401,7 +416,7 @@ def scan_virus():
                 y_start_ratio=0.0,
                 x_end_ratio=1.0,
                 y_end_ratio=0.5,
-                save_path=str(screenshot_path)
+                save_path=str(screenshot_path),
             )
 
             if region_img is None:
@@ -409,7 +424,9 @@ def scan_virus():
                 continue
 
             # 使用OCR识别是否包含"查杀完成"字符串
-            if recognizer.contains_text(str(screenshot_path), "查杀完成", case_sensitive=False):
+            if recognizer.contains_text(
+                str(screenshot_path), "查杀完成", case_sensitive=False
+            ):
                 msg = f"[SUCCESS] 检测到'查杀完成'字符，病毒查杀已完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
                 print(msg)
                 return msg

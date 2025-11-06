@@ -257,7 +257,9 @@ def get_scan_log(log_dir, initial_files):
         return new_file_path
 
 
-def find_image_on_screen_by_ratio(x_ratio, y_ratio, timeout_seconds=None, description=""):
+def find_image_on_screen_by_ratio(
+    x_ratio, y_ratio, timeout_seconds=None, description=""
+):
     """
     基于相对位置定位元素（基于前台窗口）。
 
@@ -300,7 +302,9 @@ def find_image_on_screen_by_ratio(x_ratio, y_ratio, timeout_seconds=None, descri
             location = (abs_x, abs_y)
 
             debug_print(f"找到 '{description}'，绝对坐标: {location}")
-            debug_print(f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}")
+            debug_print(
+                f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}"
+            )
             return location
 
         except Exception as e:
@@ -333,7 +337,13 @@ def click_image_at_location(location, description=""):
         return False
 
 
-def capture_window_region(x_start_ratio=0.5, y_start_ratio=0.0, x_end_ratio=1.0, y_end_ratio=1.0, save_path=None):
+def capture_window_region(
+    x_start_ratio=0.5,
+    y_start_ratio=0.0,
+    x_end_ratio=1.0,
+    y_end_ratio=1.0,
+    save_path=None,
+):
     """
     截取前台窗口的指定区域
 
@@ -438,7 +448,9 @@ def quick_scan():
 
     # 2. 点击'快速扫描'按钮（使用相对位置定位）
     debug_print(f"[Step 2] 点击'快速扫描'按钮")
-    quick_scan_pos = get_config_value("positions.focus_pack.start_scan_button", default=[0.1, 0.128])
+    quick_scan_pos = get_config_value(
+        "positions.focus_pack.start_scan_button", default=[0.1, 0.128]
+    )
     img_loc = find_image_on_screen_by_ratio(
         x_ratio=quick_scan_pos[0],
         y_ratio=quick_scan_pos[1],
@@ -461,7 +473,7 @@ def quick_scan():
         y_start_ratio=0.8,
         x_end_ratio=0.2,
         y_end_ratio=1.0,
-        save_path=str(screenshot_path)
+        save_path=str(screenshot_path),
     )
 
     if region_img is None:
@@ -471,13 +483,16 @@ def quick_scan():
     # 使用OCR识别截图中是否包含"扫描中"字符串
     try:
         recognizer = ImageRecognition()
-        if recognizer.contains_text(str(screenshot_path), "当前模式", case_sensitive=False):
+        if recognizer.contains_text(
+            str(screenshot_path), "当前模式", case_sensitive=False
+        ):
             debug_print(f"正在执行快速扫描。截图已保存到: {screenshot_path}")
         else:
             debug_print(f"未成功执行快速扫描。截图已保存到: {screenshot_path}")
             return f"未成功执行快速扫描。截图路径: {screenshot_path}"
     except Exception as e:
         import traceback
+
         error_msg = f"OCR识别过程中出错: {e}\n{traceback.format_exc()}"
         debug_print(error_msg)
         return error_msg
@@ -508,7 +523,7 @@ def quick_scan():
                 y_start_ratio=0.0,
                 x_end_ratio=0.2,
                 y_end_ratio=0.2,
-                save_path=str(screenshot_path)
+                save_path=str(screenshot_path),
             )
 
             if region_img is None:
@@ -516,7 +531,9 @@ def quick_scan():
                 continue
 
             # 使用OCR识别是否包含"扫描完成"字符串
-            if recognizer.contains_text(str(screenshot_path), "提示", case_sensitive=False):
+            if recognizer.contains_text(
+                str(screenshot_path), "提示", case_sensitive=False
+            ):
                 msg = f"[SUCCESS] 检测到'提示'字符，快速扫描已完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
                 debug_print(msg)
                 break

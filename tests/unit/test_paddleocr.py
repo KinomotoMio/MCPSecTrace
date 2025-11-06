@@ -22,7 +22,7 @@ print("\n初始化 PaddleOCR...")
 ocr = PaddleOCR(
     use_doc_orientation_classify=False,
     use_doc_unwarping=False,
-    use_textline_orientation=False
+    use_textline_orientation=False,
 )
 
 after_init_memory = process.memory_info().rss / 1024 / 1024
@@ -40,7 +40,7 @@ print(f"识别占用内存: {after_predict_memory - after_init_memory:.2f} MB")
 # 打印结果
 print("\n识别结果:")
 for res in result:
-    print(res['rec_texts'])
+    print(res["rec_texts"])
 
 print("\n" + "=" * 50)
 print(f"总内存占用: {after_predict_memory - initial_memory:.2f} MB")

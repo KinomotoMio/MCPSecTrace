@@ -55,8 +55,7 @@ class ImageRecognition:
         try:
             # 初始化 PaddleOCR（中文，关闭不必要的模块以提速）
             cls._ocr_instance = PaddleOCR(
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False
+                use_doc_orientation_classify=False, use_doc_unwarping=False
             )
             logger.info("PaddleOCR 初始化成功")
         except Exception as e:
@@ -216,7 +215,7 @@ class ImageRecognition:
         try:
             result = ocr.predict(str(image_path))
             # 提取识别文本
-            texts = [res['rec_texts'] for res in result]
+            texts = [res["rec_texts"] for res in result]
             return texts
 
         except Exception as e:
@@ -227,7 +226,7 @@ class ImageRecognition:
         self,
         image_path: Union[str, Path],
         target_text: str,
-        case_sensitive: bool = False
+        case_sensitive: bool = False,
     ) -> bool:
         """
         检查图片中是否包含指定的文本
@@ -266,7 +265,7 @@ class ImageRecognition:
         image_dir: Union[str, Path],
         target_text: str,
         case_sensitive: bool = False,
-        file_pattern: str = "*.png"
+        file_pattern: str = "*.png",
     ) -> Dict[str, bool]:
         """
         在图片目录中查找包含指定文本的图片
