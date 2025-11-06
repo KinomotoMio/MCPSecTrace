@@ -235,6 +235,54 @@ class ThreatDataExtractor:
             return None
 
     @staticmethod
+    def parse_threat_count(text: str) -> Optional[int]:
+        """
+        解析威胁数量文本，支持K、M等缩写
+        例如: "1K +" -> 1000, "1.5K" -> 1500, "2M" -> 2000000, "123" -> 123
+
+        Args:
+            text: 威胁数量文本
+
+        Returns:
+            解析后的整数，解析失败返回None
+        """
+        if not text:
+            return None
+
+        try:
+            # 删除特殊符号（+、空格等）
+            text = text.strip()
+            # 移除尾部的特殊符号（+、空格等）
+            while text and text[-1] in ['+', '-', ' ', '×', '×']:
+                text = text[:-1].strip()
+
+            # 检查是否包含单位缩写（K、M、G等）
+            text_upper = text.upper()
+            multiplier = 1
+
+            if text_upper.endswith('K'):
+                multiplier = 1_000
+                text = text[:-1].strip()
+            elif text_upper.endswith('M'):
+                multiplier = 1_000_000
+                text = text[:-1].strip()
+            elif text_upper.endswith('G'):
+                multiplier = 1_000_000_000
+                text = text[:-1].strip()
+            elif text_upper.endswith('B'):  # Billion
+                multiplier = 1_000_000_000
+                text = text[:-1].strip()
+
+            # 转换为浮点数再乘以倍数，最后转为整数
+            number = float(text)
+            result = int(number * multiplier)
+            return result
+
+        except (ValueError, AttributeError) as e:
+            print(f"威胁数量解析失败 '{text}': {e}")
+            return None
+
+    @staticmethod
     def extract_table_data(
         driver: webdriver.Chrome, tbody_xpath: str, target_value: str, output_dir: str
     ) -> bool:
@@ -498,13 +546,15 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                 time.sleep(get_config_value("ioc.scroll_wait_time", default=2))
 
                 # 读取数字内容
-                span_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]/div/span[1]"
+                
+                span_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]/div/span[2]"
                 number_text = ThreatDataExtractor.get_element_text(driver, span_xpath)
-
+                # print(number_text)
                 if number_text:
-                    try:
-                        threat_count = int(number_text)
-                        print(f"检测到威胁数量: {threat_count}")
+                    # 使用新的解析函数处理威胁数量（支持K、M等缩写）
+                    threat_count = ThreatDataExtractor.parse_threat_count(number_text)
+                    if threat_count is not None:
+                        print(f"检测到威胁数量: {threat_count} (原始文本: {number_text})")
 
                         # 判断数字是否小于5
                         if threat_count < 5:
@@ -525,9 +575,8 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             print(f"威胁数量 {threat_count} >= 5，跳过表格数据提取")
                             report_content += "\n---\n\n## 威胁数据提取\n\n"
                             report_content += f"ℹ️ 威胁数量: {threat_count} (>= 5，跳过详细数据提取)\n\n"
-
-                    except ValueError:
-                        print(f"无法解析威胁数量数字: {number_text}")
+                    else:
+                        print(f"无法解析威胁数量: {number_text}")
                         report_content += "\n---\n\n## 威胁数据提取\n\n"
                         report_content += f"⚠️ 无法解析威胁数量: {number_text}\n\n"
                 else:
