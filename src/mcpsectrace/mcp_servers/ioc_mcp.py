@@ -285,8 +285,8 @@ class ThreatDataExtractor:
     @staticmethod
     def extract_table_data(
         driver: webdriver.Chrome, tbody_xpath: str, target_value: str, output_dir: str
-    ) -> bool:
-        """提取表格数据并保存为CSV"""
+    ) -> Tuple[bool, Optional[List[List[str]]]]:
+        """提取表格数据并保存为CSV，返回(成功标志, 表格数据)"""
         try:
             element_timeout = get_config_value("ioc.element_timeout", default=10)
             tbody = WebDriverWait(driver, element_timeout).until(
@@ -301,7 +301,7 @@ class ThreatDataExtractor:
 
             if not rows:
                 print("未找到表格数据行")
-                return False
+                return False, None
 
             # CSV数据
             csv_data = []
@@ -338,12 +338,33 @@ class ThreatDataExtractor:
                 writer = csv.writer(csvfile)
                 writer.writerows(csv_data)
 
-            print(f"威胁数据CSV已保存: {csv_path}")
-            return True
+            print(f"相关样本数据CSV已保存: {csv_path}")
+            return True, csv_data
 
         except Exception as e:
             print(f"提取表格数据失败: {e}")
-            return False
+            return False, None
+
+    @staticmethod
+    def csv_data_to_markdown(csv_data: List[List[str]]) -> str:
+        """将CSV数据转换为Markdown表格格式"""
+        if not csv_data or len(csv_data) < 1:
+            return ""
+
+        # 提取表头和行数据
+        headers = csv_data[0]
+        rows = csv_data[1:]
+
+        # 构建Markdown表格
+        md_table = "| " + " | ".join(headers) + " |\n"
+        md_table += "| " + " | ".join(["---"] * len(headers)) + " |\n"
+
+        for row in rows:
+            # 确保行数据与表头列数一致
+            row_with_padding = row + [""] * (len(headers) - len(row))
+            md_table += "| " + " | ".join(row_with_padding[:len(headers)]) + " |\n"
+
+        return md_table
 
 
 class ThreatBookAnalyzer:
@@ -559,37 +580,41 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
                         # 提取表格数据（无论威胁数量是多少）
                         tbody_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/table/tbody"
-                        if ThreatDataExtractor.extract_table_data(
+                        success, csv_data = ThreatDataExtractor.extract_table_data(
                             driver, tbody_xpath, config.target_value, output_dir
-                        ):
-                            report_content += "\n---\n\n## 威胁数据提取\n\n"
-                            report_content += f"✅ 威胁数量: {threat_count}\n\n"
+                        )
+                        if success and csv_data:
+                            report_content += "\n---\n\n## 相关样本\n\n"
+                            report_content += f"**相关样本数量**: {threat_count}\n\n"
 
                             # 如果数量 >= 5，显示数量限制说明
                             if threat_count >= 5:
                                 report_content += "📝 由于数量限制，我们只获取第一页的内容。\n\n"
 
-                            report_content += f"📊 详细威胁数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
+                            # 将表格数据转换为Markdown格式并添加到报告
+                            md_table = ThreatDataExtractor.csv_data_to_markdown(csv_data)
+                            report_content += md_table + "\n"
+                            report_content += f"\n💾 详细数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
                         else:
-                            report_content += "\n---\n\n## 威胁数据提取\n\n"
+                            report_content += "\n---\n\n## 相关样本\n\n"
                             report_content += "⚠️ 表格数据提取失败\n\n"
                     else:
                         print(f"无法解析威胁数量: {number_text}")
-                        report_content += "\n---\n\n## 威胁数据提取\n\n"
-                        report_content += f"⚠️ 无法解析威胁数量: {number_text}\n\n"
+                        report_content += "\n---\n\n## 相关样本\n\n"
+                        report_content += f"⚠️ 无法解析相关样本数量: {number_text}\n\n"
                 else:
                     print("无法获取威胁数量文本")
-                    report_content += "\n---\n\n## 威胁数据提取\n\n"
-                    report_content += "⚠️ 无法获取威胁数量信息\n\n"
+                    report_content += "\n---\n\n## 相关样本\n\n"
+                    report_content += "⚠️ 无法获取相关样本数量信息\n\n"
             else:
                 print("点击目标元素失败")
-                report_content += "\n---\n\n## 威胁数据提取\n\n"
-                report_content += "⚠️ 无法点击目标威胁数据元素\n\n"
+                report_content += "\n---\n\n## 相关样本\n\n"
+                report_content += "⚠️ 无法点击目标相关样本元素\n\n"
 
         except Exception as e:
-            print(f"威胁数据提取过程出错: {e}")
-            report_content += "\n---\n\n## 威胁数据提取\n\n"
-            report_content += f"❌ 威胁数据提取失败: {str(e)}\n\n"
+            print(f"相关样本提取过程出错: {e}")
+            report_content += "\n---\n\n## 相关样本\n\n"
+            report_content += f"❌ 相关样本提取失败: {str(e)}\n\n"
 
         # 保存报告
         report_filename = f"{sanitized_target}_{config.target_type}_threat_report.md"
