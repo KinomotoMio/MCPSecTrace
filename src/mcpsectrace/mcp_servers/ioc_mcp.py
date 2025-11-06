@@ -189,7 +189,7 @@ class ElementScreenshot:
 
             # 生成Markdown内容
             md_content = f"## {config.markdown_title}\n"
-            md_content += f"![{config.markdown_title}](ioc_pic/{sanitized_target}_{config.filename_suffix}.png)\n"
+            md_content += f"![{config.markdown_title}](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/{sanitized_target}_{config.filename_suffix}.png)\n"
 
             return True, screenshot_path, md_content
 
@@ -304,9 +304,9 @@ class ThreatBookAnalyzer:
     @staticmethod
     def create_output_directories():
         """创建输出目录"""
-        output_dir = get_config_value("ioc.output_path", default="./artifacts/ioc")
+        output_dir = get_config_value("ioc.output_path", default="./logs/ioc")
         pic_output_dir = get_config_value(
-            "ioc.screenshot_path", default="./artifacts/ioc/ioc_pic"
+            "ioc.screenshot_path", default="./src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic"
         )
 
         os.makedirs(output_dir, exist_ok=True)
@@ -373,7 +373,7 @@ class ThreatBookAnalyzer:
 
                     # 添加到Markdown
                     md_content += f"### {clue_title}\n"
-                    md_content += f"![{clue_title}](ioc_pic/{sanitized_target}_panel_{i}_{sanitized_title}.png)\n\n"
+                    md_content += f"![{clue_title}](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/{sanitized_target}_panel_{i}_{sanitized_title}.png)\n\n"
 
                 except Exception as e:
                     print(f"处理面板 {i} 时出错: {e}")

@@ -14,4 +14,4 @@ panel_expand_wait_time = 2
 
 # 输出目录配置
 output_path = "./logs/ioc"
-screenshot_path = "./logs/ioc/ioc_pic"
+screenshot_path = "./src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic"

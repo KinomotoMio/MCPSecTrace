@@ -54,7 +54,7 @@ def setup_log(log_dir="logs/hrkill"):
     debug_print(f"日志目录: {log_dir}")
 
     # 生成日志文件名（包含时间戳）
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d")
     log_filename = os.path.join(log_dir, f"hrkill_mcp_{timestamp}.log")
     return log_filename
 
