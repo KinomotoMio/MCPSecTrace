@@ -203,9 +203,75 @@ class SampleReportAnalyzer:
     """样本报告分析类"""
 
     @staticmethod
+    def parse_release_file_info(file_text: str) -> Optional[dict]:
+        """
+        解析发行文件信息文本
+        """
+        try:
+            lines = file_text.split("\n")
+
+            # 初始化结果字典
+            result = {"filename": "", "file_type": "", "file_path": "", "sha256": ""}
+
+            # 遍历行并提取信息
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+
+                # 提取文件名（包含括号的行）
+                if "(" in line and ")" in line:
+                    # 格式: VCREDI~1.EXE(2.53 MB) 或 - VCREDI~1.EXE(2.53 MB)
+                    filename = line.split("(")[0].replace("-", "").strip()
+                    result["filename"] = filename
+
+                # 提取文件类型
+                elif line.startswith("文件类型："):
+                    # 文件类型信息可能在同一行或下一行
+                    if len(line) > 5:
+                        result["file_type"] = line.replace("文件类型：", "").strip()
+                    else:
+                        # 在下一行
+                        if i + 1 < len(lines):
+                            i += 1
+                            result["file_type"] = lines[i].strip()
+
+                # 提取文件路径
+                elif line.startswith("文件路径："):
+                    if len(line) > 5:
+                        result["file_path"] = line.replace("文件路径：", "").strip()
+                    else:
+                        if i + 1 < len(lines):
+                            i += 1
+                            result["file_path"] = lines[i].strip()
+
+                # 提取SHA256
+                elif line.startswith("SHA256："):
+                    if len(line) > 7:
+                        result["sha256"] = line.replace("SHA256：", "").strip()
+                    else:
+                        if i + 1 < len(lines):
+                            i += 1
+                            result["sha256"] = lines[i].strip()
+
+                i += 1
+
+            # 如果至少有文件名，则返回结果
+            if result["filename"]:
+                return result
+            else:
+                return None
+
+        except Exception as e:
+            print(f"解析发行文件信息失败: {e}")
+            return None
+
+    @staticmethod
     def analyze_sample_report(
-        driver: webdriver.Chrome, sha256: str, pic_output_dir: str
-    ) -> Tuple[bool, str]:
+        driver: webdriver.Chrome,
+        sha256: str,
+        pic_output_dir: str,
+        target_value: str = "",
+    ) -> Tuple[bool, str, List[List[str]]]:
         """
         访问样本报告页面并进行分析
 
@@ -213,11 +279,13 @@ class SampleReportAnalyzer:
             driver: WebDriver实例
             sha256: 样本的SHA256值
             pic_output_dir: 截图输出目录
+            target_value: 查询目标（IP或域名）
 
         Returns:
-            Tuple[bool, str]: (成功标志, Markdown内容)
+            Tuple[bool, str, List[List[str]]]: (成功标志, Markdown内容, CSV行数据列表)
         """
         md_content = f"\n### SHA256: {sha256}\n\n"
+        csv_rows = []  # 收集CSV数据
 
         try:
             sample_url = f"https://s.threatbook.com/report/file/{sha256}"
@@ -263,31 +331,37 @@ class SampleReportAnalyzer:
                 md_content += f"⚠️ {error_msg}\n\n"
 
             # 新增功能：处理环境列表和发行文件表格
-            md_content += SampleReportAnalyzer.extract_environment_and_files(
-                driver, sha256
+            env_md, env_csv_rows = SampleReportAnalyzer.extract_environment_and_files(
+                driver, sha256, target_value
             )
+            md_content += env_md
+            csv_rows.extend(env_csv_rows)
 
-            return True, md_content
+            return True, md_content, csv_rows
 
         except Exception as e:
             error_msg = f"样本报告分析失败: {e}"
             print(error_msg)
             md_content = f"\n#### SHA256: {sha256}\n\n❌ {error_msg}\n\n"
-            return False, md_content
+            return False, md_content, []
 
     @staticmethod
-    def extract_environment_and_files(driver: webdriver.Chrome, sha256: str) -> str:
+    def extract_environment_and_files(
+        driver: webdriver.Chrome, sha256: str, target_value: str = ""
+    ) -> Tuple[str, List[List[str]]]:
         """
         提取环境列表和发行文件表格信息
 
         Args:
             driver: WebDriver实例
             sha256: 样本SHA256值
+            target_value: 查询目标（IP或域名）
 
         Returns:
-            str: Markdown格式的内容
+            Tuple[str, List[List[str]]]: (Markdown内容, CSV行数据列表)
         """
         md_content = ""
+        csv_rows = []
 
         try:
             element_timeout = get_config_value("ioc.element_timeout", default=10)
@@ -374,6 +448,34 @@ class SampleReportAnalyzer:
                                                 f"  发行版本 {row_idx}: {cell_text}"
                                             )
 
+                                            # 解析文件信息
+                                            file_info = (
+                                                SampleReportAnalyzer.parse_release_file_info(
+                                                    cell_text
+                                                )
+                                            )
+
+                                            if file_info:
+                                                # 构建 CSV 行数据
+                                                # 第1列：目标(IP或域名)
+                                                # 第2列：样本SHA256
+                                                # 第3列：环境名称
+                                                # 第4列：文件名称
+                                                # 第5列：文件类型
+                                                # 第6列：文件路径
+                                                # 第7列：文件SHA256
+                                                csv_row = [
+                                                    target_value,
+                                                    sha256,
+                                                    env_text,
+                                                    file_info["filename"],
+                                                    file_info["file_type"],
+                                                    file_info["file_path"],
+                                                    file_info["sha256"],
+                                                ]
+                                                csv_rows.append(csv_row)
+                                                print(f"  已添加CSV行: {csv_row}")
+
                                     except Exception as e:
                                         print(f"获取表格行 {row_idx} 失败: {e}")
 
@@ -400,7 +502,53 @@ class SampleReportAnalyzer:
             print(error_msg)
             md_content += f"⚠️ {error_msg}\n\n"
 
-        return md_content
+        return md_content, csv_rows
+
+    @staticmethod
+    def save_release_files_csv(
+        csv_rows: List[List[str]], target_value: str, output_dir: str
+    ) -> bool:
+        """
+        保存发行文件信息到CSV文件
+
+        Args:
+            csv_rows: CSV行数据列表
+            target_value: 查询目标（IP或域名）
+            output_dir: 输出目录
+
+        Returns:
+            bool: 保存是否成功
+        """
+        try:
+            # 生成安全的文件名
+            sanitized_target = re.sub(r'[\\/:*?"<>|]', "_", target_value)
+            csv_filename = f"{sanitized_target}_release_files.csv"
+            csv_path = os.path.join(output_dir, csv_filename)
+
+            # CSV表头
+            headers = [
+                "查询目标",
+                "样本SHA256",
+                "环境",
+                "文件名称",
+                "文件类型",
+                "文件路径",
+                "文件SHA256",
+            ]
+
+            # 写入CSV文件
+            with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(headers)
+                writer.writerows(csv_rows)
+
+            print(f"发行文件CSV已保存: {csv_path}")
+            return True
+
+        except Exception as e:
+            error_msg = f"保存发行文件CSV失败: {e}"
+            print(error_msg)
+            return False
 
 
 class ThreatDataExtractor:
@@ -804,15 +952,21 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             print("\n开始分析每个样本的详细报告...")
                             report_content += "\n---\n\n## 样本常见释放路径分析\n\n"
 
+                            # 收集所有发行文件CSV数据
+                            all_release_files_csv = []
+
                             # 从CSV数据中提取SHA256（第4列，索引为3）
                             for row_idx, row in enumerate(csv_data[1:], 1):  # 跳过表头
                                 if len(row) > 3 and row[3].strip():  # SHA256在第4列
                                     sha256 = row[3].strip()
                                     print(f"分析样本 {row_idx}/{len(csv_data)-1}: {sha256}")
 
-                                    success, sample_md = (
+                                    success, sample_md, release_files = (
                                         SampleReportAnalyzer.analyze_sample_report(
-                                            driver, sha256, pic_output_dir
+                                            driver,
+                                            sha256,
+                                            pic_output_dir,
+                                            config.target_value,
                                         )
                                     )
                                     if success:
@@ -820,7 +974,18 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                                     else:
                                         report_content += sample_md
 
+                                    # 收集发行文件数据
+                                    all_release_files_csv.extend(release_files)
+
                             print("样本详细分析完成")
+
+                            # 保存发行文件CSV
+                            if all_release_files_csv:
+                                SampleReportAnalyzer.save_release_files_csv(
+                                    all_release_files_csv,
+                                    config.target_value,
+                                    output_dir,
+                                )
                         else:
                             report_content += "\n---\n\n## 相关样本\n\n"
                             report_content += "⚠️ 表格数据提取失败\n\n"
