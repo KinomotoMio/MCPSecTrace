@@ -1,0 +1,481 @@
+﻿【1】2025-11-05 21:17:48,其他,升级日志,自动更新成功，版本号：6.0.7.15
+
+升级方式：自动更新
+升级结果：成功，版本号：6.0.7.15，病毒库时间：2025-11-05 19:34
+下载文件：
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\hwl.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\prop.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\pset.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\crithash.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\troj.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\hips.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\behav.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\malurl.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\urlcls.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\appprot.db
+
+更新文件：
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\hwl.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\prop.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\pset.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\crithash.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\troj.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\hips.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\behav.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\malurl.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\urlcls.db
+	2025-11-05 21:17:48 C:\ProgramData\Huorong\Sysdiag\db\appprot.db
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【2】2025-11-05 03:17:50,其他,升级日志,自动更新成功，版本号：6.0.7.15
+
+升级方式：自动更新
+升级结果：成功，版本号：6.0.7.15，病毒库时间：2025-11-04 19:47
+下载文件：
+	2025-11-05 03:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\prop.db
+	2025-11-05 03:17:48 C:\ProgramData\Huorong\Sysdiag\virdb\pset.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\virdb\crithash.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\virdb\troj.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\db\hips.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\db\behav.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\db\malurl.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\db\urlcls.db
+	2025-11-05 03:17:49 C:\ProgramData\Huorong\Sysdiag\db\appprot.db
+
+更新文件：
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\virdb\prop.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\virdb\pset.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\virdb\crithash.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\virdb\troj.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\db\hips.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\db\behav.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\db\malurl.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\db\urlcls.db
+	2025-11-05 03:17:50 C:\ProgramData\Huorong\Sysdiag\db\appprot.db
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【3】2025-11-05 02:45:29,病毒防护,病毒查杀,全盘扫描, 发现1个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 02:43
+总计用时：00:01:13
+扫描对象：470757
+扫描文件：481547
+发现风险：1
+已处理风险：1
+病毒详情：
+风险路径：C:\Users\User\Desktop\data\attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【4】2025-11-05 02:43:10,病毒防护,病毒查杀,全盘扫描, 发现1个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 02:41
+总计用时：00:01:03
+扫描对象：493661
+扫描文件：504404
+发现风险：1
+已处理风险：0
+病毒详情：
+风险路径：C:\Users\User\Desktop\data\attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【5】2025-11-05 02:41:26,其他,隔离区,隔离区项恢复完成
+
+隔离区项恢复完成
+恢复成功：
+C:\Users\User\Desktop\data\attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【6】2025-11-05 02:36:09,病毒防护,病毒查杀,全盘扫描, 发现1个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 02:35
+总计用时：00:00:49
+扫描对象：361203
+扫描文件：372086
+发现风险：1
+已处理风险：1
+病毒详情：
+风险路径：C:\Users\User\Desktop\data\attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【7】2025-11-05 02:35:54,其他,隔离区,隔离区项恢复完成
+
+隔离区项恢复完成
+恢复成功：
+C:\Users\User\Desktop\data\attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【8】2025-11-05 02:31:05,病毒防护,病毒查杀,全盘扫描, 发现64个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 02:04
+总计用时：00:20:07
+扫描对象：1077346
+扫描文件：939587
+发现风险：64
+已处理风险：5
+病毒详情：
+风险路径：C:\Users\User\Desktop\data\attack\ThinkPHP远程执行代码（CVE-2019-9082）_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+风险路径：C:\Users\User\Desktop\data\attack\ThinkPHP 5.x 远程代码执行_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+风险路径：C:\Users\User\Desktop\data\attack\狮子鱼CMS image_upload.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+风险路径：C:\Users\User\Desktop\data\attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+风险路径：C:\Users\User\Desktop\data\information\发现脚本文件上传行为_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：已处理，删除文件
+风险路径：D:\data_new\tianyan_csv_pass\phpMyAdmin存在后门文件漏洞（CVE-2012-5159）.csv, 病毒名：Backdoor/PHP.WebShell.ad, 病毒ID：aa747a854b185460, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\ThinkPHP远程执行代码（CVE-2019-9082）.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\ThinkPHP 5.x 远程代码执行.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\中国菜刀变形.B.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\发现PHP风险文件（机器学习）.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\狮子鱼CMS image_upload.php页面 任意文件上传漏洞.csv, 病毒名：Backdoor/PHP.WebShell.aj, 病毒ID：aa37a23dad9a8c14, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\狮子鱼CMS wxapp.php页面 任意文件上传漏洞.csv, 病毒名：Backdoor/PHP.WebShell.aj, 病毒ID：aa37a23dad9a8c14, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\generated_templates\ThinkPHP远程执行代码（CVE-2019-9082）_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\generated_templates\ThinkPHP 5.x 远程代码执行_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\generated_templates\狮子鱼CMS image_upload.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\generated_templates\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\ThinkPHP远程执行代码（CVE-2019-9082）.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\ThinkPHP 5.x 远程代码执行.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\中国菜刀变形.B.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\发现PHP风险文件（机器学习）.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\狮子鱼CMS image_upload.php页面 任意文件上传漏洞.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_attack\狮子鱼CMS wxapp.php页面 任意文件上传漏洞.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass\发现脚本文件上传行为.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_information\发现脚本文件上传行为.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\tianyan_csv_pass_information\generated_templates\发现脚本文件上传行为_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\data_new\waf_csv_pass\['Cookie', 'Inject'].csv, 病毒名：Backdoor/PHP.WebShellUpload.a, 病毒ID：b5b6c93212fe9ec9, 处理结果：暂不处理
+风险路径：D:\data_new\zhongzi_csv_pass\fh-waf_csv_pass\['Inject'].csv, 病毒名：HEUR:Backdoor/PHP.WebShell.d, 病毒ID：47c42598edaa0c22, 处理结果：暂不处理
+风险路径：D:\Downloads\AntSword\antSword-2.1.15\CHANGELOG.md, 病毒名：Backdoor/JSP.WebShell.u, 病毒ID：fbc930f99a75bad4, 处理结果：暂不处理
+风险路径：D:\Downloads\AntSword\antSword-2.1.15\source\core\cmdlinux\encoder\base64.js, 病毒名：HEUR:Backdoor/PHP.TinyShell.b, 病毒ID：be922e6b145653b2, 处理结果：暂不处理
+风险路径：D:\Downloads\AntSword\antSword-2.1.15\source\core\pswindows\encoder\base64.js, 病毒名：HEUR:Backdoor/PHP.TinyShell.b, 病毒ID：be922e6b145653b2, 处理结果：暂不处理
+风险路径：D:\Downloads\AntSword\antSword-2.1.15\source\core\pswindows\template\filemanager.js, 病毒名：HEUR:Trojan/PS.FileManager.d, 病毒ID：42e2f90647c25998, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\new\ThinkPHP远程执行代码（CVE-2019-9082）_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\new\ThinkPHP 5.x 远程代码执行_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\new\狮子鱼CMS image_upload.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\new\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\ThinkPHP远程执行代码（CVE-2019-9082）_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\ThinkPHP 5.x 远程代码执行_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\狮子鱼CMS image_upload.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_attack\generated_templates\狮子鱼CMS wxapp.php页面 任意文件上传漏洞_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_information\generated_templates\new\发现脚本文件上传行为_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\zhongbai\waf\eventlog_list.csv, 病毒名：Backdoor/ASP.WebShell.f, 病毒ID：be3dc0ff9a9c5325, 处理结果：暂不处理
+风险路径：D:\SOCAlert-log\tianyan_csv_pass_0717\tianyan_csv_pass_information\generated_templates\发现脚本文件上传行为_processed.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\FiberSOC\finetune.json, 病毒名：HEUR:Backdoor/PHP.WebShell.c, 病毒ID：47413b8f9277c26e, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\webshell@\发现上传php_webshell木马行为.json, 病毒名：HEUR:Backdoor/PHP.WebShell.o, 病毒ID：7fd5f648d2880ea9, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\webshell@\发现上传Jspx_webshell木马行为.json, 病毒名：Backdoor/JSP.WebShell.am, 病毒ID：ff7bbf845ac3c331, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\代码执行\Java框架通用代码执行攻击.json, 病毒名：HEUR:Backdoor/ASP.WebShell.a, 病毒ID：565b50ee0f79ce6d, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\代码执行\PHP代码执行攻击(机器学习).json, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\代码执行\ThinkPHP远程执行代码（CVE-2019-9082）.json, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\代码执行\ThinkPHP 5.x 远程代码执行.json, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\文件上传\狮子鱼CMS wxapp.php页面 任意文件上传漏洞.json, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\文件上传\发现PHP脚本文件上传行为.json, 病毒名：HEUR:Backdoor/PHP.WebShell.c, 病毒ID：47413b8f9277c26e, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\文件上传\发现脚本文件上传行为.json, 病毒名：Backdoor/JSP.WebShell.am, 病毒ID：ff7bbf845ac3c331, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\目录遍历\发现目录穿越攻击行为.json, 病毒名：Trojan/Linux.CoinMiner.cj, 病毒ID：f2552a6f64eaa113, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\微调数据集筛选\配置不当错误\WebServer文件解析漏洞攻击.json, 病毒名：Backdoor/ASP.WebShell.f, 病毒ID：be3dc0ff9a9c5325, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\fh-waf_csv_pass\['Inject'].csv, 病毒名：HEUR:Backdoor/PHP.WebShell.d, 病毒ID：47c42598edaa0c22, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\phpMyAdmin存在后门文件漏洞（CVE-2012-5159）.csv, 病毒名：Backdoor/PHP.WebShell.ad, 病毒ID：aa747a854b185460, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\ThinkPHP远程执行代码（CVE-2019-9082）.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\ThinkPHP 5.x 远程代码执行.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\中国菜刀变形.B.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\发现PHP风险文件（机器学习）.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\狮子鱼CMS wxapp.php页面 任意文件上传漏洞.csv, 病毒名：Backdoor/PHP.WebShell.aj, 病毒ID：aa37a23dad9a8c14, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\狮子鱼CMS image_upload.php页面 任意文件上传漏洞.csv, 病毒名：Backdoor/PHP.WebShell.aj, 病毒ID：aa37a23dad9a8c14, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\waf_csv_pass\['Cookie', 'Inject'].csv, 病毒名：Backdoor/PHP.WebShellUpload.a, 病毒ID：b5b6c93212fe9ec9, 处理结果：暂不处理
+风险路径：D:\实验室项目汇总\烽火安全大模型\论文数据\tianyan_csv_pass\发现脚本文件上传行为.csv, 病毒名：Backdoor/PHP.WebShell.bq, 病毒ID：8da55ba59d1452dd, 处理结果：暂不处理
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【9】2025-11-05 02:02:56,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 02:02
+总计用时：00:00:13
+扫描对象：69077
+扫描文件：69551
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【10】2025-11-05 02:01:58,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 02:01
+总计用时：00:00:43
+扫描对象：91550
+扫描文件：84280
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【11】2025-11-05 01:57:05,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:56
+总计用时：00:00:16
+扫描对象：63785
+扫描文件：62703
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【12】2025-11-05 01:50:37,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:50
+总计用时：00:00:13
+扫描对象：54895
+扫描文件：55366
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【13】2025-11-05 01:40:27,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:40
+总计用时：00:00:22
+扫描对象：61123
+扫描文件：61027
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【14】2025-11-05 01:29:20,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:28
+总计用时：00:01:06
+扫描对象：99088
+扫描文件：56943
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【15】2025-11-05 01:20:13,病毒防护,病毒查杀,全盘扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:17
+总计用时：00:00:02
+扫描对象：3148
+扫描文件：3436
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【16】2025-11-05 01:15:13,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:15
+总计用时：00:00:06
+扫描对象：14283
+扫描文件：14549
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【17】2025-11-05 01:12:31,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:12
+总计用时：00:00:06
+扫描对象：14274
+扫描文件：14542
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【18】2025-11-05 01:08:21,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:08
+总计用时：00:00:06
+扫描对象：14278
+扫描文件：14544
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【19】2025-11-05 01:08:02,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:06
+总计用时：00:00:01
+扫描对象：2328
+扫描文件：2362
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【20】2025-11-05 01:03:21,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 01:03
+总计用时：00:00:06
+扫描对象：14277
+扫描文件：14539
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【21】2025-11-05 00:51:07,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:50
+总计用时：00:00:06
+扫描对象：14271
+扫描文件：14537
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【22】2025-11-05 00:48:12,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:48
+总计用时：00:00:06
+扫描对象：14293
+扫描文件：14551
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【23】2025-11-05 00:43:46,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:43
+总计用时：00:00:06
+扫描对象：14284
+扫描文件：14542
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【24】2025-11-05 00:31:59,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:31
+总计用时：00:00:07
+扫描对象：14278
+扫描文件：14540
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【25】2025-11-05 00:14:31,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:14
+总计用时：00:00:06
+扫描对象：14229
+扫描文件：14482
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【26】2025-11-05 00:11:20,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:11
+总计用时：00:00:05
+扫描对象：14234
+扫描文件：14487
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【27】2025-11-05 00:10:10,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:10
+总计用时：00:00:05
+扫描对象：14227
+扫描文件：14481
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【28】2025-11-05 00:08:09,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:08
+总计用时：00:00:06
+扫描对象：14240
+扫描文件：14491
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【29】2025-11-05 00:05:13,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:05
+总计用时：00:00:06
+扫描对象：14238
+扫描文件：14491
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+【30】2025-11-05 00:00:15,病毒防护,病毒查杀,快速扫描, 发现0个风险项目
+
+病毒库时间：2025-11-03 21:10
+开始时间：2025-11-05 00:00
+总计用时：00:00:07
+扫描对象：14240
+扫描文件：14491
+发现风险：0
+已处理风险：0
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+

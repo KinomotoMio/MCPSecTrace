@@ -332,8 +332,8 @@ def quick_scan():
     time.sleep(get_sleep_time("short"))
 
     # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
-    # 创建 mcp_servers/logs/huorong 目录
-    log_dir = Path(__file__).parent / "logs" / "huorong"
+    # 创建 mcp_servers/artifacts/huorong 目录
+    log_dir = Path(__file__).parent / "artifacts" / "huorong"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
@@ -492,8 +492,8 @@ def full_scan():
     time.sleep(get_sleep_time("short"))
 
     # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
-    # 创建 mcp_servers/logs/huorong 目录
-    log_dir = Path(__file__).parent / "logs" / "huorong"
+    # 创建 mcp_servers/artifacts/huorong 目录
+    log_dir = Path(__file__).parent / "artifacts" / "huorong"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
@@ -615,9 +615,9 @@ def get_quarantine_file():
     """
     # 读取数据库中信息
     source_db_path = r"C:/ProgramData/Huorong/Sysdiag/log.db"
-    target_dir = r"./src/mcpsectrace/mcp_servers/logs/huorong/"  # 目标目录
+    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"  # 目标目录
     target_db_path = os.path.join(target_dir, "QuarantineEx.db")
-    log_path = "./src/mcpsectrace/mcp_servers/logs/huorong/quarantine_files.log"
+    log_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/quarantine_files.log"
     try:
         # 1. 复制数据库到目标目录下
         if not os.path.exists(source_db_path):
@@ -654,7 +654,7 @@ def get_trust_zone():
         None
     """
     # 1：复制相关文件到当前目录下（存在才复制）
-    target_dir = r"./src/mcpsectrace/mcp_servers/logs/huorong/"
+    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"
     files = [
         r"C:/ProgramData/Huorong/Sysdiag/wlfile.db",
         r"C:/ProgramData/Huorong/Sysdiag/wlfile.db-wal",
@@ -667,7 +667,7 @@ def get_trust_zone():
             debug_print(f"文件复制失败: {f}, 错误: {e}")
             return f"复制文件失败: {f}, 错误: {e}"
     # 2：读取表内容
-    file_path = "./src/mcpsectrace/mcp_servers/logs/huorong/trust_files.log"
+    file_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/trust_files.log"
     read_wlfile_db(target_dir + "wlfile.db", file_path)
     # 3：删除复制的文件
     for f in ["wlfile.db", "wlfile.db-wal"]:
@@ -724,7 +724,7 @@ def get_security_log():
 
     # 截取左上角部分，检测"另存为"文本
     save_as_detected = False
-    logs_dir = Path(__file__).parent / "logs" / "huorong"
+    logs_dir = Path(__file__).parent / "artifacts" / "huorong"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     for attempt in range(15):  # 15次重试，每次等待1秒
@@ -791,7 +791,7 @@ def get_security_log():
     time.sleep(get_sleep_time("medium"))
 
     # 输入路径（使用剪贴板粘贴）
-    log_path = r"D:\MCPSecTrace\src\mcpsectrace\mcp_servers\logs\huorong"
+    log_path = r"D:/MCPSecTrace/logs/huorong/"
     debug_print(f"输入日志输出路径: {log_path}")
 
     # 复制路径到剪贴板
@@ -905,8 +905,8 @@ def main():
     # full_scan()
     # get_quarantine_file()
     # get_trust_zone()
-    get_security_log()
-    # mcp.run(transport="stdio")
+    # get_security_log()
+    mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---

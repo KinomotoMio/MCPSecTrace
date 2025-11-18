@@ -49,14 +49,14 @@ def get_sleep_time(base_type: str) -> float:
 
 
 # --- 日志函数 ---
-def setup_log(log_dir="logs"):
-    # 如果不存在，则创建logs目录
+def setup_log(log_dir="./logs/focus_pack"):
+    # 如果不存在，则创建目录
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     debug_print(f"日志目录: {log_dir}")
 
     # 生成日志文件名（包含时间戳）
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d")
     log_filename = os.path.join(log_dir, f"focus_pack_mcp_{timestamp}.log")
     return log_filename
 
@@ -443,7 +443,7 @@ def quick_scan():
     initial_files = get_initial_files(focus_logs_path)
 
     # 创建日志目录
-    log_dir = Path(__file__).parent / "logs" / "focus_pack"
+    log_dir = Path(__file__).parent / "artifacts" / "focus_pack"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 2. 点击'快速扫描'按钮（使用相对位置定位）
@@ -581,7 +581,7 @@ def main():
     else:
         debug_print(f"已从配置文件加载Focus Pack路径: {FOCUS_PACK_PATH}")
 
-    LOG_NAME = setup_log("logs/focus_pack")
+    LOG_NAME = setup_log("./logs/focus_pack")
 
     # 1. 检查VS code权限
     debug_print("--- VS code 管理员权限检查 ---")

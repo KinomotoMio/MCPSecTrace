@@ -43,11 +43,6 @@ hrkill_dir = "hrkill"
 focus_pack_dir = "focus_pack"
 
 [output]
-# 分析报告输出目录
-reports_dir = "data/reports"
-
-# 截图文件输出目录
-screenshots_dir = "data/screenshots"
 
 # 系统日志输出目录
 logs_dir = "data/logs"
