@@ -217,7 +217,7 @@ class SampleReportAnalyzer:
         Returns:
             Tuple[bool, str]: (成功标志, Markdown内容)
         """
-        md_content = f"\n#### SHA256: {sha256}\n\n"
+        md_content = f"\n### SHA256: {sha256}\n\n"
 
         try:
             sample_url = f"https://s.threatbook.com/report/file/{sha256}"
@@ -262,59 +262,10 @@ class SampleReportAnalyzer:
                 print(error_msg)
                 md_content += f"⚠️ {error_msg}\n\n"
 
-            # 找到并点击所有子元素
-            try:
-                element_timeout = get_config_value("ioc.element_timeout", default=10)
-                parent_element = WebDriverWait(driver, element_timeout).until(
-                    EC.presence_of_element_located(
-                        (
-                            By.XPATH,
-                            "/html/body/div[1]/span/div/span/div/div/section/main/div/div[2]/div[1]/div",
-                        )
-                    )
-                )
-
-                # 查找所有class为styles_subChildrenWrapper__bhPNq的元素
-                child_elements = parent_element.find_elements(
-                    By.CSS_SELECTOR, ".styles_subChildrenWrapper__bhPNq"
-                )
-
-                if child_elements:
-                    print(f"找到 {len(child_elements)} 个子元素")
-                    md_content += f"**检测到 {len(child_elements)} 个分析模块**\n\n"
-
-                    for idx, element in enumerate(child_elements, 1):
-                        try:
-                            # 滚动到元素位置
-                            driver.execute_script(
-                                "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
-                                element,
-                            )
-                            time.sleep(1)
-
-                            # 点击元素
-                            element.click()
-                            print(f"点击了第 {idx} 个元素")
-                            time.sleep(
-                                get_config_value("ioc.scroll_wait_time", default=2)
-                            )
-
-                            md_content += f"- ✅ 已点击分析模块 {idx}\n"
-
-                        except Exception as e:
-                            error_msg = f"点击第 {idx} 个元素失败: {e}"
-                            print(error_msg)
-                            md_content += f"- ❌ {error_msg}\n"
-
-                    md_content += "\n"
-                else:
-                    print("未找到任何子元素")
-                    md_content += "⚠️ 未找到分析模块\n\n"
-
-            except Exception as e:
-                error_msg = f"处理子元素失败: {e}"
-                print(error_msg)
-                md_content += f"⚠️ {error_msg}\n\n"
+            # 新增功能：处理环境列表和发行文件表格
+            md_content += SampleReportAnalyzer.extract_environment_and_files(
+                driver, sha256
+            )
 
             return True, md_content
 
@@ -323,6 +274,133 @@ class SampleReportAnalyzer:
             print(error_msg)
             md_content = f"\n#### SHA256: {sha256}\n\n❌ {error_msg}\n\n"
             return False, md_content
+
+    @staticmethod
+    def extract_environment_and_files(driver: webdriver.Chrome, sha256: str) -> str:
+        """
+        提取环境列表和发行文件表格信息
+
+        Args:
+            driver: WebDriver实例
+            sha256: 样本SHA256值
+
+        Returns:
+            str: Markdown格式的内容
+        """
+        md_content = ""
+
+        try:
+            element_timeout = get_config_value("ioc.element_timeout", default=10)
+
+            # 找到环境列表容器
+            env_list_container = WebDriverWait(driver, element_timeout).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, ".styles_envList__C9sZQ")
+                )
+            )
+
+            # 找到环境列表下的所有子元素（div）
+            env_items = env_list_container.find_elements(By.CSS_SELECTOR, "div[role]")
+
+            if not env_items:
+                # 备用选择器
+                env_items = env_list_container.find_elements(By.CSS_SELECTOR, "div")
+                # 过滤掉容器本身，只要子元素
+                env_items = [
+                    item
+                    for item in env_items
+                    if item.get_attribute("class") and item != env_list_container
+                ][:10]  # 限制数量，避免选择到过多元素
+
+            if env_items:
+                print(f"找到 {len(env_items)} 个环境项")
+                # md_content += "### 不同环境文件释放位置\n\n"
+
+                for idx, env_item in enumerate(env_items, 1):
+                    try:
+                        # 获取环境项的文本
+                        env_text = env_item.text.strip()
+                        if not env_text:
+                            continue
+
+                        print(f"处理环境项 {idx}: {env_text}")
+                        md_content += f"#### {env_text}环境下常见释放路径\n\n"
+
+                        # 点击环境项
+                        driver.execute_script(
+                            "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+                            env_item,
+                        )
+                        time.sleep(1)
+                        env_item.click()
+
+                        # 等待页面加载
+                        wait_time = get_config_value("ioc.scroll_wait_time", default=2)
+                        time.sleep(wait_time)
+
+                        # 尝试获取发行文件表格
+                        try:
+                            # 获取id为releaseFile的元素
+                            release_file_container = driver.find_element(
+                                By.ID, "releaseFile"
+                            )
+
+                            # 找到表格的tbody
+                            table_body = release_file_container.find_element(
+                                By.CSS_SELECTOR, "tbody.ant-table-tbody"
+                            )
+
+                            # 找到所有表格行
+                            table_rows = table_body.find_elements(
+                                By.CSS_SELECTOR, ".ant-table-row.ant-table-row-level-0"
+                            )
+
+                            if table_rows:
+                                md_content += f"**常见释放文件位置** ({len(table_rows)} 个)\n\n"
+
+                                for row_idx, row in enumerate(table_rows, 1):
+                                    try:
+                                        # 找到第一个td（第一列）
+                                        first_cell = row.find_element(
+                                            By.CSS_SELECTOR, "td.ant-table-cell"
+                                        )
+
+                                        # 获取单元格中的所有文本内容
+                                        cell_text = first_cell.text.strip()
+
+                                        if cell_text:
+                                            md_content += f"- {cell_text}\n\n"
+                                            print(
+                                                f"  发行版本 {row_idx}: {cell_text}"
+                                            )
+
+                                    except Exception as e:
+                                        print(f"获取表格行 {row_idx} 失败: {e}")
+
+                                md_content += "\n"
+                            else:
+                                md_content += "未找到发行版本数据\n\n"
+
+                        except Exception as e:
+                            error_msg = f"获取文件常见释放路径失败: {e}"
+                            print(error_msg)
+                            md_content += f"⚠️ {error_msg}\n\n"
+
+                    except Exception as e:
+                        error_msg = f"处理环境项 {idx} 失败: {e}"
+                        print(error_msg)
+                        md_content += f"- ❌ {error_msg}\n"
+
+            else:
+                print("未找到环境列表项")
+                md_content += "⚠️ 未找到环境列表信息\n\n"
+
+        except Exception as e:
+            error_msg = f"提取环境和文件信息失败: {e}"
+            print(error_msg)
+            md_content += f"⚠️ {error_msg}\n\n"
+
+        return md_content
 
 
 class ThreatDataExtractor:
@@ -724,7 +802,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
                             # 新增功能：分析每个样本的详细报告
                             print("\n开始分析每个样本的详细报告...")
-                            report_content += "\n---\n\n## 样本详细分析\n\n"
+                            report_content += "\n---\n\n## 样本常见释放路径分析\n\n"
 
                             # 从CSV数据中提取SHA256（第4列，索引为3）
                             for row_idx, row in enumerate(csv_data[1:], 1):  # 跳过表头
