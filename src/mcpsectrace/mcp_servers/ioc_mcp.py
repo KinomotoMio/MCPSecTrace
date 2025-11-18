@@ -199,6 +199,132 @@ class ElementScreenshot:
             return False, None, f"## {config.markdown_title}\n{error_msg}\n"
 
 
+class SampleReportAnalyzer:
+    """样本报告分析类"""
+
+    @staticmethod
+    def analyze_sample_report(
+        driver: webdriver.Chrome, sha256: str, pic_output_dir: str
+    ) -> Tuple[bool, str]:
+        """
+        访问样本报告页面并进行分析
+
+        Args:
+            driver: WebDriver实例
+            sha256: 样本的SHA256值
+            pic_output_dir: 截图输出目录
+
+        Returns:
+            Tuple[bool, str]: (成功标志, Markdown内容)
+        """
+        md_content = f"\n#### SHA256: {sha256}\n\n"
+
+        try:
+            sample_url = f"https://s.threatbook.com/report/file/{sha256}"
+            print(f"正在分析样本: {sample_url}")
+            driver.get(sample_url)
+
+            # 等待页面加载
+            page_load_wait = get_config_value("ioc.page_load_wait_seconds", default=10)
+            time.sleep(page_load_wait)
+
+            # 截图第一个位置
+            try:
+                element_timeout = get_config_value("ioc.element_timeout", default=10)
+                screenshot_element = WebDriverWait(driver, element_timeout).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            "/html/body/div/span/div/span/div/div/section/main/div/div[1]/div",
+                        )
+                    )
+                )
+
+                # 滚动到元素位置
+                driver.execute_script(
+                    "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+                    screenshot_element,
+                )
+                time.sleep(2)
+
+                # 保存截图
+                sanitized_sha256 = sha256[:16]  # 只取前16个字符作为文件名
+                screenshot_path = os.path.join(
+                    pic_output_dir, f"sample_{sanitized_sha256}_report.png"
+                )
+                screenshot_element.screenshot(screenshot_path)
+                print(f"样本报告截图已保存: {screenshot_path}")
+
+                md_content += f"![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_{sanitized_sha256}_report.png)\n\n"
+
+            except Exception as e:
+                error_msg = f"截取样本报告失败: {e}"
+                print(error_msg)
+                md_content += f"⚠️ {error_msg}\n\n"
+
+            # 找到并点击所有子元素
+            try:
+                element_timeout = get_config_value("ioc.element_timeout", default=10)
+                parent_element = WebDriverWait(driver, element_timeout).until(
+                    EC.presence_of_element_located(
+                        (
+                            By.XPATH,
+                            "/html/body/div[1]/span/div/span/div/div/section/main/div/div[2]/div[1]/div",
+                        )
+                    )
+                )
+
+                # 查找所有class为styles_subChildrenWrapper__bhPNq的元素
+                child_elements = parent_element.find_elements(
+                    By.CSS_SELECTOR, ".styles_subChildrenWrapper__bhPNq"
+                )
+
+                if child_elements:
+                    print(f"找到 {len(child_elements)} 个子元素")
+                    md_content += f"**检测到 {len(child_elements)} 个分析模块**\n\n"
+
+                    for idx, element in enumerate(child_elements, 1):
+                        try:
+                            # 滚动到元素位置
+                            driver.execute_script(
+                                "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+                                element,
+                            )
+                            time.sleep(1)
+
+                            # 点击元素
+                            element.click()
+                            print(f"点击了第 {idx} 个元素")
+                            time.sleep(
+                                get_config_value("ioc.scroll_wait_time", default=2)
+                            )
+
+                            md_content += f"- ✅ 已点击分析模块 {idx}\n"
+
+                        except Exception as e:
+                            error_msg = f"点击第 {idx} 个元素失败: {e}"
+                            print(error_msg)
+                            md_content += f"- ❌ {error_msg}\n"
+
+                    md_content += "\n"
+                else:
+                    print("未找到任何子元素")
+                    md_content += "⚠️ 未找到分析模块\n\n"
+
+            except Exception as e:
+                error_msg = f"处理子元素失败: {e}"
+                print(error_msg)
+                md_content += f"⚠️ {error_msg}\n\n"
+
+            return True, md_content
+
+        except Exception as e:
+            error_msg = f"样本报告分析失败: {e}"
+            print(error_msg)
+            md_content = f"\n#### SHA256: {sha256}\n\n❌ {error_msg}\n\n"
+            return False, md_content
+
+
 class ThreatDataExtractor:
     """威胁数据提取类"""
 
@@ -595,6 +721,28 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             md_table = ThreatDataExtractor.csv_data_to_markdown(csv_data)
                             report_content += md_table + "\n"
                             report_content += f"\n💾 详细数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
+
+                            # 新增功能：分析每个样本的详细报告
+                            print("\n开始分析每个样本的详细报告...")
+                            report_content += "\n---\n\n## 样本详细分析\n\n"
+
+                            # 从CSV数据中提取SHA256（第4列，索引为3）
+                            for row_idx, row in enumerate(csv_data[1:], 1):  # 跳过表头
+                                if len(row) > 3 and row[3].strip():  # SHA256在第4列
+                                    sha256 = row[3].strip()
+                                    print(f"分析样本 {row_idx}/{len(csv_data)-1}: {sha256}")
+
+                                    success, sample_md = (
+                                        SampleReportAnalyzer.analyze_sample_report(
+                                            driver, sha256, pic_output_dir
+                                        )
+                                    )
+                                    if success:
+                                        report_content += sample_md
+                                    else:
+                                        report_content += sample_md
+
+                            print("样本详细分析完成")
                         else:
                             report_content += "\n---\n\n## 相关样本\n\n"
                             report_content += "⚠️ 表格数据提取失败\n\n"
