@@ -1,4 +1,4 @@
-"""MCP server implementation for cross-platform file search."""
+"""跨平台文件搜索的 MCP 服务器实现。"""
 
 import json
 import platform
@@ -13,7 +13,7 @@ from .platform_search import UnifiedSearchQuery, WindowsSpecificParams, build_se
 from .search_interface import SearchProvider
 
 class SearchQuery(BaseModel):
-    """Model for search query parameters."""
+    """搜索查询参数的模型。"""
     query: str = Field(
         description="Search query string. See the search syntax guide for details."
     )
@@ -45,30 +45,30 @@ class SearchQuery(BaseModel):
     )
 
 async def serve() -> None:
-    """Run the server."""
+    """运行服务器。"""
     current_platform = platform.system().lower()
     search_provider = SearchProvider.get_provider()
-    
+
     server = Server("universal-search")
 
     @server.list_resources()
     async def list_resources() -> list[Resource]:
-        """Return an empty list since this server doesn't provide any resources."""
+        """返回空列表，因为此服务器不提供任何资源。"""
         return []
 
     @server.list_resource_templates()
     async def list_resource_templates() -> list[ResourceTemplate]:
-        """Return an empty list since this server doesn't provide any resource templates."""
+        """返回空列表，因为此服务器不提供任何资源模板。"""
         return []
 
     @server.list_prompts()
     async def list_prompts() -> list[Prompt]:
-        """Return an empty list since this server doesn't provide any prompts."""
+        """返回空列表，因为此服务器不提供任何提示。"""
         return []
 
     @server.list_tools()
     async def list_tools() -> List[Tool]:
-        """Return the search tool with platform-specific documentation and schema."""
+        """返回具有平台特定文档和 schema 的搜索工具。"""
         platform_info = {
             'windows': "Using Everything SDK with full search capabilities",
             'darwin': "Using mdfind (Spotlight) with native macOS search capabilities",
@@ -220,51 +220,51 @@ Search Syntax Guide:
     @server.call_tool()
     async def call_tool(name: str, arguments: dict) -> List[TextContent]:
         if name != "search":
-            raise ValueError(f"Unknown tool: {name}")
+            raise ValueError(f"未知工具: {name}")
 
         try:
-            # Parse and validate inputs
+            # 解析和验证输入
             base_params = {}
             windows_params = {}
-            
-            # Handle base parameters
+
+            # 处理基础参数
             if 'base' in arguments:
                 if isinstance(arguments['base'], str):
                     try:
                         base_params = json.loads(arguments['base'])
                     except json.JSONDecodeError:
-                        # If not valid JSON string, treat as simple query string
+                        # 如果不是有效的 JSON 字符串，将其视为简单的查询字符串
                         base_params = {'query': arguments['base']}
                 elif isinstance(arguments['base'], dict):
-                    # If already a dict, use directly
+                    # 如果已经是字典，直接使用
                     base_params = arguments['base']
                 else:
-                    raise ValueError("'base' parameter must be a string or dictionary")
+                    raise ValueError("'base' 参数必须是字符串或字典")
 
-            # Handle Windows-specific parameters
+            # 处理 Windows 特定参数
             if 'windows_params' in arguments:
                 if isinstance(arguments['windows_params'], str):
                     try:
                         windows_params = json.loads(arguments['windows_params'])
                     except json.JSONDecodeError:
-                        raise ValueError("Invalid JSON in windows_params")
+                        raise ValueError("windows_params 中的 JSON 无效")
                 elif isinstance(arguments['windows_params'], dict):
-                    # If already a dict, use directly
+                    # 如果已经是字典，直接使用
                     windows_params = arguments['windows_params']
                 else:
-                    raise ValueError("'windows_params' must be a string or dictionary")
+                    raise ValueError("'windows_params' 必须是字符串或字典")
 
-            # Combine parameters
+            # 组合参数
             query_params = {
                 **base_params,
                 'windows_params': windows_params
             }
 
-            # Create unified query
+            # 创建统一查询
             query = UnifiedSearchQuery(**query_params)
 
             if current_platform == "windows":
-                # Use Everything SDK directly
+                # 直接使用 Everything SDK
                 platform_params = query.windows_params or WindowsSpecificParams()
                 results = search_provider.search_files(
                     query=query.query,
@@ -276,7 +276,7 @@ Search Syntax Guide:
                     sort_by=platform_params.sort_by
                 )
             else:
-                # Use command-line tools (mdfind/locate)
+                # 使用命令行工具（mdfind/locate）
                 platform_params = None
                 if current_platform == 'darwin':
                     platform_params = query.mac_params or {}
@@ -305,7 +305,7 @@ Search Syntax Guide:
         except Exception as e:
             return [TextContent(
                 type="text",
-                text=f"Search failed: {str(e)}"
+                text=f"搜索失败: {str(e)}"
             )]
 
     options = server.create_initialization_options()
@@ -313,27 +313,27 @@ Search Syntax Guide:
         await server.run(read_stream, write_stream, options, raise_exceptions=True)
 
 def configure_windows_console():
-    """Configure Windows console for UTF-8 output."""
+    """配置 Windows 控制台以输出 UTF-8。"""
     import ctypes
 
     if sys.platform == "win32":
-        # Enable virtual terminal processing
+        # 启用虚拟终端处理
         kernel32 = ctypes.windll.kernel32
         STD_OUTPUT_HANDLE = -11
         ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
-        
+
         handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
         mode = ctypes.c_ulong()
         kernel32.GetConsoleMode(handle, ctypes.byref(mode))
         mode.value |= ENABLE_VIRTUAL_TERMINAL_PROCESSING
         kernel32.SetConsoleMode(handle, mode)
-        
-        # Set UTF-8 encoding for console output
+
+        # 为控制台输出设置 UTF-8 编码
         sys.stdout.reconfigure(encoding='utf-8')
         sys.stderr.reconfigure(encoding='utf-8')
 
 def main() -> None:
-    """Main entry point."""
+    """主入口点。"""
     import asyncio
     import logging
     logging.basicConfig(
@@ -342,12 +342,12 @@ def main() -> None:
     )
 
     configure_windows_console()
-    
+
     try:
         asyncio.run(serve())
     except KeyboardInterrupt:
-        logging.info("Server stopped by user")
+        logging.info("服务器被用户停止")
         sys.exit(0)
     except Exception as e:
-        logging.error(f"Server error: {e}", exc_info=True)
+        logging.error(f"服务器错误: {e}", exc_info=True)
         sys.exit(1)

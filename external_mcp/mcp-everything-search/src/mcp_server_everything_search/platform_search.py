@@ -1,4 +1,4 @@
-"""Platform-specific search implementations with dedicated parameter models."""
+"""平台特定的搜索实现和参数模型。"""
 
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
@@ -6,7 +6,7 @@ from enum import Enum
 import platform
 
 class BaseSearchQuery(BaseModel):
-    """Base search parameters common to all platforms."""
+    """所有平台通用的基础搜索参数。"""
     query: str = Field(
         description="Search query string. See platform-specific documentation for syntax details."
     )
@@ -18,7 +18,7 @@ class BaseSearchQuery(BaseModel):
     )
 
 class MacSpecificParams(BaseModel):
-    """macOS-specific search parameters for mdfind."""
+    """macOS 特定的搜索参数（用于 mdfind）。"""
     live_updates: bool = Field(
         default=False,
         description="Provide live updates to search results"
@@ -37,7 +37,7 @@ class MacSpecificParams(BaseModel):
     )
 
 class LinuxSpecificParams(BaseModel):
-    """Linux-specific search parameters for locate."""
+    """Linux 特定的搜索参数（用于 locate）。"""
     ignore_case: bool = Field(
         default=True,
         description="Ignore case distinctions (-i parameter)"
@@ -56,7 +56,7 @@ class LinuxSpecificParams(BaseModel):
     )
 
 class WindowsSortOption(int, Enum):
-    """Sort options for Windows Everything search."""
+    """Windows Everything 搜索的排序选项。"""
     NAME_ASC = 1
     NAME_DESC = 2
     PATH_ASC = 3
@@ -71,7 +71,7 @@ class WindowsSortOption(int, Enum):
     MODIFIED_DESC = 14
 
 class WindowsSpecificParams(BaseModel):
-    """Windows-specific search parameters for Everything SDK."""
+    """Windows 特定的搜索参数（用于 Everything SDK）。"""
     match_path: bool = Field(
         default=False,
         description="Match against full path instead of filename only"
@@ -94,16 +94,16 @@ class WindowsSpecificParams(BaseModel):
     )
 
 class UnifiedSearchQuery(BaseSearchQuery):
-    """Combined search parameters model."""
+    """组合的搜索参数模型。"""
     mac_params: Optional[MacSpecificParams] = None
     linux_params: Optional[LinuxSpecificParams] = None
     windows_params: Optional[WindowsSpecificParams] = None
 
     @classmethod
     def get_schema_for_platform(cls) -> Dict[str, Any]:
-        """Get the appropriate schema based on the current platform."""
+        """获取基于当前平台的适当 schema。"""
         system = platform.system().lower()
-        
+
         schema = {
             "type": "object",
             "properties": {
@@ -111,8 +111,8 @@ class UnifiedSearchQuery(BaseSearchQuery):
             },
             "required": ["base"]
         }
-        
-        # Add platform-specific parameters
+
+        # 添加平台特定的参数
         if system == "darwin":
             schema["properties"]["mac_params"] = MacSpecificParams.model_json_schema()
         elif system == "linux":
@@ -123,7 +123,7 @@ class UnifiedSearchQuery(BaseSearchQuery):
         return schema
 
     def get_platform_params(self) -> Optional[BaseModel]:
-        """Get the parameters specific to the current platform."""
+        """获取当前平台特定的参数。"""
         system = platform.system().lower()
         if system == "darwin":
             return self.mac_params
@@ -134,10 +134,10 @@ class UnifiedSearchQuery(BaseSearchQuery):
         return None
 
 def build_search_command(query: UnifiedSearchQuery) -> List[str]:
-    """Build the appropriate search command based on platform and parameters."""
+    """根据平台和参数构建适当的搜索命令。"""
     system = platform.system().lower()
     platform_params = query.get_platform_params()
-    
+
     if system == "darwin":
         cmd = ["mdfind"]
         if platform_params:
@@ -149,9 +149,9 @@ def build_search_command(query: UnifiedSearchQuery) -> List[str]:
                 cmd.append("-literal")
             if platform_params.interpret_query:
                 cmd.append("-interpret")
-        cmd.append(query.query)  # Use query directly from UnifiedSearchQuery
+        cmd.append(query.query)  # 直接使用 UnifiedSearchQuery 中的 query
         return cmd
-        
+
     elif system == "linux":
         cmd = ["locate"]
         if platform_params:
@@ -163,11 +163,11 @@ def build_search_command(query: UnifiedSearchQuery) -> List[str]:
                 cmd.append("-e")
             if platform_params.count_only:
                 cmd.append("-c")
-        cmd.append(query.query)  # Use query directly from UnifiedSearchQuery
+        cmd.append(query.query)  # 直接使用 UnifiedSearchQuery 中的 query
         return cmd
-        
+
     elif system == "windows":
-        # For Windows, return None as we'll use the Everything SDK directly
+        # 对于 Windows，返回空列表，因为我们将直接使用 Everything SDK
         return []
-        
-    raise NotImplementedError(f"Unsupported platform: {system}")
+
+    raise NotImplementedError(f"不支持的平台: {system}")

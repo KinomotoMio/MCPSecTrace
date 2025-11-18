@@ -1,4 +1,4 @@
-"""Main entry point for Everything Search MCP server."""
+"""Everything Search MCP 服务器的主入口点。"""
 
 from .server import main
 

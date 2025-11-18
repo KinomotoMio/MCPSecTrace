@@ -1,4 +1,4 @@
-"""Everything SDK wrapper class."""
+"""Everything SDK 包装类。"""
 
 import ctypes
 import datetime
@@ -7,7 +7,7 @@ import sys
 from typing import Any, List
 from pydantic import BaseModel
 
-# Everything SDK constants
+# Everything SDK 常量
 EVERYTHING_OK = 0
 EVERYTHING_ERROR_MEMORY = 1
 EVERYTHING_ERROR_IPC = 2
@@ -17,7 +17,7 @@ EVERYTHING_ERROR_CREATETHREAD = 5
 EVERYTHING_ERROR_INVALIDINDEX = 6
 EVERYTHING_ERROR_INVALIDCALL = 7
 
-# Request flags
+# 请求标志
 EVERYTHING_REQUEST_FILE_NAME = 0x00000001
 EVERYTHING_REQUEST_PATH = 0x00000002
 EVERYTHING_REQUEST_FULL_PATH_AND_FILE_NAME = 0x00000004
@@ -35,7 +35,7 @@ EVERYTHING_REQUEST_HIGHLIGHTED_FILE_NAME = 0x00002000
 EVERYTHING_REQUEST_HIGHLIGHTED_PATH = 0x00004000
 EVERYTHING_REQUEST_HIGHLIGHTED_FULL_PATH_AND_FILE_NAME = 0x00008000
 
-# Sort options
+# 排序选项
 EVERYTHING_SORT_NAME_ASCENDING = 1
 EVERYTHING_SORT_NAME_DESCENDING = 2
 EVERYTHING_SORT_PATH_ASCENDING = 3
@@ -63,7 +63,7 @@ EVERYTHING_SORT_DATE_ACCESSED_DESCENDING = 24
 EVERYTHING_SORT_DATE_RUN_ASCENDING = 25
 EVERYTHING_SORT_DATE_RUN_DESCENDING = 26
 
-# Windows time conversion constants
+# Windows 时间转换常量
 WINDOWS_TICKS = int(1/10**-7)
 WINDOWS_EPOCH = datetime.datetime.strptime('1601-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 POSIX_EPOCH = datetime.datetime.strptime('1970-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
@@ -71,7 +71,7 @@ EPOCH_DIFF = (POSIX_EPOCH - WINDOWS_EPOCH).total_seconds()
 WINDOWS_TICKS_TO_POSIX_EPOCH = EPOCH_DIFF * WINDOWS_TICKS
 
 class SearchResult(BaseModel):
-    """Model for search results."""
+    """搜索结果的模型。"""
     path: str
     filename: str
     extension: str | None = None
@@ -85,38 +85,38 @@ class SearchResult(BaseModel):
     highlighted_path: str | None = None
 
 class EverythingError(Exception):
-    """Custom exception for Everything SDK errors."""
+    """Everything SDK 错误的自定义异常。"""
     def __init__(self, error_code: int):
         self.error_code = error_code
         super().__init__(self._get_error_message())
-    
+
     def _get_error_message(self) -> str:
         error_messages = {
-            EVERYTHING_ERROR_MEMORY: "Failed to allocate memory",
-            EVERYTHING_ERROR_IPC: "IPC failed (Everything service not running?)",
-            EVERYTHING_ERROR_REGISTERCLASSEX: "Failed to register window class",
-            EVERYTHING_ERROR_CREATEWINDOW: "Failed to create window",
-            EVERYTHING_ERROR_CREATETHREAD: "Failed to create thread",
-            EVERYTHING_ERROR_INVALIDINDEX: "Invalid index",
-            EVERYTHING_ERROR_INVALIDCALL: "Invalid call"
+            EVERYTHING_ERROR_MEMORY: "内存分配失败",
+            EVERYTHING_ERROR_IPC: "IPC 失败（Everything 服务未运行？）",
+            EVERYTHING_ERROR_REGISTERCLASSEX: "注册窗口类失败",
+            EVERYTHING_ERROR_CREATEWINDOW: "创建窗口失败",
+            EVERYTHING_ERROR_CREATETHREAD: "创建线程失败",
+            EVERYTHING_ERROR_INVALIDINDEX: "无效的索引",
+            EVERYTHING_ERROR_INVALIDCALL: "无效的调用"
         }
-        return error_messages.get(self.error_code, f"Unknown error: {self.error_code}")
+        return error_messages.get(self.error_code, f"未知错误: {self.error_code}")
 
 class EverythingSDK:
-    """Wrapper for Everything SDK functionality."""
-    
+    """Everything SDK 功能的包装器。"""
+
     def __init__(self, dll_path: str):
-        """Initialize Everything SDK with the specified DLL path."""
+        """使用指定的 DLL 路径初始化 Everything SDK。"""
         try:
             self.dll = ctypes.WinDLL(dll_path)
             self._configure_dll()
         except Exception as e:
-            print(f"Failed to load Everything SDK DLL: {e}", file=sys.stderr)
+            print(f"加载 Everything SDK DLL 失败: {e}", file=sys.stderr)
             raise
 
     def _configure_dll(self):
-        """Configure DLL function signatures."""
-        # Search configuration
+        """配置 DLL 函数签名。"""
+        # 搜索配置
         self.dll.Everything_SetSearchW.argtypes = [ctypes.c_wchar_p]
         self.dll.Everything_SetMatchPath.argtypes = [ctypes.c_bool]
         self.dll.Everything_SetMatchCase.argtypes = [ctypes.c_bool]
@@ -126,65 +126,65 @@ class EverythingSDK:
         self.dll.Everything_SetSort.argtypes = [ctypes.c_uint]
         self.dll.Everything_SetRequestFlags.argtypes = [ctypes.c_uint]
 
-        # Query function
+        # 查询函数
         self.dll.Everything_QueryW.argtypes = [ctypes.c_bool]
         self.dll.Everything_QueryW.restype = ctypes.c_bool
 
-        # Result getters
+        # 结果获取器
         self.dll.Everything_GetNumResults.restype = ctypes.c_uint
         self.dll.Everything_GetLastError.restype = ctypes.c_uint
-        
+
         self.dll.Everything_GetResultFileNameW.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultFileNameW.restype = ctypes.c_wchar_p
         self.dll.Everything_GetResultExtensionW.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultExtensionW.restype = ctypes.c_wchar_p
         self.dll.Everything_GetResultPathW.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultPathW.restype = ctypes.c_wchar_p
-        
+
         self.dll.Everything_GetResultFullPathNameW.argtypes = [
             ctypes.c_uint,
             ctypes.c_wchar_p,
             ctypes.c_uint
         ]
-        
+
         self.dll.Everything_GetResultDateCreated.argtypes = [
-            ctypes.c_uint, 
+            ctypes.c_uint,
             ctypes.POINTER(ctypes.c_ulonglong)
         ]
         self.dll.Everything_GetResultDateModified.argtypes = [
-            ctypes.c_uint, 
+            ctypes.c_uint,
             ctypes.POINTER(ctypes.c_ulonglong)
         ]
         self.dll.Everything_GetResultDateAccessed.argtypes = [
-            ctypes.c_uint, 
+            ctypes.c_uint,
             ctypes.POINTER(ctypes.c_ulonglong)
         ]
         self.dll.Everything_GetResultSize.argtypes = [
-            ctypes.c_uint, 
+            ctypes.c_uint,
             ctypes.POINTER(ctypes.c_ulonglong)
         ]
         self.dll.Everything_GetResultAttributes.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultRunCount.argtypes = [ctypes.c_uint]
-        
+
         self.dll.Everything_GetResultHighlightedFileNameW.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultHighlightedFileNameW.restype = ctypes.c_wchar_p
         self.dll.Everything_GetResultHighlightedPathW.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultHighlightedPathW.restype = ctypes.c_wchar_p
 
     def _check_error(self):
-        """Check for Everything SDK errors and raise appropriate exception."""
+        """检查 Everything SDK 错误并抛出适当的异常。"""
         error_code = self.dll.Everything_GetLastError()
         if error_code != EVERYTHING_OK:
             raise EverythingError(error_code)
 
     def _get_time(self, filetime: int) -> datetime.datetime:
-        """Convert Windows filetime to Python datetime."""
+        """将 Windows 文件时间转换为 Python datetime。"""
         microsecs = (filetime - WINDOWS_TICKS_TO_POSIX_EPOCH) / WINDOWS_TICKS
         return datetime.datetime.fromtimestamp(microsecs)
 
     def search_files(
-        self, 
-        query: str, 
+        self,
+        query: str,
         max_results: int = 100,
         match_path: bool = False,
         match_case: bool = False,
@@ -193,10 +193,10 @@ class EverythingSDK:
         sort_by: int = EVERYTHING_SORT_NAME_ASCENDING,
         request_flags: int | None = None
     ) -> List[SearchResult]:
-        """Perform file search using Everything SDK."""
-        print(f"Debug: Setting up search with query: {query}", file=sys.stderr)
-        
-        # Set up search parameters
+        """使用 Everything SDK 执行文件搜索。"""
+        print(f"调试: 使用查询设置搜索: {query}", file=sys.stderr)
+
+        # 设置搜索参数
         self.dll.Everything_SetSearchW(query)
         self.dll.Everything_SetMatchPath(match_path)
         self.dll.Everything_SetMatchCase(match_case)
@@ -205,7 +205,7 @@ class EverythingSDK:
         self.dll.Everything_SetMax(max_results)
         self.dll.Everything_SetSort(sort_by)
 
-        # Set request flags
+        # 设置请求标志
         if request_flags is None:
             request_flags = (
                 EVERYTHING_REQUEST_FILE_NAME |
@@ -222,14 +222,14 @@ class EverythingSDK:
             )
         self.dll.Everything_SetRequestFlags(request_flags)
 
-        # Execute search
-        print("Debug: Executing search query", file=sys.stderr)
+        # 执行搜索
+        print("调试: 执行搜索查询", file=sys.stderr)
         if not self.dll.Everything_QueryW(True):
             self._check_error()
-            raise RuntimeError("Search query failed")
-        
-        # Get results
-        print("Debug: Getting search results", file=sys.stderr)
+            raise RuntimeError("搜索查询失败")
+
+        # 获取结果
+        print("调试: 获取搜索结果", file=sys.stderr)
         num_results = min(self.dll.Everything_GetNumResults(), max_results)
         results = []
 
@@ -242,14 +242,14 @@ class EverythingSDK:
         for i in range(num_results):
             try:
                 self.dll.Everything_GetResultFullPathNameW(i, filename_buffer, 260)
-                
-                # Get timestamps
+
+                # 获取时间戳
                 self.dll.Everything_GetResultDateCreated(i, date_created)
                 self.dll.Everything_GetResultDateModified(i, date_modified)
                 self.dll.Everything_GetResultDateAccessed(i, date_accessed)
                 self.dll.Everything_GetResultSize(i, file_size)
 
-                # Get other attributes
+                # 获取其他属性
                 filename = self.dll.Everything_GetResultFileNameW(i)
                 extension = self.dll.Everything_GetResultExtensionW(i)
                 attributes = self.dll.Everything_GetResultAttributes(i)
@@ -271,10 +271,10 @@ class EverythingSDK:
                     highlighted_path=highlighted_path
                 ))
             except Exception as e:
-                print(f"Debug: Error processing result {i}: {e}", file=sys.stderr)
+                print(f"调试: 处理结果 {i} 出错: {e}", file=sys.stderr)
                 continue
 
-        print("Debug: Resetting Everything SDK", file=sys.stderr)
+        print("调试: 重置 Everything SDK", file=sys.stderr)
         self.dll.Everything_Reset()
 
         return results
