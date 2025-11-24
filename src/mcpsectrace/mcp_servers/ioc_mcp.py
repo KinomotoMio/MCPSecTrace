@@ -1027,6 +1027,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
 
 if __name__ == "__main__":
+    mcp.run(transport="stdio")
     # 测试IP分析
-    result = analyze_ip_threat("8.8.8.8")
-    print(result)
+    # result = analyze_ip_threat("8.8.8.8")
+    # print(result)
