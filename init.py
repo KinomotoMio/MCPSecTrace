@@ -133,6 +133,53 @@ def everything_search(dll_path: str, filename_with_suffix: str, search_type: str
         return []
 
 
+def _filter_search_results(results: list, tool_name: str) -> str | None:
+    """
+    根据工具类型为搜索结果应用严格的路径过滤规则
+
+    Args:
+        results: Everything 搜索返回的所有结果
+        tool_name: 工具名称（用于确定过滤规则）
+
+    Returns:
+        过滤后选中的最佳结果，如果未找到则返回 None
+    """
+    if not results:
+        return None
+
+    if tool_name == 'chrome.exe':
+        # 严格要求路径必须包含 /chrome-win64/
+        for result in results:
+            if 'chrome-win64' in result.lower():
+                return result
+        return None
+
+    elif tool_name == 'chromedriver.exe':
+        # 严格要求路径必须包含 /chromedriver-win64/
+        for result in results:
+            if 'chromedriver-win64' in result.lower():
+                return result
+        return None
+
+    elif tool_name == 'User Data':
+        # 严格要求路径必须包含 /Google/Chrome for Testing/ 或 /Google/Chrome/
+        for result in results:
+            lower_path = result.lower()
+            # 优先选择 Chrome for Testing
+            if 'google' in lower_path and 'chrome for testing' in lower_path:
+                return result
+        # 其次选择标准 Google Chrome
+        for result in results:
+            lower_path = result.lower()
+            if 'google' in lower_path and 'chrome' in lower_path and 'cef' not in lower_path:
+                return result
+        return None
+
+    else:
+        # 对于其他工具（huorong, hrkill, focus_pack），使用第一个结果
+        return results[0] if results else None
+
+
 def configure_tool_paths(mcp_sectrace_dir):
     """
     配置工具路径：
@@ -184,13 +231,16 @@ def configure_tool_paths(mcp_sectrace_dir):
             results = everything_search(everything_dll_path, tool_name, search_type)
 
             if results:
-                # 使用第一个结果
-                tool_path = results[0]
-                update_dict[key_path] = tool_path
-                found_count += 1
-                print(f" ✓ 找到")
+                # 使用严格的路径过滤规则
+                tool_path = _filter_search_results(results, tool_name)
+                if tool_path:
+                    update_dict[key_path] = tool_path
+                    found_count += 1
+                    print(f" [OK] 找到")
+                else:
+                    print(f" [SKIP] 找到文件但不符合路径要求")
             else:
-                print(f" ✗ 未找到")
+                print(f" [NOT FOUND] 未找到")
 
         # 更新 TOML 文件
         if update_dict:
@@ -218,7 +268,7 @@ def configure_tool_paths(mcp_sectrace_dir):
                 print(f"[ERROR] 更新 user_settings.toml 失败: {e}")
                 return False
         else:
-            print("[WARN] 未找到任何工具，请手动编辑 config/user_settings.toml 配置工具路径")
+            print("[WARN] 未找到任何符合条件的工具，请手动编辑 config/user_settings.toml 配置工具路径")
             return True
 
     except Exception as e:
