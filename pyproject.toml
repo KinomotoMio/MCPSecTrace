@@ -27,6 +27,7 @@ dependencies = [
     "opencv-python>=4.12.0.88",
     "paddleocr>=3.3.2",
     "paddlepaddle>=3.2.2",
+    "tomlkit>=0.12.0",
 ]
 
 [project.optional-dependencies]

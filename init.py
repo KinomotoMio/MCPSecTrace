@@ -3,7 +3,14 @@ import os
 import json
 import shutil
 import subprocess
+import ctypes
+import sys
 from pathlib import Path
+
+try:
+    import tomlkit
+except ImportError:
+    tomlkit = None
 
 
 def add_to_path_windows(new_path):
@@ -50,6 +57,175 @@ def add_to_path_windows(new_path):
 
     except Exception as e:
         print(f"发生错误: {e}")
+
+
+def everything_search(dll_path: str, filename_with_suffix: str, search_type: str) -> list:
+    """
+    使用 Everything SDK 搜索文件并返回所有匹配项的完整路径列表。
+
+    Args:
+        dll_path: Everything64.dll 的路径
+        filename_with_suffix: 要搜索的文件名（包含后缀）
+        search_type: 搜索类型，'file' 或 'folder'
+
+    Returns:
+        匹配结果的完整路径列表
+    """
+    if search_type not in ('file', 'folder'):
+        print(f"[ERROR] 无效的 search_type '{search_type}'。必须是 'file' 或 'folder'。")
+        return []
+
+    # Everything SDK 常量定义
+    EVERYTHING_REQUEST_FILE_NAME = 0x00000001
+    EVERYTHING_REQUEST_PATH = 0x00000002
+    REQUEST_FLAGS = EVERYTHING_REQUEST_FILE_NAME | EVERYTHING_REQUEST_PATH
+
+    try:
+        everything_dll = ctypes.WinDLL(dll_path)
+
+        # 设置函数参数和返回类型
+        everything_dll.Everything_SetSearchW.argtypes = [ctypes.c_wchar_p]
+        everything_dll.Everything_SetRequestFlags.argtypes = [ctypes.c_uint]
+        everything_dll.Everything_QueryW.argtypes = [ctypes.c_bool]
+        everything_dll.Everything_QueryW.restype = ctypes.c_bool
+        everything_dll.Everything_GetNumResults.restype = ctypes.c_int
+        everything_dll.Everything_GetResultFullPathNameW.argtypes = [ctypes.c_int, ctypes.c_wchar_p, ctypes.c_int]
+
+    except OSError as e:
+        print(f"[ERROR] 无法加载 Everything64.dll: {e}")
+        return []
+    except AttributeError as e:
+        print(f"[ERROR] DLL 中缺少必要的函数: {e}")
+        return []
+
+    try:
+        # 1. 设置搜索词（处理空格）
+        search_query = f'"{filename_with_suffix}"' if ' ' in filename_with_suffix else filename_with_suffix
+        search_query = search_type + ': wfn:' + search_query
+        everything_dll.Everything_SetSearchW(search_query)
+
+        # 2. 设置请求标志
+        everything_dll.Everything_SetRequestFlags(REQUEST_FLAGS)
+
+        # 3. 执行查询
+        if not everything_dll.Everything_QueryW(True):
+            print("[ERROR] Everything 查询执行失败，请确保 Everything 服务已启动")
+            return []
+
+        # 4. 获取结果数量
+        num_results = everything_dll.Everything_GetNumResults()
+
+        if num_results == 0:
+            return []
+
+        # 5. 遍历所有结果
+        results_list = []
+        path_buffer = ctypes.create_unicode_buffer(260)
+
+        for i in range(num_results):
+            everything_dll.Everything_GetResultFullPathNameW(i, path_buffer, 260)
+            results_list.append(ctypes.wstring_at(path_buffer))
+
+        return results_list
+
+    except Exception as e:
+        print(f"[ERROR] 搜索过程中发生异常: {e}")
+        return []
+
+
+def configure_tool_paths(mcp_sectrace_dir):
+    """
+    配置工具路径：
+    使用 Everything 工具自动搜索并填写 user_settings.toml 中的工具路径
+    """
+    print("[Step 5] 配置工具路径...")
+
+    try:
+        # 检查 tomlkit 是否可用
+        if tomlkit is None:
+            print("[WARN] tomlkit 库未安装，跳过工具路径配置")
+            print("[INFO] 可以手动编辑 config/user_settings.toml 配置工具路径")
+            return True
+
+        # 获取 Everything DLL 路径
+        everything_dll_path = "D:/Everything/Everything-SDK/dll/Everything64.dll"
+
+        if not Path(everything_dll_path).exists():
+            print(f"[WARN] Everything SDK 未找到: {everything_dll_path}")
+            print("[INFO] 可以手动编辑 config/user_settings.toml 配置工具路径")
+            return True
+
+        # 定义要搜索的工具
+        # toml 中工具路径 (用.分隔): [文件名, 类型]
+        tool_dict = {
+            'paths.huorong_exe': ['HipsMain.exe', 'file'],
+            'paths.hrkill_exe': ['hrkill-1.0.0.86.exe', 'file'],
+            'paths.focus_pack_exe': ['Focus_Pack.exe', 'file'],
+            'paths.chrome_exe': ['chrome.exe', 'file'],
+            'paths.chromedriver_exe': ['chromedriver.exe', 'file'],
+            'paths.chrome_user_data_dir': ['User Data', 'folder']
+        }
+
+        # 获取 user_settings.toml 路径
+        toml_path = mcp_sectrace_dir / "config" / "user_settings.toml"
+
+        if not toml_path.exists():
+            print(f"[ERROR] user_settings.toml 不存在: {toml_path}")
+            return False
+
+        print(f"开始搜索工具文件，这可能需要几秒钟...")
+
+        # 搜索工具并收集结果
+        update_dict = {}
+        found_count = 0
+
+        for key_path, (tool_name, search_type) in tool_dict.items():
+            print(f"  搜索 {tool_name}...", end='', flush=True)
+            results = everything_search(everything_dll_path, tool_name, search_type)
+
+            if results:
+                # 使用第一个结果
+                tool_path = results[0]
+                update_dict[key_path] = tool_path
+                found_count += 1
+                print(f" ✓ 找到")
+            else:
+                print(f" ✗ 未找到")
+
+        # 更新 TOML 文件
+        if update_dict:
+            try:
+                with open(toml_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                doc = tomlkit.parse(content)
+
+                for key_path, value in update_dict.items():
+                    keys = key_path.split('.')
+                    d = doc
+                    for k in keys[:-1]:
+                        if k not in d or not isinstance(d[k], (tomlkit.items.Table, dict)):
+                            d[k] = tomlkit.table()
+                        d = d[k]
+                    d[keys[-1]] = value
+
+                with open(toml_path, 'w', encoding='utf-8') as f:
+                    f.write(tomlkit.dumps(doc))
+
+                print(f"[SUCCESS] 工具路径配置完成，共更新 {found_count} 个路径。")
+                return True
+
+            except Exception as e:
+                print(f"[ERROR] 更新 user_settings.toml 失败: {e}")
+                return False
+        else:
+            print("[WARN] 未找到任何工具，请手动编辑 config/user_settings.toml 配置工具路径")
+            return True
+
+    except Exception as e:
+        print(f"[ERROR] 配置工具路径失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 def configure_workflow(mcp_sectrace_dir):
@@ -375,6 +551,12 @@ def initialize_environment():
 
     # Step 4: 配置溯源工作流
     if not configure_workflow(mcp_sectrace_dir):
+        return False
+
+    print()
+
+    # Step 5: 配置工具路径
+    if not configure_tool_paths(mcp_sectrace_dir):
         return False
 
     print("-" * 50)
