@@ -133,13 +133,14 @@ def everything_search(dll_path: str, filename_with_suffix: str, search_type: str
         return []
 
 
-def _filter_search_results(results: list, tool_name: str) -> str | None:
+def _filter_search_results(results: list, path_patterns: list) -> str | None:
     """
-    根据工具类型为搜索结果应用严格的路径过滤规则
+    根据配置的路径模式过滤搜索结果
 
     Args:
         results: Everything 搜索返回的所有结果
-        tool_name: 工具名称（用于确定过滤规则）
+        path_patterns: 路径必须匹配的模式列表（支持多个，OR关系）
+                      如果为空列表，则返回第一个结果
 
     Returns:
         过滤后选中的最佳结果，如果未找到则返回 None
@@ -147,43 +148,26 @@ def _filter_search_results(results: list, tool_name: str) -> str | None:
     if not results:
         return None
 
-    if tool_name == 'chrome.exe':
-        # 严格要求路径必须包含 /chrome-win64/
-        for result in results:
-            if 'chrome-win64' in result.lower():
-                return result
-        return None
+    # 如果没有指定路径模式，直接返回第一个结果
+    if not path_patterns:
+        return results[0]
 
-    elif tool_name == 'chromedriver.exe':
-        # 严格要求路径必须包含 /chromedriver-win64/
+    # 逐个检查路径模式（OR关系）
+    for pattern in path_patterns:
+        pattern_lower = pattern.lower()
         for result in results:
-            if 'chromedriver-win64' in result.lower():
+            if pattern_lower in result.lower():
                 return result
-        return None
 
-    elif tool_name == 'User Data':
-        # 严格要求路径必须包含 /Google/Chrome for Testing/ 或 /Google/Chrome/
-        for result in results:
-            lower_path = result.lower()
-            # 优先选择 Chrome for Testing
-            if 'google' in lower_path and 'chrome for testing' in lower_path:
-                return result
-        # 其次选择标准 Google Chrome
-        for result in results:
-            lower_path = result.lower()
-            if 'google' in lower_path and 'chrome' in lower_path and 'cef' not in lower_path:
-                return result
-        return None
-
-    else:
-        # 对于其他工具（huorong, hrkill, focus_pack），使用第一个结果
-        return results[0] if results else None
+    # 所有模式都匹配失败时返回 None
+    return None
 
 
 def configure_tool_paths(mcp_sectrace_dir):
     """
     配置工具路径：
     使用 Everything 工具自动搜索并填写 user_settings.toml 中的工具路径
+    从 [tools.entries] 配置中读取要搜索的工具列表
     """
     print("[Step 5] 配置工具路径...")
 
@@ -202,17 +186,6 @@ def configure_tool_paths(mcp_sectrace_dir):
             print("[INFO] 可以手动编辑 config/user_settings.toml 配置工具路径")
             return True
 
-        # 定义要搜索的工具
-        # toml 中工具路径 (用.分隔): [文件名, 类型]
-        tool_dict = {
-            'paths.huorong_exe': ['HipsMain.exe', 'file'],
-            'paths.hrkill_exe': ['hrkill-1.0.0.86.exe', 'file'],
-            'paths.focus_pack_exe': ['Focus_Pack.exe', 'file'],
-            'paths.chrome_exe': ['chrome.exe', 'file'],
-            'paths.chromedriver_exe': ['chromedriver.exe', 'file'],
-            'paths.chrome_user_data_dir': ['User Data', 'folder']
-        }
-
         # 获取 user_settings.toml 路径
         toml_path = mcp_sectrace_dir / "config" / "user_settings.toml"
 
@@ -220,21 +193,49 @@ def configure_tool_paths(mcp_sectrace_dir):
             print(f"[ERROR] user_settings.toml 不存在: {toml_path}")
             return False
 
+        # 读取配置文件，获取工具列表
+        try:
+            with open(toml_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            doc = tomlkit.parse(content)
+        except Exception as e:
+            print(f"[ERROR] 读取 user_settings.toml 失败: {e}")
+            return False
+
+        # 从配置中提取工具定义
+        if 'tools' not in doc or 'entries' not in doc['tools']:
+            print("[WARN] 未找到 [tools.entries] 配置，跳过工具路径配置")
+            return True
+
+        tool_entries = doc['tools']['entries']
+        if not tool_entries:
+            print("[WARN] [tools.entries] 为空，跳过工具路径配置")
+            return True
+
         print(f"开始搜索工具文件，这可能需要几秒钟...")
 
         # 搜索工具并收集结果
         update_dict = {}
         found_count = 0
 
-        for key_path, (tool_name, search_type) in tool_dict.items():
-            print(f"  搜索 {tool_name}...", end='', flush=True)
-            results = everything_search(everything_dll_path, tool_name, search_type)
+        for entry in tool_entries:
+            config_key = entry.get('config_key')
+            filename = entry.get('filename')
+            search_type = entry.get('type', 'file')
+            path_patterns = entry.get('path_patterns', [])
+
+            if not config_key or not filename:
+                print(f"  [SKIP] 工具配置不完整: {entry}")
+                continue
+
+            print(f"  搜索 {filename}...", end='', flush=True)
+            results = everything_search(everything_dll_path, filename, search_type)
 
             if results:
-                # 使用严格的路径过滤规则
-                tool_path = _filter_search_results(results, tool_name)
+                # 根据配置的路径模式过滤结果
+                tool_path = _filter_search_results(results, path_patterns)
                 if tool_path:
-                    update_dict[key_path] = tool_path
+                    update_dict[f'paths.{config_key}'] = tool_path
                     found_count += 1
                     print(f" [OK] 找到")
                 else:
@@ -245,10 +246,6 @@ def configure_tool_paths(mcp_sectrace_dir):
         # 更新 TOML 文件
         if update_dict:
             try:
-                with open(toml_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                doc = tomlkit.parse(content)
-
                 for key_path, value in update_dict.items():
                     keys = key_path.split('.')
                     d = doc

@@ -11,22 +11,66 @@ environment = "prod"
 
 [paths]
 # 火绒安全软件主程序路径（必填）
-huorong_exe = "D:/HuoRong/Sysdiag/bin/HipsMain.exe"
+huorong_exe = "D:\\HuoRong\\Sysdiag\\bin\\HipsMain.exe"
 
 # HRKill工具程序路径（必填）
-hrkill_exe = "D:/MCPTools/hrkill-1.0.0.86.exe"
+hrkill_exe = "D:\\MCPTools\\hrkill-1.0.0.86.exe"
 
 # Focus Pack工具程序路径（必填）
-focus_pack_exe = "D:/MCPTools/Focus_Pack.exe"
+focus_pack_exe = "D:\\MCPTools\\Focus_Pack.exe"
 
 # Chrome浏览器程序路径（IOC威胁情报查询用，必填）
-chrome_exe = "D:/OneDrive/NDSS26-Alert Measurement/Selenium_gpt/chrome-win64/chrome.exe"
+chrome_exe = "D:\\MCPTools\\chrome-win64\\chrome.exe"
 
 # ChromeDriver程序路径（IOC威胁情报查询用，必填）
-chromedriver_exe = "D:/OneDrive/NDSS26-Alert Measurement/Selenium_gpt/chromedriver-win64/chromedriver.exe"
+chromedriver_exe = "D:\\MCPTools\\chromedriver-win64\\chromedriver.exe"
 
 # Chrome用户数据目录（IOC查询时保持会话用）
-chrome_user_data_dir = "C:/Users/User/AppData/Local/Google/Chrome for Testing/User Data"
+chrome_user_data_dir = "C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
+
+[tools]
+# 工具自动搜索配置
+# 每个工具需要定义：
+# - filename: 文件或文件夹名称
+# - type: 搜索类型 (file 或 folder)
+# - config_key: 对应在 [paths] 中的配置键
+# - path_patterns: (可选) 路径必须包含的模式，支持多个（OR关系）
+
+[[tools.entries]]
+config_key = "huorong_exe"
+filename = "HipsMain.exe"
+type = "file"
+path_patterns = []
+
+[[tools.entries]]
+config_key = "hrkill_exe"
+filename = "hrkill-1.0.0.86.exe"
+type = "file"
+path_patterns = []
+
+[[tools.entries]]
+config_key = "focus_pack_exe"
+filename = "Focus_Pack.exe"
+type = "file"
+path_patterns = []
+
+[[tools.entries]]
+config_key = "chrome_exe"
+filename = "chrome.exe"
+type = "file"
+path_patterns = ["chrome-win64"]
+
+[[tools.entries]]
+config_key = "chromedriver_exe"
+filename = "chromedriver.exe"
+type = "file"
+path_patterns = ["chromedriver-win64"]
+
+[[tools.entries]]
+config_key = "chrome_user_data_dir"
+filename = "User Data"
+type = "folder"
+path_patterns = ["google\\chrome for testing"]
 
 [images]
 # GUI自动化所需的截图文件根目录
