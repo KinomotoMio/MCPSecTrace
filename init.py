@@ -2,6 +2,7 @@ import winreg
 import os
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -51,7 +52,7 @@ def add_to_path_windows(new_path):
         print(f"发生错误: {e}")
 
 
-def configure_workflow():
+def configure_workflow(mcp_sectrace_dir):
     """
     配置溯源工作流：
     将 assets/workflow 目录下的所有 markdown 文件
@@ -61,7 +62,6 @@ def configure_workflow():
 
     try:
         # 获取源目录路径
-        mcp_sectrace_dir = Path(__file__).parent
         source_dir = mcp_sectrace_dir / "assets" / "workflow"
 
         if not source_dir.exists():
@@ -101,7 +101,7 @@ def configure_workflow():
         return False
 
 
-def configure_mcp_tools():
+def configure_mcp_tools(mcp_sectrace_dir):
     """
     配置 MCPTools：
     将 mcpsetting.json 复制到 Cline 的配置目录，
@@ -111,7 +111,6 @@ def configure_mcp_tools():
 
     try:
         # 获取源文件路径
-        mcp_sectrace_dir = Path(__file__).parent
         source_file = mcp_sectrace_dir / "assets" / "mcpsetting.json"
 
         if not source_file.exists():
@@ -144,7 +143,7 @@ def configure_mcp_tools():
         return False
 
 
-def configure_vscode_extensions():
+def configure_vscode_extensions(mcp_sectrace_dir):
     """
     配置 VSCode 插件：
     1. 将 Cline 插件配置添加到 extensions.json
@@ -169,7 +168,6 @@ def configure_vscode_extensions():
             extensions_data = json.load(f)
 
         # 2. 读取 clinesetting.json
-        mcp_sectrace_dir = Path(__file__).parent
         cline_setting_path = mcp_sectrace_dir / "assets" / "clinesetting.json"
 
         if not cline_setting_path.exists():
@@ -221,15 +219,63 @@ def configure_vscode_extensions():
         return False
 
 
+def get_mcp_sectrace_dir():
+    """
+    获取 MCPSecTrace 项目目录。
+    支持从 py 文件和 exe 文件运行。
+    """
+    # 首先尝试从脚本文件所在目录
+    script_dir = Path(__file__).parent
+    if (script_dir / "assets").exists():
+        return script_dir
+
+    # 如果不存在，尝试从当前工作目录
+    cwd = Path.cwd()
+    if (cwd / "assets").exists():
+        return cwd
+
+    # 尝试从环境变量获取
+    env_path = os.getenv("MCPSECTRACE_PATH")
+    if env_path:
+        project_path = Path(env_path)
+        if project_path.exists() and (project_path / "assets").exists():
+            return project_path
+
+    # 最后尝试常见的默认路径
+    common_paths = [
+        Path("D:\\MCPSecTrace"),
+        Path("D:\\MCPSecTrace"),
+        Path.home() / "MCPSecTrace",
+        Path("C:\\MCPSecTrace"),
+    ]
+
+    for potential_path in common_paths:
+        if potential_path.exists() and (potential_path / "assets").exists():
+            return potential_path
+
+    # 如果都找不到，返回错误信息
+    print("[ERROR] 无法自动定位 MCPSecTrace 项目目录")
+    print("\n解决方案：")
+    print("1. 运行本 exe 时，请在 MCPSecTrace 项目目录下运行")
+    print("2. 或者设置环境变量: set MCPSECTRACE_PATH=D:\\MCPSecTrace")
+    print("3. 或者将本 exe 放在 MCPSecTrace 目录下运行")
+    return None
+
+
 def configure_uv_environment():
     """
     配置 MCPTools/uv 环境：
-    将 MCPTools/uv 路径添加到系统环境变量的 PATH 中。
+    1. 将 MCPTools/uv 路径添加到系统环境变量的 PATH 中
+    2. 验证 uv 安装
+    3. 运行 uv sync 同步依赖
     """
     print("[Step 1] 配置 MCPTools/uv 路径...")
     try:
         # 获取 MCPSecTrace 的父目录
-        mcp_sectrace_dir = Path(__file__).parent
+        mcp_sectrace_dir = get_mcp_sectrace_dir()
+        if mcp_sectrace_dir is None:
+            return False
+
         mcp_tools_uv_path = mcp_sectrace_dir.parent / "MCPTools" / "uv"
 
         # 验证路径是否存在
@@ -241,10 +287,57 @@ def configure_uv_environment():
         print(f"准备添加路径: {mcp_tools_uv_str}")
         add_to_path_windows(mcp_tools_uv_str)
         print("[SUCCESS] MCPTools/uv 路径配置完成。")
-        return True
+
+        # 验证 uv 安装
+        print("\n验证 uv 安装...")
+        try:
+            result = subprocess.run(
+                ["uv", "--help"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                print("[SUCCESS] uv 已成功安装并可用。")
+            else:
+                print(f"[ERROR] uv 命令执行失败，返回码: {result.returncode}")
+                print(f"错误信息: {result.stderr}")
+                return False
+        except FileNotFoundError:
+            print("[ERROR] 未找到 uv 命令。请确保已正确添加路径并重启终端。")
+            return False
+        except subprocess.TimeoutExpired:
+            print("[ERROR] uv 命令执行超时。")
+            return False
+
+        # 运行 uv sync 同步依赖
+        print("\n正在同步项目依赖 (uv sync)，这可能需要几分钟...")
+        try:
+            result = subprocess.run(
+                ["uv", "sync"],
+                cwd=str(mcp_sectrace_dir),
+                capture_output=True,
+                text=True,
+                timeout=600  # 10分钟超时
+            )
+            if result.returncode == 0:
+                print("[SUCCESS] 项目依赖同步完成。")
+                return True
+            else:
+                print(f"[ERROR] uv sync 执行失败，返回码: {result.returncode}")
+                print(f"错误信息: {result.stderr}")
+                return False
+        except FileNotFoundError:
+            print("[ERROR] 未找到 uv 命令。请确保已正确添加路径并重启终端。")
+            return False
+        except subprocess.TimeoutExpired:
+            print("[ERROR] uv sync 执行超时（10分钟），请手动运行 'uv sync'。")
+            return False
 
     except Exception as e:
-        print(f"[ERROR] 配置 MCPTools/uv 路径失败: {e}")
+        print(f"[ERROR] 配置 MCPTools/uv 环境失败: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -255,6 +348,13 @@ def initialize_environment():
     print("开始初始化环境配置...")
     print("-" * 50)
 
+    # 获取 MCPSecTrace 项目目录
+    mcp_sectrace_dir = get_mcp_sectrace_dir()
+    if mcp_sectrace_dir is None:
+        return False
+
+    print(f"[INFO] 项目目录: {mcp_sectrace_dir}\n")
+
     # Step 1: 配置 uv 环境
     if not configure_uv_environment():
         return False
@@ -262,19 +362,19 @@ def initialize_environment():
     print()
 
     # Step 2: 配置 VSCode 插件
-    if not configure_vscode_extensions():
+    if not configure_vscode_extensions(mcp_sectrace_dir):
         return False
 
     print()
 
     # Step 3: 配置 MCPTools
-    if not configure_mcp_tools():
+    if not configure_mcp_tools(mcp_sectrace_dir):
         return False
 
     print()
 
     # Step 4: 配置溯源工作流
-    if not configure_workflow():
+    if not configure_workflow(mcp_sectrace_dir):
         return False
 
     print("-" * 50)
@@ -282,11 +382,36 @@ def initialize_environment():
     return True
 
 
+def wait_for_user():
+    """
+    等待用户按任意键。
+    用于 exe 执行时保持窗口打开，让用户看到完整的输出结果。
+    """
+    print("\n" + "=" * 50)
+    print("按任意键关闭窗口...")
+    print("=" * 50)
+    try:
+        # Windows 系统上使用 msvcrt
+        import msvcrt
+        msvcrt.getch()
+    except ImportError:
+        # Linux/Mac 系统上使用 input
+        input()
+
+
 def main():
     """
     主函数，执行项目初始化。
     """
-    initialize_environment()
+    try:
+        success = initialize_environment()
+        if success:
+            wait_for_user()
+    except Exception as e:
+        print(f"\n[FATAL ERROR] 初始化过程中发生异常: {e}")
+        import traceback
+        traceback.print_exc()
+        wait_for_user()
 
 
 if __name__ == "__main__":
