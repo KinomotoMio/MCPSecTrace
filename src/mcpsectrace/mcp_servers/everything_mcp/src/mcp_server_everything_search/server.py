@@ -68,9 +68,10 @@ def query_malicious_files_from_csv(
     从CSV文件查询恶意释放的文件。
 
     检查逻辑：
-    - 第0层：检查文件是否存在
-    - 第1层：检查上一层目录是否存在
-    - 第2层：检查上两层目录是否存在
+    - 第0层：在预期路径所在目录下，使用Everything查找文件
+    - 第1层：在上一层目录下，使用Everything查找文件
+    - 第2层：在上两层目录下，使用Everything查找文件
+    - 第3层：在全局范围内，使用Everything查找文件
 
     Args:
         csv_path: CSV文件路径
@@ -91,6 +92,7 @@ def query_malicious_files_from_csv(
             "文件存在": [],
             "上一层目录存在": [],
             "上两层目录存在": [],
+            "全局范围存在": [],
             "未找到的文件": []
         }
 
@@ -120,27 +122,56 @@ def query_malicious_files_from_csv(
                 found_status = None
                 check_result = None
 
-                # 第0层：检查文件是否存在
-                if os.path.exists(file_path):
-                    found = True
-                    found_status = "文件存在"
-                    check_result = "文件直接存在于预期位置"
+                # 第0层：在预期路径所在目录下查找文件
+                try:
+                    file_dir = str(Path(file_path).parent)
+                    search_query = f"path:{file_dir} {file_name}"
+                    results = search_provider.search_files(query=search_query, max_results=10)
+                    if results and any(file_name.lower() in r.filename.lower() for r in results):
+                        found = True
+                        found_status = "文件存在"
+                        check_result = f"在预期目录 {file_dir} 中找到"
+                except Exception as e:
+                    print(f"第0层查询失败: {e}", file=sys.stderr)
 
-                # 如果文件未找到，检查第1层：上一层目录是否存在
+                # 如果文件未找到，检查第1层：上一层目录下查找文件
                 if not found and max_search_depth >= 1:
-                    parent_dir = str(Path(file_path).parent)
-                    if os.path.exists(parent_dir) and os.path.isdir(parent_dir):
-                        found = True
-                        found_status = "上一层目录存在"
-                        check_result = parent_dir
+                    try:
+                        parent_dir = str(Path(file_path).parent.parent)
+                        search_query = f"path:{parent_dir} {file_name}"
+                        results = search_provider.search_files(query=search_query, max_results=10)
+                        if results and any(file_name.lower() in r.filename.lower() for r in results):
+                            found = True
+                            found_status = "上一层目录存在"
+                            check_result = f"在上一层目录 {parent_dir} 中找到"
+                    except Exception as e:
+                        print(f"第1层查询失败: {e}", file=sys.stderr)
 
-                # 如果仍未找到，检查第2层：上两层目录是否存在
+                # 如果仍未找到，检查第2层：上两层目录下查找文件
                 if not found and max_search_depth >= 2:
-                    grandparent_dir = str(Path(file_path).parent.parent)
-                    if os.path.exists(grandparent_dir) and os.path.isdir(grandparent_dir):
-                        found = True
-                        found_status = "上两层目录存在"
-                        check_result = grandparent_dir
+                    try:
+                        grandparent_dir = str(Path(file_path).parent.parent.parent)
+                        search_query = f"path:{grandparent_dir} {file_name}"
+                        results = search_provider.search_files(query=search_query, max_results=10)
+                        if results and any(file_name.lower() in r.filename.lower() for r in results):
+                            found = True
+                            found_status = "上两层目录存在"
+                            check_result = f"在上两层目录 {grandparent_dir} 中找到"
+                    except Exception as e:
+                        print(f"第2层查询失败: {e}", file=sys.stderr)
+
+                # 如果仍未找到，检查第3层：在全局范围内查找文件
+                if not found:
+                    try:
+                        search_query = file_name
+                        results = search_provider.search_files(query=search_query, max_results=10)
+                        if results and any(file_name.lower() in r.filename.lower() for r in results):
+                            found = True
+                            found_status = "全局范围存在"
+                            found_paths = [r.path for r in results if file_name.lower() in r.filename.lower()]
+                            check_result = f"在全局范围内找到: {', '.join(found_paths[:3])}"
+                    except Exception as e:
+                        print(f"第3层查询失败: {e}", file=sys.stderr)
 
                 # 记录结果
                 if found:
@@ -162,9 +193,10 @@ def query_malicious_files_from_csv(
         output_lines.append(f"统计信息:")
         output_lines.append(f"  总文件数: {total_files}")
         output_lines.append(f"  找到: {len(results_by_status['找到的文件'])}")
-        output_lines.append(f"    ├─ 文件存在: {len(results_by_status['文件存在'])}个 ⭐⭐⭐")
-        output_lines.append(f"    ├─ 上一层目录存在: {len(results_by_status['上一层目录存在'])}个 ⭐⭐")
-        output_lines.append(f"    └─ 上两层目录存在: {len(results_by_status['上两层目录存在'])}个 ⭐")
+        output_lines.append(f"    ├─ 文件存在（第0层）: {len(results_by_status['文件存在'])}个 ⭐⭐⭐")
+        output_lines.append(f"    ├─ 上一层目录存在（第1层）: {len(results_by_status['上一层目录存在'])}个 ⭐⭐")
+        output_lines.append(f"    ├─ 上两层目录存在（第2层）: {len(results_by_status['上两层目录存在'])}个 ⭐")
+        output_lines.append(f"    └─ 全局范围存在（第3层）: {len(results_by_status['全局范围存在'])}个 ⭐")
         output_lines.append(f"  未找到: {len(results_by_status['未找到的文件'])}个 ✓")
         output_lines.append("")
 
@@ -212,6 +244,22 @@ def query_malicious_files_from_csv(
                 output_lines.append(f"  环境: {file_info['环境']}")
                 output_lines.append(f"  预期路径: {file_info['预期路径']}")
                 output_lines.append(f"  存在目录: {file_info['检查结果']}")
+                output_lines.append(f"  SHA256: {file_info['SHA256']}")
+                output_lines.append("")
+
+        # 全局范围存在
+        if results_by_status["全局范围存在"]:
+            output_lines.append("=" * 80)
+            output_lines.append(f"【⭐ 全局范围存在】({len(results_by_status['全局范围存在'])}个)")
+            output_lines.append("=" * 80)
+            output_lines.append("状态: 文件在系统其他位置被找到（可能被移动或恶意软件仍在运行）")
+            output_lines.append("")
+            for file_info in results_by_status["全局范围存在"]:
+                output_lines.append(f"  文件名: {file_info['文件名']}")
+                output_lines.append(f"  查询目标: {file_info['查询目标']}")
+                output_lines.append(f"  环境: {file_info['环境']}")
+                output_lines.append(f"  预期路径: {file_info['预期路径']}")
+                output_lines.append(f"  发现位置: {file_info['检查结果']}")
                 output_lines.append(f"  SHA256: {file_info['SHA256']}")
                 output_lines.append("")
 
