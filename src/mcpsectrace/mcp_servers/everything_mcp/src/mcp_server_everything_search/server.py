@@ -439,45 +439,65 @@ Examples:
 """
         }
 
-        description = f"""Universal file search tool for {platform.system()}
+        # ============ Tool 1: search 描述 ============
+        search_description = f"""【工具描述】
+跨平台文件搜索工具。基于当前平台（{platform.system()}）自动选择最优搜索引擎：
+- Windows: Everything SDK（超快速索引搜索）
+- macOS: mdfind（Spotlight搜索）
+- Linux: locate（Unix索引搜索）
 
-Current Implementation:
-{platform_info.get(current_platform, "Unknown platform")}
+【使用限制】
+仅适用于查询恶意样本的释放文件。此工具专为威胁情报分析设计，用于评估恶意软件清理程度。
+其他用途（如普通文件查找、日常系统管理等）请使用 search 工具。
 
-Search Syntax Guide:
-{syntax_docs.get(current_platform, "Platform-specific syntax guide not available")}
-"""
+【Args 参数】
+- query (str): 搜索查询语句（支持通配符、正则表达式、布尔操作符）
+- max_results (int): 最多返回结果数，范围 1-1000，默认 100
+- match_path (bool): 是否匹配完整路径，默认 False（仅匹配文件名）
+- match_case (bool): 大小写敏感，默认 False
+- match_whole_word (bool): 整词匹配，默认 False
+- match_regex (bool): 启用正则表达式，默认 False
+- sort_by (int): 排序选项，默认 1（按名称升序）
 
-        malicious_file_description = """查询恶意释放的文件并检查清理痕迹。
+【Return 返回值】
+返回匹配的文件列表（最多 max_results 条），每个文件包含：
+- Path: 完整文件路径
+- Filename: 文件名
+- Extension: 文件扩展名
+- Size: 文件大小（字节）
+- Created: 创建时间（ISO格式）
+- Modified: 修改时间（ISO格式）
+- Accessed: 访问时间（ISO格式）"""
 
-该工具读取从威胁情报分析中生成的CSV文件，其中包含释放文件的详细信息。
-通过分层检查目录存在性来判断系统清理程度和风险等级。
+        # ============ Tool 2: query_malicious_release_files 描述 ============
+        malicious_file_description = """【工具描述】
+查询恶意文件清理程度评估。读取威胁情报 CSV 文件，通过分层目录检查判断恶意文件是否被清理。
 
-CSV文件应该包含以下列：
-- 查询目标: IP地址或域名
-- 样本SHA256: 样本文件的SHA256哈希
-- 环境: 文件释放的环境信息
-- 文件名称: 释放文件的名称
-- 文件类型: 文件的类型描述
-- 文件路径: 文件的完整释放路径
-- 文件SHA256: 释放文件的SHA256哈希
+分层检查策略：
+- 第0层：检查文件本身（风险最高）
+- 第1层：检查上一层目录（风险中等）
+- 第2层：检查上两层目录（风险较低）
+- 第3层：全局范围搜索（风险最低）
 
-检查策略（分层判断清理程度）：
-1. 第0层：检查文件是否存在 ⭐⭐⭐ 风险最高
-2. 第1层：检查上一层目录是否存在 ⭐⭐ 风险中等（文件被删除，目录保留）
-3. 第2层：检查上两层目录是否存在 ⭐ 风险较低（目录也被删除）
+【使用限制】
+仅适用于查询恶意样本的释放文件。此工具专为威胁情报分析设计，用于评估恶意软件清理程度。
+其他用途（如普通文件查找、日常系统管理等）请使用 search 工具。
 
-结果分类：
-- 文件存在：恶意文件仍保留在系统中
-- 上一层目录存在：文件已删除，但释放目录保留（可能被清理工具部分清理）
-- 上两层目录存在：释放目录也被删除，但上层目录保留（清理相对彻底）
-- 完全未找到：文件和所有相关目录均不存在（清理最彻底）
-"""
+【Args 参数】
+- csv_file_path (str): CSV 文件路径，必须包含以下列：
+  查询目标、样本SHA256、环境、文件名称、文件类型、文件路径、文件SHA256
+- max_search_depth (int): 最大向上搜索目录层数，范围 0-5，默认 2
+
+【Return 返回值】
+返回分层统计报告（文本格式），包含：
+- 总体统计信息（文件总数、找到数、未找到数）
+- 各层级分类结果（文件存在/目录存在/完全未找到）
+- 详细的风险等级评估和清理状态说明"""
 
         return [
             Tool(
                 name="search",
-                description=description,
+                description=search_description,
                 inputSchema=UnifiedSearchQuery.get_schema_for_platform()
             ),
             Tool(
