@@ -364,7 +364,6 @@ class SampleReportAnalyzer:
             except Exception as e:
                 error_msg = f"截取样本报告失败: {e}"
                 log_print(error_msg)
-                md_content += f"⚠️ {error_msg}\n\n"
 
             # 新增功能：处理环境列表和发行文件表格
             env_md, env_csv_rows = SampleReportAnalyzer.extract_environment_and_files(
@@ -378,7 +377,7 @@ class SampleReportAnalyzer:
         except Exception as e:
             error_msg = f"样本报告分析失败: {e}"
             log_print(error_msg)
-            md_content = f"\n#### SHA256: {sha256}\n\n❌ {error_msg}\n\n"
+            md_content = f"\n#### SHA256: {sha256}\n\n"
             return False, md_content, []
 
     @staticmethod
@@ -522,21 +521,17 @@ class SampleReportAnalyzer:
                         except Exception as e:
                             error_msg = f"获取文件常见释放路径失败: {e}"
                             log_print(error_msg)
-                            md_content += f"⚠️ {error_msg}\n\n"
 
                     except Exception as e:
                         error_msg = f"处理环境项 {idx} 失败: {e}"
                         log_print(error_msg)
-                        md_content += f"- ❌ {error_msg}\n"
 
             else:
                 log_print("未找到环境列表项")
-                md_content += "⚠️ 未找到环境列表信息\n\n"
 
         except Exception as e:
             error_msg = f"提取环境和文件信息失败: {e}"
             log_print(error_msg)
-            md_content += f"⚠️ {error_msg}\n\n"
 
         return md_content, csv_rows
 
@@ -1023,25 +1018,16 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                                     output_dir,
                                 )
                         else:
-                            report_content += "\n---\n\n## 相关样本\n\n"
-                            report_content += "⚠️ 表格数据提取失败\n\n"
+                            log_print("表格数据提取失败")
                     else:
                         log_print(f"无法解析威胁数量: {number_text}")
-                        report_content += "\n---\n\n## 相关样本\n\n"
-                        report_content += f"⚠️ 无法解析相关样本数量: {number_text}\n\n"
                 else:
                     log_print("无法获取威胁数量文本")
-                    report_content += "\n---\n\n## 相关样本\n\n"
-                    report_content += "⚠️ 无法获取相关样本数量信息\n\n"
             else:
                 log_print("点击目标元素失败")
-                report_content += "\n---\n\n## 相关样本\n\n"
-                report_content += "⚠️ 无法点击目标相关样本元素\n\n"
 
         except Exception as e:
             log_print(f"相关样本提取过程出错: {e}")
-            report_content += "\n---\n\n## 相关样本\n\n"
-            report_content += f"❌ 相关样本提取失败: {str(e)}\n\n"
 
         # 保存报告
         report_filename = f"{sanitized_target}_{config.target_type}_threat_report.md"
