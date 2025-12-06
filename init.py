@@ -380,15 +380,22 @@ def configure_vscode_extensions(mcp_sectrace_dir):
         vscode_extensions_dir = Path(f"C:\\Users\\{username}\\.vscode\\extensions")
         extensions_json_path = vscode_extensions_dir / "extensions.json"
 
-        # 验证 extensions.json 是否存在
-        if not extensions_json_path.exists():
-            print(f"[ERROR] extensions.json 文件不存在: {extensions_json_path}")
-            return False
+        # 如果 extensions 目录不存在，创建它
+        if not vscode_extensions_dir.exists():
+            print(f"[INFO] VSCode extensions 目录不存在，创建目录: {vscode_extensions_dir}")
+            vscode_extensions_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. 读取 extensions.json
-        print(f"读取 extensions.json: {extensions_json_path}")
-        with open(extensions_json_path, "r", encoding="utf-8") as f:
-            extensions_data = json.load(f)
+        # 如果 extensions.json 不存在，创建空的配置文件
+        if not extensions_json_path.exists():
+            print(f"[INFO] extensions.json 不存在，创建空配置: {extensions_json_path}")
+            extensions_data = []
+            with open(extensions_json_path, "w", encoding="utf-8") as f:
+                json.dump(extensions_data, f, indent=4, ensure_ascii=False)
+        else:
+            # 1. 读取 extensions.json
+            print(f"读取 extensions.json: {extensions_json_path}")
+            with open(extensions_json_path, "r", encoding="utf-8") as f:
+                extensions_data = json.load(f)
 
         # 2. 读取 clinesetting.json
         cline_setting_path = mcp_sectrace_dir / "assets" / "clinesetting.json"
