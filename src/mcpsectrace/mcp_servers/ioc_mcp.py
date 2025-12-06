@@ -1,6 +1,10 @@
 import csv
+import io
+import json
+import logging
 import os
 import re
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -17,6 +21,33 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from mcpsectrace.config import get_config_value
 
+# 配置日志，将日志输出到文件而不是 stdout（避免污染 MCP JSON-RPC 通信）
+logging.basicConfig(
+    filename='ioc_mcp.log',
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    encoding='utf-8'
+)
+logger = logging.getLogger(__name__)
+
+# 创建一个 print 的包装函数，输出到日志而不是 stdout
+def log_print(*args, **kwargs):
+    message = ' '.join(str(arg) for arg in args)
+    logger.info(message)
+
+# 配置 stdout/stderr 为 UTF-8 编码以正确处理中文字符
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+# 配置json.dumps以支持中文字符
+_original_dumps = json.dumps
+def _patched_dumps(*args, **kwargs):
+    kwargs.setdefault('ensure_ascii', False)
+    return _original_dumps(*args, **kwargs)
+json.dumps = _patched_dumps
+
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
 
 
@@ -30,7 +61,7 @@ def scroll_to_element_and_wait(driver, element, wait_seconds=2):
         )
         time.sleep(wait_seconds)  # 等待滚动和渲染完成
     except Exception as e:
-        print(f"滚动到元素时出错: {e}")
+        log_print(f"滚动到元素时出错: {e}")
 
 
 @dataclass
@@ -136,7 +167,7 @@ class ElementScreenshot:
             )
             time.sleep(wait_seconds)
         except Exception as e:
-            print(f"滚动到元素时出错: {e}")
+            log_print(f"滚动到元素时出错: {e}")
 
     @staticmethod
     def take_element_screenshot(
@@ -185,7 +216,7 @@ class ElementScreenshot:
             )
             element.screenshot(screenshot_path)
 
-            print(f"截图已保存: {screenshot_path}")
+            log_print(f"截图已保存: {screenshot_path}")
 
             # 生成Markdown内容
             md_content = f"## {config.markdown_title}\n"
@@ -195,7 +226,7 @@ class ElementScreenshot:
 
         except Exception as e:
             error_msg = f"截取元素 {config.element_selector} 时出错: {e}"
-            print(error_msg)
+            log_print(error_msg)
             return False, None, f"## {config.markdown_title}\n{error_msg}\n"
 
 
@@ -262,7 +293,7 @@ class SampleReportAnalyzer:
                 return None
 
         except Exception as e:
-            print(f"解析发行文件信息失败: {e}")
+            log_print(f"解析发行文件信息失败: {e}")
             return None
 
     @staticmethod
@@ -289,7 +320,7 @@ class SampleReportAnalyzer:
 
         try:
             sample_url = f"https://s.threatbook.com/report/file/{sha256}"
-            print(f"正在分析样本: {sample_url}")
+            log_print(f"正在分析样本: {sample_url}")
             driver.get(sample_url)
 
             # 等待页面加载
@@ -321,13 +352,13 @@ class SampleReportAnalyzer:
                     pic_output_dir, f"sample_{sanitized_sha256}_report.png"
                 )
                 screenshot_element.screenshot(screenshot_path)
-                print(f"样本报告截图已保存: {screenshot_path}")
+                log_print(f"样本报告截图已保存: {screenshot_path}")
 
                 md_content += f"![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_{sanitized_sha256}_report.png)\n\n"
 
             except Exception as e:
                 error_msg = f"截取样本报告失败: {e}"
-                print(error_msg)
+                log_print(error_msg)
                 md_content += f"⚠️ {error_msg}\n\n"
 
             # 新增功能：处理环境列表和发行文件表格
@@ -341,7 +372,7 @@ class SampleReportAnalyzer:
 
         except Exception as e:
             error_msg = f"样本报告分析失败: {e}"
-            print(error_msg)
+            log_print(error_msg)
             md_content = f"\n#### SHA256: {sha256}\n\n❌ {error_msg}\n\n"
             return False, md_content, []
 
@@ -387,7 +418,7 @@ class SampleReportAnalyzer:
                 ][:10]  # 限制数量，避免选择到过多元素
 
             if env_items:
-                print(f"找到 {len(env_items)} 个环境项")
+                log_print(f"找到 {len(env_items)} 个环境项")
                 # md_content += "### 不同环境文件释放位置\n\n"
 
                 for idx, env_item in enumerate(env_items, 1):
@@ -397,7 +428,7 @@ class SampleReportAnalyzer:
                         if not env_text:
                             continue
 
-                        print(f"处理环境项 {idx}: {env_text}")
+                        log_print(f"处理环境项 {idx}: {env_text}")
                         md_content += f"#### {env_text}环境下常见释放路径\n\n"
 
                         # 点击环境项
@@ -444,7 +475,7 @@ class SampleReportAnalyzer:
 
                                         if cell_text:
                                             md_content += f"- {cell_text}\n\n"
-                                            print(
+                                            log_print(
                                                 f"  发行版本 {row_idx}: {cell_text}"
                                             )
 
@@ -474,10 +505,10 @@ class SampleReportAnalyzer:
                                                     file_info["sha256"],
                                                 ]
                                                 csv_rows.append(csv_row)
-                                                print(f"  已添加CSV行: {csv_row}")
+                                                log_print(f"  已添加CSV行: {csv_row}")
 
                                     except Exception as e:
-                                        print(f"获取表格行 {row_idx} 失败: {e}")
+                                        log_print(f"获取表格行 {row_idx} 失败: {e}")
 
                                 md_content += "\n"
                             else:
@@ -485,21 +516,21 @@ class SampleReportAnalyzer:
 
                         except Exception as e:
                             error_msg = f"获取文件常见释放路径失败: {e}"
-                            print(error_msg)
+                            log_print(error_msg)
                             md_content += f"⚠️ {error_msg}\n\n"
 
                     except Exception as e:
                         error_msg = f"处理环境项 {idx} 失败: {e}"
-                        print(error_msg)
+                        log_print(error_msg)
                         md_content += f"- ❌ {error_msg}\n"
 
             else:
-                print("未找到环境列表项")
+                log_print("未找到环境列表项")
                 md_content += "⚠️ 未找到环境列表信息\n\n"
 
         except Exception as e:
             error_msg = f"提取环境和文件信息失败: {e}"
-            print(error_msg)
+            log_print(error_msg)
             md_content += f"⚠️ {error_msg}\n\n"
 
         return md_content, csv_rows
@@ -542,12 +573,12 @@ class SampleReportAnalyzer:
                 writer.writerow(headers)
                 writer.writerows(csv_rows)
 
-            print(f"发行文件CSV已保存: {csv_path}")
+            log_print(f"发行文件CSV已保存: {csv_path}")
             return True
 
         except Exception as e:
             error_msg = f"保存发行文件CSV失败: {e}"
-            print(error_msg)
+            log_print(error_msg)
             return False
 
 
@@ -570,7 +601,7 @@ class ThreatDataExtractor:
             element.click()
             return True
         except Exception as e:
-            print(f"点击XPath元素失败 {xpath}: {e}")
+            log_print(f"点击XPath元素失败 {xpath}: {e}")
             return False
 
     @staticmethod
@@ -583,7 +614,7 @@ class ThreatDataExtractor:
             )
             return element.text.strip()
         except Exception as e:
-            print(f"获取XPath元素文本失败 {xpath}: {e}")
+            log_print(f"获取XPath元素文本失败 {xpath}: {e}")
             return None
 
     @staticmethod
@@ -631,7 +662,7 @@ class ThreatDataExtractor:
             return result
 
         except (ValueError, AttributeError) as e:
-            print(f"威胁数量解析失败 '{text}': {e}")
+            log_print(f"威胁数量解析失败 '{text}': {e}")
             return None
 
     @staticmethod
@@ -652,7 +683,7 @@ class ThreatDataExtractor:
             )
 
             if not rows:
-                print("未找到表格数据行")
+                log_print("未找到表格数据行")
                 return False, None
 
             # CSV数据
@@ -690,11 +721,11 @@ class ThreatDataExtractor:
                 writer = csv.writer(csvfile)
                 writer.writerows(csv_data)
 
-            print(f"相关样本数据CSV已保存: {csv_path}")
+            log_print(f"相关样本数据CSV已保存: {csv_path}")
             return True, csv_data
 
         except Exception as e:
-            print(f"提取表格数据失败: {e}")
+            log_print(f"提取表格数据失败: {e}")
             return False, None
 
     @staticmethod
@@ -776,7 +807,7 @@ class ThreatBookAnalyzer:
                     header = item.find_element(By.CLASS_NAME, "ant-collapse-header")
 
                     header.click()
-                    print("点击面板标题")
+                    log_print("点击面板标题")
                     panel_expand_wait = get_config_value(
                         "ioc.panel_expand_wait_time", default=2
                     )
@@ -790,19 +821,19 @@ class ThreatBookAnalyzer:
                         f"{sanitized_target}_panel_{i}_{sanitized_title}.png",
                     )
                     item.screenshot(panel_screenshot_path)
-                    print(f"面板截图已保存: {panel_screenshot_path}")
+                    log_print(f"面板截图已保存: {panel_screenshot_path}")
 
                     # 添加到Markdown
                     md_content += f"### {clue_title}\n"
                     md_content += f"![{clue_title}](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/{sanitized_target}_panel_{i}_{sanitized_title}.png)\n\n"
 
                 except Exception as e:
-                    print(f"处理面板 {i} 时出错: {e}")
+                    log_print(f"处理面板 {i} 时出错: {e}")
                     continue
 
         except Exception as e:
             error_msg = f"展开威胁面板时出错: {e}"
-            print(error_msg)
+            log_print(error_msg)
             md_content += f"### 威胁面板截图失败\n{error_msg}\n\n"
 
         return md_content
@@ -870,12 +901,12 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
         driver = selenium_driver.setup_driver()
 
         # 访问目标页面
-        print(f"正在访问: {config.base_url}")
+        log_print(f"正在访问: {config.base_url}")
         driver.get(config.base_url)
 
         # 等待页面加载
         page_load_wait = get_config_value("ioc.page_load_wait_seconds", default=10)
-        print(f"页面加载中，请等待 {page_load_wait} 秒...")
+        log_print(f"页面加载中，请等待 {page_load_wait} 秒...")
         time.sleep(page_load_wait)
 
         # 生成报告头部
@@ -913,7 +944,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
             # 点击指定的XPath元素 (li[8])
             li_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]"
             if ThreatDataExtractor.click_xpath_element(driver, li_xpath):
-                print("成功点击目标元素")
+                log_print("成功点击目标元素")
 
                 # 等待页面更新
                 time.sleep(get_config_value("ioc.scroll_wait_time", default=2))
@@ -922,13 +953,13 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                 
                 span_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]/div/span[2]"
                 number_text = ThreatDataExtractor.get_element_text(driver, span_xpath)
-                # print(number_text)
+                # log_print(number_text)
                 if number_text:
                     # 使用新的解析函数处理威胁数量（支持K、M等缩写）
                     threat_count = ThreatDataExtractor.parse_threat_count(number_text)
                     if threat_count is not None:
-                        print(f"检测到威胁数量: {threat_count} (原始文本: {number_text})")
-                        print("开始提取表格数据")
+                        log_print(f"检测到威胁数量: {threat_count} (原始文本: {number_text})")
+                        log_print("开始提取表格数据")
 
                         # 提取表格数据（无论威胁数量是多少）
                         tbody_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[2]/div/div[2]/div/div/div/div/div[1]/div/div/div/div/div/table/tbody"
@@ -949,7 +980,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             report_content += f"\n💾 详细数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
 
                             # 新增功能：分析每个样本的详细报告
-                            print("\n开始分析每个样本的详细报告...")
+                            log_print("\n开始分析每个样本的详细报告...")
                             report_content += "\n---\n\n## 样本常见释放路径分析\n\n"
 
                             # 收集所有发行文件CSV数据
@@ -959,7 +990,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             for row_idx, row in enumerate(csv_data[1:], 1):  # 跳过表头
                                 if len(row) > 3 and row[3].strip():  # SHA256在第4列
                                     sha256 = row[3].strip()
-                                    print(f"分析样本 {row_idx}/{len(csv_data)-1}: {sha256}")
+                                    log_print(f"分析样本 {row_idx}/{len(csv_data)-1}: {sha256}")
 
                                     success, sample_md, release_files = (
                                         SampleReportAnalyzer.analyze_sample_report(
@@ -977,7 +1008,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                                     # 收集发行文件数据
                                     all_release_files_csv.extend(release_files)
 
-                            print("样本详细分析完成")
+                            log_print("样本详细分析完成")
 
                             # 保存发行文件CSV
                             if all_release_files_csv:
@@ -990,20 +1021,20 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             report_content += "\n---\n\n## 相关样本\n\n"
                             report_content += "⚠️ 表格数据提取失败\n\n"
                     else:
-                        print(f"无法解析威胁数量: {number_text}")
+                        log_print(f"无法解析威胁数量: {number_text}")
                         report_content += "\n---\n\n## 相关样本\n\n"
                         report_content += f"⚠️ 无法解析相关样本数量: {number_text}\n\n"
                 else:
-                    print("无法获取威胁数量文本")
+                    log_print("无法获取威胁数量文本")
                     report_content += "\n---\n\n## 相关样本\n\n"
                     report_content += "⚠️ 无法获取相关样本数量信息\n\n"
             else:
-                print("点击目标元素失败")
+                log_print("点击目标元素失败")
                 report_content += "\n---\n\n## 相关样本\n\n"
                 report_content += "⚠️ 无法点击目标相关样本元素\n\n"
 
         except Exception as e:
-            print(f"相关样本提取过程出错: {e}")
+            log_print(f"相关样本提取过程出错: {e}")
             report_content += "\n---\n\n## 相关样本\n\n"
             report_content += f"❌ 相关样本提取失败: {str(e)}\n\n"
 
@@ -1013,12 +1044,12 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(report_content)
 
-        print(f"\n✅ 报告已生成: {report_path}")
+        log_print(f"\n✅ 报告已生成: {report_path}")
         return f"报告已成功生成并保存至: {report_path}"
 
     except Exception as e:
         error_message = f"分析过程中出现错误: {str(e)}"
-        print(f"\n❌ {error_message}")
+        log_print(f"\n❌ {error_message}")
         return error_message
 
     finally:
@@ -1030,4 +1061,4 @@ if __name__ == "__main__":
     mcp.run(transport="stdio")
     # 测试IP分析
     # result = analyze_ip_threat("112.82.223.167")
-    # print(result)
+    # log_print(result)
