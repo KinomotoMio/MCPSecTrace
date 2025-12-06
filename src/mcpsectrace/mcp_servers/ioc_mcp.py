@@ -22,8 +22,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from mcpsectrace.config import get_config_value
 
 # 配置日志，将日志输出到文件而不是 stdout（避免污染 MCP JSON-RPC 通信）
+# 日志保存到项目根目录的 logs 目录
+_log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+os.makedirs(_log_dir, exist_ok=True)
+_log_file = os.path.join(_log_dir, 'ioc_mcp.log')
+
 logging.basicConfig(
-    filename='ioc_mcp.log',
+    filename=_log_file,
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     encoding='utf-8'
