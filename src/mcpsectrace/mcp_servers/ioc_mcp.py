@@ -834,7 +834,6 @@ class ThreatBookAnalyzer:
         except Exception as e:
             error_msg = f"展开威胁面板时出错: {e}"
             log_print(error_msg)
-            md_content += f"### 威胁面板截图失败\n{error_msg}\n\n"
 
         return md_content
 
