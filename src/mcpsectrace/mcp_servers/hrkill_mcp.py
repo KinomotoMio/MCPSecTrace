@@ -390,20 +390,20 @@ def scan_virus():
         return error_msg
     time.sleep(get_sleep_time("long"))
 
-    # 4. 检测是否扫描完成（每30秒截取页面上半部分，使用OCR识别"查杀完成"字符串）
+    # 4. 检测是否扫描完成（每15秒截取页面上半部分，使用OCR识别"查杀完成"字符串）
     start_time = time.time()
     interval = 600  # 10分钟
-    check_interval = 30  # 每30秒检测一次
+    check_interval = 15  # 每15秒检测一次
     last_check_time = 0
     recognizer = ImageRecognition()
 
     debug_print(f"[Step 4] 检测是否扫描完成（时长{interval}s，可调节）")
-    debug_print("开始监控扫描进度，每30秒检测一次...")
+    debug_print("开始监控扫描进度，每15秒检测一次...")
 
     while time.time() - start_time < interval:
         current_time = time.time()
 
-        # 每30秒检测一次
+        # 每15秒检测一次
         if current_time - last_check_time >= check_interval:
             last_check_time = current_time
             elapsed_time = current_time - start_time

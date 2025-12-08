@@ -600,8 +600,9 @@ def main():
         quick_scan()
     else:
         print("--- 当前处于正式运行模式 ---")
+        mcp.run(transport="stdio")
         # start_app(FOCUS_PACK_PATH)
-        quick_scan()
+        # quick_scan()
         # mcp.run(transport="stdio")
 
 

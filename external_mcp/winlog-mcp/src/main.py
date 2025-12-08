@@ -15,8 +15,8 @@ args, unknown = parser.parse_known_args()
 
 class Settings:
     STORAGE_PATH = args.storage_path
-    LOG_NAME = "Microsoft-Windows-Sysmon/Operational"  # 預設抓 Sysmon 通道
-    SOURCE_NAME = "Microsoft-Windows-Sysmon"           # 預設只抓 Sysmon 來源
+    LOG_NAME = "Microsoft-Windows-Sysmon/Operational"  # 默认获取 Sysmon 通道
+    SOURCE_NAME = "Microsoft-Windows-Sysmon"           # 默认仅获取 Sysmon 来源
     SERVER_NAME = "localhost"
     SIZE = 10
 
@@ -32,16 +32,16 @@ def ingest_syslog(
     size: int = Settings.SIZE
 ):
     """
-    Ingest Windows logs
+    摄取 Windows 日志
 
-    Args:
-        source_name (str, optional): event source name. Empty string means no filter (all sources).
-        log_name (str, optional): event log name. Defaults to "Microsoft-Windows-Sysmon/Operational".
-        server_name (str, optional): server. Defaults to "localhost".
-        size (int, optional): number of log lines to return
+    参数：
+        source_name (str, 可选): 事件源名称。空字符串表示无过滤（所有来源）。
+        log_name (str, 可选): 事件日志名称。默认为 "Microsoft-Windows-Sysmon/Operational"。
+        server_name (str, 可选): 服务器。默认为 "localhost"。
+        size (int, 可选): 返回的日志行数
 
-    Returns:
-        str: log content
+    返回：
+        str: 日志内容
     """
 
     try:
@@ -52,12 +52,12 @@ def ingest_syslog(
         safe_log_name = log_name.replace("/", "_").replace("\\", "_")
         dest_file = os.path.join(Settings.STORAGE_PATH, f"{timestamp}_{safe_log_name}.log")
 
-        # Check admin privileges
+        # 检查管理员权限
         if not ctypes.windll.shell32.IsUserAnAdmin():
             return "ERROR: Administrator privileges required."
 
         if log_name == "Microsoft-Windows-Sysmon/Operational":
-            # Use EvtQuery for Sysmon log
+            # 对于 Sysmon 日志使用 EvtQuery
             flags = win32evtlog.EvtQueryReverseDirection
             query = f"*[System/Provider/@Name='{source_name or 'Microsoft-Windows-Sysmon'}']"
             handle = win32evtlog.EvtQuery(log_name, flags, query)
@@ -75,7 +75,7 @@ def ingest_syslog(
                         if written >= size:
                             break
         else:
-            # Use OpenEventLog for other logs
+            # 对于其他日志使用 OpenEventLog
             handle = win32evtlog.OpenEventLog(server_name, log_name)
             flags = win32evtlog.EVENTLOG_BACKWARDS_READ | win32evtlog.EVENTLOG_SEQUENTIAL_READ
             written = 0
@@ -86,7 +86,7 @@ def ingest_syslog(
                     if not events:
                         break
                     for event in events:
-                        # If source_name is empty, do not filter
+                        # 如果 source_name 为空，则不进行过滤
                         print(event)
                         try:
                             event_record = {}
@@ -103,14 +103,14 @@ def ingest_syslog(
                             event_record['TimeWritten'] = getattr(event, 'TimeWritten', None).isoformat() if hasattr(getattr(event, 'TimeWritten', None), 'isoformat') else str(getattr(event, 'TimeWritten', None))
                             event_record['Message'] = None
                             try:
-                                # Attempt to get the formatted message
+                                # 尝试获取格式化后的消息
                                 event_record['Message'] = win32evtlogutil.SafeFormatMessage(event, log_name)
                             except Exception as msg_ex:
-                                # Handle message parsing error
+                                # 处理消息解析错误
                                 event_record['Message'] = f"Message parse error: {msg_ex}"
                             f.write(str(event_record) + "\n")
                         except Exception as e:
-                            # Handle event parsing error
+                            # 处理事件解析错误
                             f.write(f"Error parsing event: {e}\n")
                         written += 1
                         if written >= size:
@@ -131,15 +131,15 @@ def query_syslog(
     size: int = Settings.SIZE
 ):
     """
-    Query Windows logs
+    查询 Windows 日志
 
-    Args:
-        timestamp (str): the timestamp (YYYY-MM-DD_HH-MM-SS) to filter log files
-        source_name (str, optional): event source name. Defaults to "Microsoft-Windows-Sysmon".
-        size (int, optional): number of log lines to return
+    参数：
+        timestamp (str): 时间戳 (YYYY-MM-DD_HH-MM-SS) 用于过滤日志文件
+        source_name (str, 可选): 事件源名称。默认为 "Microsoft-Windows-Sysmon"。
+        size (int, 可选): 返回的日志行数
 
-    Returns:
-        str: log content
+    返回：
+        str: 日志内容
     """
     files = os.listdir(Settings.STORAGE_PATH)
     matched_files = [
@@ -160,13 +160,13 @@ def query_syslog(
                 except Exception:
                     event_dict = None
                 if source_name and event_dict and 'SourceName' in event_dict:
-                    # Filter events by source name
+                    # 按源名称过滤事件
                     if event_dict['SourceName'] != source_name:
                         continue
                 logs.append(event.strip())
 
     if not logs:
-        return "No events found in matching log files"
+        return "在匹配的日志文件中未找到事件"
 
     return "\n".join(logs[-size:])
 
@@ -174,38 +174,38 @@ def query_syslog(
 @mcp.prompt()
 def prompt_guide():
     return f"""
-    You are a Windows log analyst.
+    你是一个Windows日志分析员。
 
-    Your task is to analyze the Windows log and provide a summary of the events.
-    The log is stored in the following path:
+    你的任务是分析Windows日志并提供事件摘要。
+    日志存储在以下路径：
     ```
     {Settings.STORAGE_PATH}
     ```
-    
-    You can use the following tools:
-    - ingest_syslog: Ingest Windows log
-        - Args:
-            - source_name (str, optional): event source name. Defaults to "Microsoft-Windows-Sysmon".
-            - size (int, optional): number of log lines to return
-        - Returns:
-            - str: log file path
-    - query_syslog: Query Windows log
-        - Args:
-            - timestamp (str): the timestamp (YYYY-MM-DD_HH-MM-SS) to filter log files
-            - source_name (str, optional): event source name. Defaults to "Microsoft-Windows-Sysmon".
-            - size (int, optional): number of log lines to return
-        - Returns:
-            - str: log file path
-    
-    if you want to ingest the log, use the following prompt:
+
+    你可以使用以下工具：
+    - ingest_syslog: 摄取Windows日志
+        - 参数：
+            - source_name (str，可选): 事件源名称。默认为 "Microsoft-Windows-Sysmon"。
+            - size (int，可选): 返回的日志行数
+        - 返回值：
+            - str: 日志文件路径
+    - query_syslog: 查询Windows日志
+        - 参数：
+            - timestamp (str): 时间戳 (YYYY-MM-DD_HH-MM-SS) 用于过滤日志文件
+            - source_name (str，可选): 事件源名称。默认为 "Microsoft-Windows-Sysmon"。
+            - size (int，可选): 返回的日志行数
+        - 返回值：
+            - str: 日志文件路径
+
+    如果你想摄取日志，请使用以下提示：
     ```
     ingest_syslog(
         source_name="{Settings.SOURCE_NAME}",
         size={Settings.SIZE}
     )
     ```
-    
-    if you want to query the log, use the following prompt:
+
+    如果你想查询日志，请使用以下提示：
     ```
     query_syslog(
         timestamp="2025-05-15_14-47-24",
