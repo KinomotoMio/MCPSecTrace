@@ -12,11 +12,17 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool, Resource, ResourceTemplate, Prompt
 from pydantic import BaseModel, Field
 
-from .platform_search import UnifiedSearchQuery, WindowsSpecificParams, build_search_command
+from .platform_search import (
+    UnifiedSearchQuery,
+    WindowsSpecificParams,
+    build_search_command,
+)
 from .search_interface import SearchProvider
+
 
 class SearchQuery(BaseModel):
     """搜索查询参数的模型。"""
+
     query: str = Field(
         description="Search query string. See the search syntax guide for details."
     )
@@ -24,45 +30,31 @@ class SearchQuery(BaseModel):
         default=100,
         ge=1,
         le=1000,
-        description="Maximum number of results to return (1-1000)"
+        description="Maximum number of results to return (1-1000)",
     )
     match_path: bool = Field(
-        default=False,
-        description="Match against full path instead of filename only"
+        default=False, description="Match against full path instead of filename only"
     )
-    match_case: bool = Field(
-        default=False,
-        description="Enable case-sensitive search"
-    )
-    match_whole_word: bool = Field(
-        default=False,
-        description="Match whole words only"
-    )
-    match_regex: bool = Field(
-        default=False,
-        description="Enable regex search"
-    )
+    match_case: bool = Field(default=False, description="Enable case-sensitive search")
+    match_whole_word: bool = Field(default=False, description="Match whole words only")
+    match_regex: bool = Field(default=False, description="Enable regex search")
     sort_by: int = Field(
         default=1,
-        description="Sort order for results (Note: Not all sort options available on all platforms)"
+        description="Sort order for results (Note: Not all sort options available on all platforms)",
     )
+
 
 class MaliciousFileQuery(BaseModel):
     """恶意释放文件查询参数的模型。"""
-    csv_file_path: str = Field(
-        description="CSV 文件路径，包含释放文件信息"
-    )
+
+    csv_file_path: str = Field(description="CSV 文件路径，包含释放文件信息")
     max_search_depth: int = Field(
-        default=2,
-        ge=0,
-        le=5,
-        description="最大向上搜索目录层数（默认为2）"
+        default=2, ge=0, le=5, description="最大向上搜索目录层数（默认为2）"
     )
 
+
 def query_malicious_files_from_csv(
-    csv_path: str,
-    search_provider: SearchProvider,
-    max_search_depth: int = 2
+    csv_path: str, search_provider: SearchProvider, max_search_depth: int = 2
 ) -> str:
     """
     从CSV文件查询恶意释放的文件。
@@ -93,10 +85,10 @@ def query_malicious_files_from_csv(
             "上一层目录存在": [],
             "上两层目录存在": [],
             "全局范围存在": [],
-            "未找到的文件": []
+            "未找到的文件": [],
         }
 
-        with open(csv_path, 'r', encoding='utf-8') as f:
+        with open(csv_path, "r", encoding="utf-8") as f:
             csv_reader = csv.DictReader(f)
 
             for row in csv_reader:
@@ -115,7 +107,7 @@ def query_malicious_files_from_csv(
                     "环境": environment,
                     "文件名": file_name,
                     "预期路径": file_path,
-                    "SHA256": sha256
+                    "SHA256": sha256,
                 }
 
                 found = False
@@ -126,8 +118,12 @@ def query_malicious_files_from_csv(
                 try:
                     file_dir = str(Path(file_path).parent)
                     search_query = f"path:{file_dir} {file_name}"
-                    results = search_provider.search_files(query=search_query, max_results=10)
-                    if results and any(file_name.lower() in r.filename.lower() for r in results):
+                    results = search_provider.search_files(
+                        query=search_query, max_results=10
+                    )
+                    if results and any(
+                        file_name.lower() in r.filename.lower() for r in results
+                    ):
                         found = True
                         found_status = "文件存在"
                         check_result = f"在预期目录 {file_dir} 中找到"
@@ -139,8 +135,12 @@ def query_malicious_files_from_csv(
                     try:
                         parent_dir = str(Path(file_path).parent.parent)
                         search_query = f"path:{parent_dir} {file_name}"
-                        results = search_provider.search_files(query=search_query, max_results=10)
-                        if results and any(file_name.lower() in r.filename.lower() for r in results):
+                        results = search_provider.search_files(
+                            query=search_query, max_results=10
+                        )
+                        if results and any(
+                            file_name.lower() in r.filename.lower() for r in results
+                        ):
                             found = True
                             found_status = "上一层目录存在"
                             check_result = f"在上一层目录 {parent_dir} 中找到"
@@ -152,8 +152,12 @@ def query_malicious_files_from_csv(
                     try:
                         grandparent_dir = str(Path(file_path).parent.parent.parent)
                         search_query = f"path:{grandparent_dir} {file_name}"
-                        results = search_provider.search_files(query=search_query, max_results=10)
-                        if results and any(file_name.lower() in r.filename.lower() for r in results):
+                        results = search_provider.search_files(
+                            query=search_query, max_results=10
+                        )
+                        if results and any(
+                            file_name.lower() in r.filename.lower() for r in results
+                        ):
                             found = True
                             found_status = "上两层目录存在"
                             check_result = f"在上两层目录 {grandparent_dir} 中找到"
@@ -164,12 +168,22 @@ def query_malicious_files_from_csv(
                 if not found:
                     try:
                         search_query = file_name
-                        results = search_provider.search_files(query=search_query, max_results=10)
-                        if results and any(file_name.lower() in r.filename.lower() for r in results):
+                        results = search_provider.search_files(
+                            query=search_query, max_results=10
+                        )
+                        if results and any(
+                            file_name.lower() in r.filename.lower() for r in results
+                        ):
                             found = True
                             found_status = "全局范围存在"
-                            found_paths = [r.path for r in results if file_name.lower() in r.filename.lower()]
-                            check_result = f"在全局范围内找到: {', '.join(found_paths[:3])}"
+                            found_paths = [
+                                r.path
+                                for r in results
+                                if file_name.lower() in r.filename.lower()
+                            ]
+                            check_result = (
+                                f"在全局范围内找到: {', '.join(found_paths[:3])}"
+                            )
                     except Exception as e:
                         print(f"第3层查询失败: {e}", file=sys.stderr)
 
@@ -189,21 +203,33 @@ def query_malicious_files_from_csv(
         output_lines.append("")
 
         # 统计信息
-        total_files = len(results_by_status["找到的文件"]) + len(results_by_status["未找到的文件"])
+        total_files = len(results_by_status["找到的文件"]) + len(
+            results_by_status["未找到的文件"]
+        )
         output_lines.append(f"统计信息:")
         output_lines.append(f"  总文件数: {total_files}")
         output_lines.append(f"  找到: {len(results_by_status['找到的文件'])}")
-        output_lines.append(f"    ├─ 文件存在（第0层）: {len(results_by_status['文件存在'])}个 ⭐⭐⭐")
-        output_lines.append(f"    ├─ 上一层目录存在（第1层）: {len(results_by_status['上一层目录存在'])}个 ⭐⭐")
-        output_lines.append(f"    ├─ 上两层目录存在（第2层）: {len(results_by_status['上两层目录存在'])}个 ⭐")
-        output_lines.append(f"    └─ 全局范围存在（第3层）: {len(results_by_status['全局范围存在'])}个 ⭐")
+        output_lines.append(
+            f"    ├─ 文件存在（第0层）: {len(results_by_status['文件存在'])}个 ⭐⭐⭐"
+        )
+        output_lines.append(
+            f"    ├─ 上一层目录存在（第1层）: {len(results_by_status['上一层目录存在'])}个 ⭐⭐"
+        )
+        output_lines.append(
+            f"    ├─ 上两层目录存在（第2层）: {len(results_by_status['上两层目录存在'])}个 ⭐"
+        )
+        output_lines.append(
+            f"    └─ 全局范围存在（第3层）: {len(results_by_status['全局范围存在'])}个 ⭐"
+        )
         output_lines.append(f"  未找到: {len(results_by_status['未找到的文件'])}个 ✓")
         output_lines.append("")
 
         # 文件存在
         if results_by_status["文件存在"]:
             output_lines.append("=" * 80)
-            output_lines.append(f"【⭐⭐⭐ 文件直接存在】({len(results_by_status['文件存在'])}个)")
+            output_lines.append(
+                f"【⭐⭐⭐ 文件直接存在】({len(results_by_status['文件存在'])}个)"
+            )
             output_lines.append("=" * 80)
             output_lines.append("状态: 恶意文件仍保留在系统中，风险最高")
             output_lines.append("")
@@ -218,9 +244,13 @@ def query_malicious_files_from_csv(
         # 上一层目录存在
         if results_by_status["上一层目录存在"]:
             output_lines.append("=" * 80)
-            output_lines.append(f"【⭐⭐ 上一层目录存在】({len(results_by_status['上一层目录存在'])}个)")
+            output_lines.append(
+                f"【⭐⭐ 上一层目录存在】({len(results_by_status['上一层目录存在'])}个)"
+            )
             output_lines.append("=" * 80)
-            output_lines.append("状态: 释放文件被删除，但释放目录仍存在（可能被清理工具部分清理）")
+            output_lines.append(
+                "状态: 释放文件被删除，但释放目录仍存在（可能被清理工具部分清理）"
+            )
             output_lines.append("")
             for file_info in results_by_status["上一层目录存在"]:
                 output_lines.append(f"  文件名: {file_info['文件名']}")
@@ -234,9 +264,13 @@ def query_malicious_files_from_csv(
         # 上两层目录存在
         if results_by_status["上两层目录存在"]:
             output_lines.append("=" * 80)
-            output_lines.append(f"【⭐ 上两层目录存在】({len(results_by_status['上两层目录存在'])}个)")
+            output_lines.append(
+                f"【⭐ 上两层目录存在】({len(results_by_status['上两层目录存在'])}个)"
+            )
             output_lines.append("=" * 80)
-            output_lines.append("状态: 释放目录也被删除，但上层目录仍存在（清理相对彻底）")
+            output_lines.append(
+                "状态: 释放目录也被删除，但上层目录仍存在（清理相对彻底）"
+            )
             output_lines.append("")
             for file_info in results_by_status["上两层目录存在"]:
                 output_lines.append(f"  文件名: {file_info['文件名']}")
@@ -250,9 +284,13 @@ def query_malicious_files_from_csv(
         # 全局范围存在
         if results_by_status["全局范围存在"]:
             output_lines.append("=" * 80)
-            output_lines.append(f"【⭐ 全局范围存在】({len(results_by_status['全局范围存在'])}个)")
+            output_lines.append(
+                f"【⭐ 全局范围存在】({len(results_by_status['全局范围存在'])}个)"
+            )
             output_lines.append("=" * 80)
-            output_lines.append("状态: 文件在系统其他位置被找到（可能被移动或恶意软件仍在运行）")
+            output_lines.append(
+                "状态: 文件在系统其他位置被找到（可能被移动或恶意软件仍在运行）"
+            )
             output_lines.append("")
             for file_info in results_by_status["全局范围存在"]:
                 output_lines.append(f"  文件名: {file_info['文件名']}")
@@ -266,7 +304,9 @@ def query_malicious_files_from_csv(
         # 未找到的文件
         if results_by_status["未找到的文件"]:
             output_lines.append("=" * 80)
-            output_lines.append(f"【✓ 完全未找到】({len(results_by_status['未找到的文件'])}个)")
+            output_lines.append(
+                f"【✓ 完全未找到】({len(results_by_status['未找到的文件'])}个)"
+            )
             output_lines.append("=" * 80)
             output_lines.append("状态: 文件和目录均不存在，清理完全（最低风险）")
             output_lines.append("")
@@ -282,6 +322,7 @@ def query_malicious_files_from_csv(
 
     except Exception as e:
         return f"查询失败: {str(e)}"
+
 
 async def serve() -> None:
     """运行服务器。"""
@@ -309,13 +350,13 @@ async def serve() -> None:
     async def list_tools() -> List[Tool]:
         """返回具有平台特定文档和 schema 的搜索工具。"""
         platform_info = {
-            'windows': "Using Everything SDK with full search capabilities",
-            'darwin': "Using mdfind (Spotlight) with native macOS search capabilities",
-            'linux': "Using locate with Unix-style search capabilities"
+            "windows": "Using Everything SDK with full search capabilities",
+            "darwin": "Using mdfind (Spotlight) with native macOS search capabilities",
+            "linux": "Using locate with Unix-style search capabilities",
         }
 
         syntax_docs = {
-            'darwin': """macOS Spotlight (mdfind) Search Syntax:
+            "darwin": """macOS Spotlight (mdfind) Search Syntax:
                 
 Basic Usage:
 - Simple text search: Just type the words you're looking for
@@ -334,8 +375,7 @@ Metadata Attributes:
 - kMDItemKind
 - kMDItemFSSize
 - And many more OS X metadata attributes""",
-
-            'linux': """Linux Locate Search Syntax:
+            "linux": """Linux Locate Search Syntax:
 
 Basic Usage:
 - Simple pattern: locate filename
@@ -354,7 +394,7 @@ Examples:
 - locate -r "/home/.*\.txt$"
 - locate -c "*.doc"
 """,
-            'windows': """Search for files and folders using Everything SDK.
+            "windows": """Search for files and folders using Everything SDK.
                 
 Features:
 - Fast file and folder search across all indexed drives
@@ -436,7 +476,7 @@ Examples:
    ext:mp4|mkv|avi size:>1gb
 3. Find files in specific folder:
    path:C:\Projects *.js
-"""
+""",
         }
 
         # ============ Tool 1: search 描述 ============
@@ -498,13 +538,13 @@ Examples:
             Tool(
                 name="search",
                 description=search_description,
-                inputSchema=UnifiedSearchQuery.get_schema_for_platform()
+                inputSchema=UnifiedSearchQuery.get_schema_for_platform(),
             ),
             Tool(
                 name="query_malicious_release_files",
                 description=malicious_file_description,
-                inputSchema=MaliciousFileQuery.model_json_schema()
-            )
+                inputSchema=MaliciousFileQuery.model_json_schema(),
+            ),
         ]
 
     @server.call_tool()
@@ -521,18 +561,12 @@ Examples:
                 result_text = query_malicious_files_from_csv(
                     csv_path=csv_path,
                     search_provider=search_provider,
-                    max_search_depth=max_search_depth
+                    max_search_depth=max_search_depth,
                 )
 
-                return [TextContent(
-                    type="text",
-                    text=result_text
-                )]
+                return [TextContent(type="text", text=result_text)]
             except Exception as e:
-                return [TextContent(
-                    type="text",
-                    text=f"恶意文件查询失败: {str(e)}"
-                )]
+                return [TextContent(type="text", text=f"恶意文件查询失败: {str(e)}")]
 
         elif name == "search":
             # 处理标准搜索工具
@@ -542,37 +576,34 @@ Examples:
                 windows_params = {}
 
                 # 处理基础参数
-                if 'base' in arguments:
-                    if isinstance(arguments['base'], str):
+                if "base" in arguments:
+                    if isinstance(arguments["base"], str):
                         try:
-                            base_params = json.loads(arguments['base'])
+                            base_params = json.loads(arguments["base"])
                         except json.JSONDecodeError:
                             # 如果不是有效的 JSON 字符串，将其视为简单的查询字符串
-                            base_params = {'query': arguments['base']}
-                    elif isinstance(arguments['base'], dict):
+                            base_params = {"query": arguments["base"]}
+                    elif isinstance(arguments["base"], dict):
                         # 如果已经是字典，直接使用
-                        base_params = arguments['base']
+                        base_params = arguments["base"]
                     else:
                         raise ValueError("'base' 参数必须是字符串或字典")
 
                 # 处理 Windows 特定参数
-                if 'windows_params' in arguments:
-                    if isinstance(arguments['windows_params'], str):
+                if "windows_params" in arguments:
+                    if isinstance(arguments["windows_params"], str):
                         try:
-                            windows_params = json.loads(arguments['windows_params'])
+                            windows_params = json.loads(arguments["windows_params"])
                         except json.JSONDecodeError:
                             raise ValueError("windows_params 中的 JSON 无效")
-                    elif isinstance(arguments['windows_params'], dict):
+                    elif isinstance(arguments["windows_params"], dict):
                         # 如果已经是字典，直接使用
-                        windows_params = arguments['windows_params']
+                        windows_params = arguments["windows_params"]
                     else:
                         raise ValueError("'windows_params' 必须是字符串或字典")
 
                 # 组合参数
-                query_params = {
-                    **base_params,
-                    'windows_params': windows_params
-                }
+                query_params = {**base_params, "windows_params": windows_params}
 
                 # 创建统一查询
                 query = UnifiedSearchQuery(**query_params)
@@ -587,40 +618,41 @@ Examples:
                         match_case=platform_params.match_case,
                         match_whole_word=platform_params.match_whole_word,
                         match_regex=platform_params.match_regex,
-                        sort_by=platform_params.sort_by
+                        sort_by=platform_params.sort_by,
                     )
                 else:
                     # 使用命令行工具（mdfind/locate）
                     platform_params = None
-                    if current_platform == 'darwin':
+                    if current_platform == "darwin":
                         platform_params = query.mac_params or {}
-                    elif current_platform == 'linux':
+                    elif current_platform == "linux":
                         platform_params = query.linux_params or {}
 
                     results = search_provider.search_files(
                         query=query.query,
                         max_results=query.max_results,
-                        **platform_params.dict() if platform_params else {}
+                        **platform_params.dict() if platform_params else {},
                     )
 
-                return [TextContent(
-                    type="text",
-                    text="\n".join([
-                        f"Path: {r.path}\n"
-                        f"Filename: {r.filename}"
-                        f"{f' ({r.extension})' if r.extension else ''}\n"
-                        f"Size: {r.size:,} bytes\n"
-                        f"Created: {r.created if r.created else 'N/A'}\n"
-                        f"Modified: {r.modified if r.modified else 'N/A'}\n"
-                        f"Accessed: {r.accessed if r.accessed else 'N/A'}\n"
-                        for r in results
-                    ])
-                )]
+                return [
+                    TextContent(
+                        type="text",
+                        text="\n".join(
+                            [
+                                f"Path: {r.path}\n"
+                                f"Filename: {r.filename}"
+                                f"{f' ({r.extension})' if r.extension else ''}\n"
+                                f"Size: {r.size:,} bytes\n"
+                                f"Created: {r.created if r.created else 'N/A'}\n"
+                                f"Modified: {r.modified if r.modified else 'N/A'}\n"
+                                f"Accessed: {r.accessed if r.accessed else 'N/A'}\n"
+                                for r in results
+                            ]
+                        ),
+                    )
+                ]
             except Exception as e:
-                return [TextContent(
-                    type="text",
-                    text=f"搜索失败: {str(e)}"
-                )]
+                return [TextContent(type="text", text=f"搜索失败: {str(e)}")]
 
         else:
             raise ValueError(f"未知工具: {name}")
@@ -628,6 +660,7 @@ Examples:
     options = server.create_initialization_options()
     async with stdio_server() as (read_stream, write_stream):
         await server.run(read_stream, write_stream, options, raise_exceptions=True)
+
 
 def configure_windows_console():
     """配置 Windows 控制台以输出 UTF-8。"""
@@ -646,16 +679,18 @@ def configure_windows_console():
         kernel32.SetConsoleMode(handle, mode)
 
         # 为控制台输出设置 UTF-8 编码
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
 
 def main() -> None:
     """主入口点。"""
     import asyncio
     import logging
+
     logging.basicConfig(
         level=logging.WARNING,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     configure_windows_console()

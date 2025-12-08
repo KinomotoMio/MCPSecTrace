@@ -5,8 +5,10 @@ from pydantic import BaseModel, Field
 from enum import Enum
 import platform
 
+
 class BaseSearchQuery(BaseModel):
     """所有平台通用的基础搜索参数。"""
+
     query: str = Field(
         description="Search query string. See platform-specific documentation for syntax details."
     )
@@ -14,49 +16,49 @@ class BaseSearchQuery(BaseModel):
         default=100,
         ge=1,
         le=1000,
-        description="Maximum number of results to return (1-1000)"
+        description="Maximum number of results to return (1-1000)",
     )
+
 
 class MacSpecificParams(BaseModel):
     """macOS 特定的搜索参数（用于 mdfind）。"""
+
     live_updates: bool = Field(
-        default=False,
-        description="Provide live updates to search results"
+        default=False, description="Provide live updates to search results"
     )
     search_directory: Optional[str] = Field(
         default=None,
-        description="Limit search to specific directory (-onlyin parameter)"
+        description="Limit search to specific directory (-onlyin parameter)",
     )
     literal_query: bool = Field(
         default=False,
-        description="Treat query as literal string without interpretation"
+        description="Treat query as literal string without interpretation",
     )
     interpret_query: bool = Field(
-        default=False,
-        description="Interpret query as if typed in Spotlight menu"
+        default=False, description="Interpret query as if typed in Spotlight menu"
     )
+
 
 class LinuxSpecificParams(BaseModel):
     """Linux 特定的搜索参数（用于 locate）。"""
+
     ignore_case: bool = Field(
-        default=True,
-        description="Ignore case distinctions (-i parameter)"
+        default=True, description="Ignore case distinctions (-i parameter)"
     )
     regex_search: bool = Field(
-        default=False,
-        description="Use regular expressions in patterns (-r parameter)"
+        default=False, description="Use regular expressions in patterns (-r parameter)"
     )
     existing_files: bool = Field(
-        default=True,
-        description="Only output existing files (-e parameter)"
+        default=True, description="Only output existing files (-e parameter)"
     )
     count_only: bool = Field(
-        default=False,
-        description="Only display count of matches (-c parameter)"
+        default=False, description="Only display count of matches (-c parameter)"
     )
+
 
 class WindowsSortOption(int, Enum):
     """Windows Everything 搜索的排序选项。"""
+
     NAME_ASC = 1
     NAME_DESC = 2
     PATH_ASC = 3
@@ -70,31 +72,24 @@ class WindowsSortOption(int, Enum):
     MODIFIED_ASC = 13
     MODIFIED_DESC = 14
 
+
 class WindowsSpecificParams(BaseModel):
     """Windows 特定的搜索参数（用于 Everything SDK）。"""
+
     match_path: bool = Field(
-        default=False,
-        description="Match against full path instead of filename only"
+        default=False, description="Match against full path instead of filename only"
     )
-    match_case: bool = Field(
-        default=False,
-        description="Enable case-sensitive search"
-    )
-    match_whole_word: bool = Field(
-        default=False,
-        description="Match whole words only"
-    )
-    match_regex: bool = Field(
-        default=False,
-        description="Enable regex search"
-    )
+    match_case: bool = Field(default=False, description="Enable case-sensitive search")
+    match_whole_word: bool = Field(default=False, description="Match whole words only")
+    match_regex: bool = Field(default=False, description="Enable regex search")
     sort_by: WindowsSortOption = Field(
-        default=WindowsSortOption.NAME_ASC,
-        description="Sort order for results"
+        default=WindowsSortOption.NAME_ASC, description="Sort order for results"
     )
+
 
 class UnifiedSearchQuery(BaseSearchQuery):
     """组合的搜索参数模型。"""
+
     mac_params: Optional[MacSpecificParams] = None
     linux_params: Optional[LinuxSpecificParams] = None
     windows_params: Optional[WindowsSpecificParams] = None
@@ -106,20 +101,22 @@ class UnifiedSearchQuery(BaseSearchQuery):
 
         schema = {
             "type": "object",
-            "properties": {
-                "base": BaseSearchQuery.model_json_schema()
-            },
-            "required": ["base"]
+            "properties": {"base": BaseSearchQuery.model_json_schema()},
+            "required": ["base"],
         }
 
         # 添加平台特定的参数
         if system == "darwin":
             schema["properties"]["mac_params"] = MacSpecificParams.model_json_schema()
         elif system == "linux":
-            schema["properties"]["linux_params"] = LinuxSpecificParams.model_json_schema()
+            schema["properties"][
+                "linux_params"
+            ] = LinuxSpecificParams.model_json_schema()
         elif system == "windows":
-            schema["properties"]["windows_params"] = WindowsSpecificParams.model_json_schema()
-            
+            schema["properties"][
+                "windows_params"
+            ] = WindowsSpecificParams.model_json_schema()
+
         return schema
 
     def get_platform_params(self) -> Optional[BaseModel]:
@@ -132,6 +129,7 @@ class UnifiedSearchQuery(BaseSearchQuery):
         elif system == "windows":
             return self.windows_params
         return None
+
 
 def build_search_command(query: UnifiedSearchQuery) -> List[str]:
     """根据平台和参数构建适当的搜索命令。"""

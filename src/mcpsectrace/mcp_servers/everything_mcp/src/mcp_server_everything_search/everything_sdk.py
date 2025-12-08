@@ -64,14 +64,16 @@ EVERYTHING_SORT_DATE_RUN_ASCENDING = 25
 EVERYTHING_SORT_DATE_RUN_DESCENDING = 26
 
 # Windows 时间转换常量
-WINDOWS_TICKS = int(1/10**-7)
-WINDOWS_EPOCH = datetime.datetime.strptime('1601-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-POSIX_EPOCH = datetime.datetime.strptime('1970-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+WINDOWS_TICKS = int(1 / 10**-7)
+WINDOWS_EPOCH = datetime.datetime.strptime("1601-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+POSIX_EPOCH = datetime.datetime.strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
 EPOCH_DIFF = (POSIX_EPOCH - WINDOWS_EPOCH).total_seconds()
 WINDOWS_TICKS_TO_POSIX_EPOCH = EPOCH_DIFF * WINDOWS_TICKS
 
+
 class SearchResult(BaseModel):
     """搜索结果的模型。"""
+
     path: str
     filename: str
     extension: str | None = None
@@ -84,8 +86,10 @@ class SearchResult(BaseModel):
     highlighted_filename: str | None = None
     highlighted_path: str | None = None
 
+
 class EverythingError(Exception):
     """Everything SDK 错误的自定义异常。"""
+
     def __init__(self, error_code: int):
         self.error_code = error_code
         super().__init__(self._get_error_message())
@@ -98,9 +102,10 @@ class EverythingError(Exception):
             EVERYTHING_ERROR_CREATEWINDOW: "创建窗口失败",
             EVERYTHING_ERROR_CREATETHREAD: "创建线程失败",
             EVERYTHING_ERROR_INVALIDINDEX: "无效的索引",
-            EVERYTHING_ERROR_INVALIDCALL: "无效的调用"
+            EVERYTHING_ERROR_INVALIDCALL: "无效的调用",
         }
         return error_messages.get(self.error_code, f"未知错误: {self.error_code}")
+
 
 class EverythingSDK:
     """Everything SDK 功能的包装器。"""
@@ -144,24 +149,24 @@ class EverythingSDK:
         self.dll.Everything_GetResultFullPathNameW.argtypes = [
             ctypes.c_uint,
             ctypes.c_wchar_p,
-            ctypes.c_uint
+            ctypes.c_uint,
         ]
 
         self.dll.Everything_GetResultDateCreated.argtypes = [
             ctypes.c_uint,
-            ctypes.POINTER(ctypes.c_ulonglong)
+            ctypes.POINTER(ctypes.c_ulonglong),
         ]
         self.dll.Everything_GetResultDateModified.argtypes = [
             ctypes.c_uint,
-            ctypes.POINTER(ctypes.c_ulonglong)
+            ctypes.POINTER(ctypes.c_ulonglong),
         ]
         self.dll.Everything_GetResultDateAccessed.argtypes = [
             ctypes.c_uint,
-            ctypes.POINTER(ctypes.c_ulonglong)
+            ctypes.POINTER(ctypes.c_ulonglong),
         ]
         self.dll.Everything_GetResultSize.argtypes = [
             ctypes.c_uint,
-            ctypes.POINTER(ctypes.c_ulonglong)
+            ctypes.POINTER(ctypes.c_ulonglong),
         ]
         self.dll.Everything_GetResultAttributes.argtypes = [ctypes.c_uint]
         self.dll.Everything_GetResultRunCount.argtypes = [ctypes.c_uint]
@@ -191,7 +196,7 @@ class EverythingSDK:
         match_whole_word: bool = False,
         match_regex: bool = False,
         sort_by: int = EVERYTHING_SORT_NAME_ASCENDING,
-        request_flags: int | None = None
+        request_flags: int | None = None,
     ) -> List[SearchResult]:
         """使用 Everything SDK 执行文件搜索。"""
         print(f"调试: 使用查询设置搜索: {query}", file=sys.stderr)
@@ -208,17 +213,17 @@ class EverythingSDK:
         # 设置请求标志
         if request_flags is None:
             request_flags = (
-                EVERYTHING_REQUEST_FILE_NAME |
-                EVERYTHING_REQUEST_PATH |
-                EVERYTHING_REQUEST_EXTENSION |
-                EVERYTHING_REQUEST_SIZE |
-                EVERYTHING_REQUEST_DATE_CREATED |
-                EVERYTHING_REQUEST_DATE_MODIFIED |
-                EVERYTHING_REQUEST_DATE_ACCESSED |
-                EVERYTHING_REQUEST_ATTRIBUTES |
-                EVERYTHING_REQUEST_RUN_COUNT |
-                EVERYTHING_REQUEST_HIGHLIGHTED_FILE_NAME |
-                EVERYTHING_REQUEST_HIGHLIGHTED_PATH
+                EVERYTHING_REQUEST_FILE_NAME
+                | EVERYTHING_REQUEST_PATH
+                | EVERYTHING_REQUEST_EXTENSION
+                | EVERYTHING_REQUEST_SIZE
+                | EVERYTHING_REQUEST_DATE_CREATED
+                | EVERYTHING_REQUEST_DATE_MODIFIED
+                | EVERYTHING_REQUEST_DATE_ACCESSED
+                | EVERYTHING_REQUEST_ATTRIBUTES
+                | EVERYTHING_REQUEST_RUN_COUNT
+                | EVERYTHING_REQUEST_HIGHLIGHTED_FILE_NAME
+                | EVERYTHING_REQUEST_HIGHLIGHTED_PATH
             )
         self.dll.Everything_SetRequestFlags(request_flags)
 
@@ -254,22 +259,38 @@ class EverythingSDK:
                 extension = self.dll.Everything_GetResultExtensionW(i)
                 attributes = self.dll.Everything_GetResultAttributes(i)
                 run_count = self.dll.Everything_GetResultRunCount(i)
-                highlighted_filename = self.dll.Everything_GetResultHighlightedFileNameW(i)
+                highlighted_filename = (
+                    self.dll.Everything_GetResultHighlightedFileNameW(i)
+                )
                 highlighted_path = self.dll.Everything_GetResultHighlightedPathW(i)
 
-                results.append(SearchResult(
-                    path=filename_buffer.value,
-                    filename=filename,
-                    extension=extension,
-                    size=file_size.value,
-                    created=self._get_time(date_created.value).isoformat() if date_created.value else None,
-                    modified=self._get_time(date_modified.value).isoformat() if date_modified.value else None,
-                    accessed=self._get_time(date_accessed.value).isoformat() if date_accessed.value else None,
-                    attributes=attributes,
-                    run_count=run_count,
-                    highlighted_filename=highlighted_filename,
-                    highlighted_path=highlighted_path
-                ))
+                results.append(
+                    SearchResult(
+                        path=filename_buffer.value,
+                        filename=filename,
+                        extension=extension,
+                        size=file_size.value,
+                        created=(
+                            self._get_time(date_created.value).isoformat()
+                            if date_created.value
+                            else None
+                        ),
+                        modified=(
+                            self._get_time(date_modified.value).isoformat()
+                            if date_modified.value
+                            else None
+                        ),
+                        accessed=(
+                            self._get_time(date_accessed.value).isoformat()
+                            if date_accessed.value
+                            else None
+                        ),
+                        attributes=attributes,
+                        run_count=run_count,
+                        highlighted_filename=highlighted_filename,
+                        highlighted_path=highlighted_path,
+                    )
+                )
             except Exception as e:
                 print(f"调试: 处理结果 {i} 出错: {e}", file=sys.stderr)
                 continue

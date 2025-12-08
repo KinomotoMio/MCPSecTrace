@@ -9,9 +9,11 @@ from typing import Optional, List
 from dataclasses import dataclass
 from pathlib import Path
 
+
 @dataclass
 class SearchResult:
     """通用搜索结果结构。"""
+
     path: str
     filename: str
     extension: Optional[str] = None
@@ -20,6 +22,7 @@ class SearchResult:
     modified: Optional[datetime] = None
     accessed: Optional[datetime] = None
     attributes: Optional[str] = None
+
 
 class SearchProvider(abc.ABC):
     """平台特定搜索实现的抽象基类。"""
@@ -33,20 +36,20 @@ class SearchProvider(abc.ABC):
         match_case: bool = False,
         match_whole_word: bool = False,
         match_regex: bool = False,
-        sort_by: Optional[int] = None
+        sort_by: Optional[int] = None,
     ) -> List[SearchResult]:
         """使用平台特定方法执行文件搜索。"""
         pass
 
     @classmethod
-    def get_provider(cls) -> 'SearchProvider':
+    def get_provider(cls) -> "SearchProvider":
         """工厂方法：获取当前平台的适当搜索提供者。"""
         system = platform.system().lower()
-        if system == 'darwin':
+        if system == "darwin":
             return MacSearchProvider()
-        elif system == 'linux':
+        elif system == "linux":
             return LinuxSearchProvider()
-        elif system == 'windows':
+        elif system == "windows":
             return WindowsSearchProvider()
         else:
             raise NotImplementedError(f"没有可用的搜索提供者用于 {system}")
@@ -63,14 +66,12 @@ class SearchProvider(abc.ABC):
                 size=stat.st_size,
                 created=datetime.fromtimestamp(stat.st_ctime),
                 modified=datetime.fromtimestamp(stat.st_mtime),
-                accessed=datetime.fromtimestamp(stat.st_atime)
+                accessed=datetime.fromtimestamp(stat.st_atime),
             )
         except (OSError, ValueError) as e:
             # 如果无法访问文件，返回基本信息
-            return SearchResult(
-                path=str(path),
-                filename=os.path.basename(path)
-            )
+            return SearchResult(path=str(path), filename=os.path.basename(path))
+
 
 class MacSearchProvider(SearchProvider):
     """使用 mdfind 的 macOS 搜索实现。"""
@@ -83,16 +84,16 @@ class MacSearchProvider(SearchProvider):
         match_case: bool = False,
         match_whole_word: bool = False,
         match_regex: bool = False,
-        sort_by: Optional[int] = None
+        sort_by: Optional[int] = None,
     ) -> List[SearchResult]:
         try:
             # 构建 mdfind 命令
-            cmd = ['mdfind']
+            cmd = ["mdfind"]
             if match_path:
                 # 匹配路径时，不使用 -name
                 cmd.append(query)
             else:
-                cmd.extend(['-name', query])
+                cmd.extend(["-name", query])
 
             # 执行搜索
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -102,9 +103,10 @@ class MacSearchProvider(SearchProvider):
             # 处理结果
             paths = result.stdout.splitlines()[:max_results]
             return [self._convert_path_to_result(path) for path in paths]
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"搜索失败: {e}")
+
 
 class LinuxSearchProvider(SearchProvider):
     """使用 locate/plocate 的 Linux 搜索实现。"""
@@ -115,16 +117,16 @@ class LinuxSearchProvider(SearchProvider):
         self.locate_type = None
 
         # 首先检查 plocate（更新的版本）
-        plocate_check = subprocess.run(['which', 'plocate'], capture_output=True)
+        plocate_check = subprocess.run(["which", "plocate"], capture_output=True)
         if plocate_check.returncode == 0:
-            self.locate_cmd = 'plocate'
-            self.locate_type = 'plocate'
+            self.locate_cmd = "plocate"
+            self.locate_type = "plocate"
         else:
             # 检查 mlocate
-            mlocate_check = subprocess.run(['which', 'locate'], capture_output=True)
+            mlocate_check = subprocess.run(["which", "locate"], capture_output=True)
             if mlocate_check.returncode == 0:
-                self.locate_cmd = 'locate'
-                self.locate_type = 'mlocate'
+                self.locate_cmd = "locate"
+                self.locate_type = "mlocate"
             else:
                 raise RuntimeError(
                     "Neither 'locate' nor 'plocate' is installed. Please install one:\n"
@@ -139,10 +141,10 @@ class LinuxSearchProvider(SearchProvider):
 
     def _update_database(self):
         """更新 locate 数据库。"""
-        if self.locate_type == 'plocate':
-            subprocess.run(['sudo', 'updatedb'], check=True)
+        if self.locate_type == "plocate":
+            subprocess.run(["sudo", "updatedb"], check=True)
         else:  # mlocate
-            subprocess.run(['sudo', '/etc/cron.daily/mlocate'], check=True)
+            subprocess.run(["sudo", "/etc/cron.daily/mlocate"], check=True)
 
     def search_files(
         self,
@@ -152,15 +154,15 @@ class LinuxSearchProvider(SearchProvider):
         match_case: bool = False,
         match_whole_word: bool = False,
         match_regex: bool = False,
-        sort_by: Optional[int] = None
+        sort_by: Optional[int] = None,
     ) -> List[SearchResult]:
         try:
             # 构建 locate 命令
             cmd = [self.locate_cmd]
             if not match_case:
-                cmd.append('-i')
+                cmd.append("-i")
             if match_regex:
-                cmd.append('--regex' if self.locate_type == 'mlocate' else '-r')
+                cmd.append("--regex" if self.locate_type == "mlocate" else "-r")
             cmd.append(query)
 
             # 执行搜索
@@ -169,15 +171,14 @@ class LinuxSearchProvider(SearchProvider):
                 error_msg = result.stderr.lower()
                 if "no such file or directory" in error_msg or "database" in error_msg:
                     raise RuntimeError(
-                        f"{self.locate_type} 数据库需要创建。"
-                        f"请运行: sudo updatedb"
+                        f"{self.locate_type} 数据库需要创建。" f"请运行: sudo updatedb"
                     )
                 raise RuntimeError(f"{self.locate_cmd} 失败: {result.stderr}")
 
             # 处理结果
             paths = result.stdout.splitlines()[:max_results]
             return [self._convert_path_to_result(path) for path in paths]
-            
+
         except FileNotFoundError:
             raise RuntimeError(
                 f"{self.locate_cmd} 命令消失了。请重新安装:\n"
@@ -197,7 +198,11 @@ class WindowsSearchProvider(SearchProvider):
         """初始化 Everything SDK。"""
         import os
         from .everything_sdk import EverythingSDK
-        dll_path = os.getenv('EVERYTHING_SDK_PATH', 'D:\\dev\\tools\\Everything-SDK\\dll\\Everything64.dll')
+
+        dll_path = os.getenv(
+            "EVERYTHING_SDK_PATH",
+            "D:\\dev\\tools\\Everything-SDK\\dll\\Everything64.dll",
+        )
         self.everything_sdk = EverythingSDK(dll_path)
 
     def search_files(
@@ -208,7 +213,7 @@ class WindowsSearchProvider(SearchProvider):
         match_case: bool = False,
         match_whole_word: bool = False,
         match_regex: bool = False,
-        sort_by: Optional[int] = None
+        sort_by: Optional[int] = None,
     ) -> List[SearchResult]:
         # 将双反斜杠替换为单反斜杠
         query = query.replace("\\\\", "\\")
@@ -222,6 +227,5 @@ class WindowsSearchProvider(SearchProvider):
             match_case=match_case,
             match_whole_word=match_whole_word,
             match_regex=match_regex,
-            sort_by=sort_by
+            sort_by=sort_by,
         )
-    

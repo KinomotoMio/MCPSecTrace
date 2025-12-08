@@ -23,34 +23,42 @@ from mcpsectrace.config import get_config_value
 
 # 配置日志，将日志输出到文件而不是 stdout（避免污染 MCP JSON-RPC 通信）
 # 日志保存到项目根目录的 logs 目录
-_log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+_log_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs"
+)
 os.makedirs(_log_dir, exist_ok=True)
-_log_file = os.path.join(_log_dir, 'ioc_mcp.log')
+_log_file = os.path.join(_log_dir, "ioc_mcp.log")
 
 logging.basicConfig(
     filename=_log_file,
     level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    encoding='utf-8'
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    encoding="utf-8",
 )
 logger = logging.getLogger(__name__)
 
+
 # 创建一个 print 的包装函数，输出到日志而不是 stdout
 def log_print(*args, **kwargs):
-    message = ' '.join(str(arg) for arg in args)
+    message = " ".join(str(arg) for arg in args)
     logger.info(message)
 
+
 # 配置 stdout/stderr 为 UTF-8 编码以正确处理中文字符
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-if sys.stderr.encoding != 'utf-8':
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+if sys.stderr.encoding != "utf-8":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 # 配置json.dumps以支持中文字符
 _original_dumps = json.dumps
+
+
 def _patched_dumps(*args, **kwargs):
-    kwargs.setdefault('ensure_ascii', False)
+    kwargs.setdefault("ensure_ascii", False)
     return _original_dumps(*args, **kwargs)
+
+
 json.dumps = _patched_dumps
 
 mcp = FastMCP("ioc", log_level="ERROR", port=8888)
@@ -420,7 +428,9 @@ class SampleReportAnalyzer:
                     item
                     for item in env_items
                     if item.get_attribute("class") and item != env_list_container
-                ][:10]  # 限制数量，避免选择到过多元素
+                ][
+                    :10
+                ]  # 限制数量，避免选择到过多元素
 
             if env_items:
                 log_print(f"找到 {len(env_items)} 个环境项")
@@ -466,7 +476,9 @@ class SampleReportAnalyzer:
                             )
 
                             if table_rows:
-                                md_content += f"**常见释放文件位置** ({len(table_rows)} 个)\n\n"
+                                md_content += (
+                                    f"**常见释放文件位置** ({len(table_rows)} 个)\n\n"
+                                )
 
                                 for row_idx, row in enumerate(table_rows, 1):
                                     try:
@@ -485,10 +497,8 @@ class SampleReportAnalyzer:
                                             )
 
                                             # 解析文件信息
-                                            file_info = (
-                                                SampleReportAnalyzer.parse_release_file_info(
-                                                    cell_text
-                                                )
+                                            file_info = SampleReportAnalyzer.parse_release_file_info(
+                                                cell_text
                                             )
 
                                             if file_info:
@@ -641,23 +651,23 @@ class ThreatDataExtractor:
             # 删除特殊符号（+、空格等）
             text = text.strip()
             # 移除尾部的特殊符号（+、空格等）
-            while text and text[-1] in ['+', '-', ' ', '×', '×']:
+            while text and text[-1] in ["+", "-", " ", "×", "×"]:
                 text = text[:-1].strip()
 
             # 检查是否包含单位缩写（K、M、G等）
             text_upper = text.upper()
             multiplier = 1
 
-            if text_upper.endswith('K'):
+            if text_upper.endswith("K"):
                 multiplier = 1_000
                 text = text[:-1].strip()
-            elif text_upper.endswith('M'):
+            elif text_upper.endswith("M"):
                 multiplier = 1_000_000
                 text = text[:-1].strip()
-            elif text_upper.endswith('G'):
+            elif text_upper.endswith("G"):
                 multiplier = 1_000_000_000
                 text = text[:-1].strip()
-            elif text_upper.endswith('B'):  # Billion
+            elif text_upper.endswith("B"):  # Billion
                 multiplier = 1_000_000_000
                 text = text[:-1].strip()
 
@@ -750,7 +760,7 @@ class ThreatDataExtractor:
         for row in rows:
             # 确保行数据与表头列数一致
             row_with_padding = row + [""] * (len(headers) - len(row))
-            md_table += "| " + " | ".join(row_with_padding[:len(headers)]) + " |\n"
+            md_table += "| " + " | ".join(row_with_padding[: len(headers)]) + " |\n"
 
         return md_table
 
@@ -763,7 +773,8 @@ class ThreatBookAnalyzer:
         """创建输出目录"""
         output_dir = get_config_value("ioc.output_path", default="./logs/ioc")
         pic_output_dir = get_config_value(
-            "ioc.screenshot_path", default="./src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic"
+            "ioc.screenshot_path",
+            default="./src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic",
         )
 
         os.makedirs(output_dir, exist_ok=True)
@@ -954,7 +965,7 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                 time.sleep(get_config_value("ioc.scroll_wait_time", default=2))
 
                 # 读取数字内容
-                
+
                 span_xpath = "/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]/div/span[2]"
                 number_text = ThreatDataExtractor.get_element_text(driver, span_xpath)
                 # log_print(number_text)
@@ -962,7 +973,9 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                     # 使用新的解析函数处理威胁数量（支持K、M等缩写）
                     threat_count = ThreatDataExtractor.parse_threat_count(number_text)
                     if threat_count is not None:
-                        log_print(f"检测到威胁数量: {threat_count} (原始文本: {number_text})")
+                        log_print(
+                            f"检测到威胁数量: {threat_count} (原始文本: {number_text})"
+                        )
                         log_print("开始提取表格数据")
 
                         # 提取表格数据（无论威胁数量是多少）
@@ -976,10 +989,14 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
 
                             # 如果数量 >= 5，显示数量限制说明
                             if threat_count >= 5:
-                                report_content += "📝 由于数量限制，我们只获取第一页的内容。\n\n"
+                                report_content += (
+                                    "📝 由于数量限制，我们只获取第一页的内容。\n\n"
+                                )
 
                             # 将表格数据转换为Markdown格式并添加到报告
-                            md_table = ThreatDataExtractor.csv_data_to_markdown(csv_data)
+                            md_table = ThreatDataExtractor.csv_data_to_markdown(
+                                csv_data
+                            )
                             report_content += md_table + "\n"
                             report_content += f"\n💾 详细数据已保存为CSV文件: `{sanitized_target}_threat_data.csv`\n\n"
 
@@ -994,7 +1011,9 @@ def analyze_target_with_config(config: ThreatBookConfig) -> str:
                             for row_idx, row in enumerate(csv_data[1:], 1):  # 跳过表头
                                 if len(row) > 3 and row[3].strip():  # SHA256在第4列
                                     sha256 = row[3].strip()
-                                    log_print(f"分析样本 {row_idx}/{len(csv_data)-1}: {sha256}")
+                                    log_print(
+                                        f"分析样本 {row_idx}/{len(csv_data)-1}: {sha256}"
+                                    )
 
                                     success, sample_md, release_files = (
                                         SampleReportAnalyzer.analyze_sample_report(
