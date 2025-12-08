@@ -1,0 +1,4 @@
+文件名称,类型,扫描时间,SHA256,多引擎检出,木马家族和类型,威胁等级
+Adobe.exe,EXEx86,2025-11-18 23:56:08,77d10c9dd00377142e7b508f522ab13c7d4b6b5c8e2e76bbf2ff49f1e894e093,12 / 25,Meterpreter木马,恶意
+检测网络环境工具.zip,Zip,2024-12-09 17:26:12,21829083b019c73b202e465a434a1d7bea9d25267c7a01a6eee30e98e4eb5205,13 / 28,CobaltStrike木马,恶意
+main.exe,EXEx64,2024-07-23 12:50:40,74af79b82fd26c95bbae39f14279194219dfb5859bcff5a88a403c83afc77ed5,2 / 28,CobaltStrike木马,恶意

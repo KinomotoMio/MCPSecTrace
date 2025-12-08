@@ -60,7 +60,7 @@
         "mcp-server-everything-search"
       ],
       "env": {
-        "EVERYTHING_SDK_PATH": "D:/Everything/Everything-SDK/dll/Everything64.dll"
+        "EVERYTHING_SDK_PATH": "D:/MCPTools/Everything/Everything-SDK/dll/Everything64.dll"
       }
     }
   }

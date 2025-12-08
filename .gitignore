@@ -48,7 +48,7 @@ Thumbs.db
 
 # 日志文件
 *.log
-logs/
+!logs/**/*.log
 data/logs/
 
 # 临时文件
