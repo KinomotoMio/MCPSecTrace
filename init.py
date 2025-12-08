@@ -347,10 +347,11 @@ def configure_mcp_tools(mcp_sectrace_dir):
         )
         target_file = target_dir / "cline_mcp_settings.json"
 
-        # 验证目标目录是否存在
+        # 如果目标目录不存在，则创建它
         if not target_dir.exists():
-            print(f"[ERROR] 目标目录不存在: {target_dir}")
-            return False
+            print(f"[INFO] 目标目录不存在，创建目录: {target_dir}")
+            target_dir.mkdir(parents=True, exist_ok=True)
+            print(f"[SUCCESS] 目录创建完成。")
 
         # 复制文件（覆盖现有文件）
         print(f"复制: {source_file}")
