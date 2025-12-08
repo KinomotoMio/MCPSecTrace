@@ -1,0 +1,67 @@
+{
+  "mcpServers": {
+    "huorong": {
+      "disabled": true,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/",
+        "run",
+        "src/mcpsectrace/mcp_servers/huorong_mcp.py"
+      ]
+    },
+    "ioc": {
+      "disabled": true,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/",
+        "run",
+        "src/mcpsectrace/mcp_servers/ioc_mcp.py"
+      ]
+    },
+    "hrkill": {
+      "disabled": true,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/",
+        "run",
+        "src/mcpsectrace/mcp_servers/hrkill_mcp.py"
+      ]
+    },
+    "focus_pack": {
+      "disabled": true,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/",
+        "run",
+        "src/mcpsectrace/mcp_servers/focus_pack_mcp.py"
+      ]
+    },
+    "everything-search": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/src/mcpsectrace/mcp_servers/everything_mcp",
+        "run",
+        "mcp-server-everything-search"
+      ],
+      "env": {
+        "EVERYTHING_SDK_PATH": "D:/Everything/Everything-SDK/dll/Everything64.dll"
+      }
+    }
+  }
+}

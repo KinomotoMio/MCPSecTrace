@@ -68,6 +68,7 @@ data/logs/
 *.json
 !config/**/*.json
 !external_mcp/**/config*.json
+!assets/**/*.json
 
 # 工具和可执行文件
 tools/executables/*.exe

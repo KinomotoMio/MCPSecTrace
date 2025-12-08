@@ -1,0 +1,30 @@
+{
+    "identifier": {
+        "id": "saoudrizwan.claude-dev",
+        "uuid": "ad94c633-a9d5-4f78-b85f-c664e7d91a0f"
+    },
+    "version": "3.38.2",
+    "location": {
+        "$mid": 1,
+        "path": "/c:/Users/User/.vscode/extensions/saoudrizwan.claude-dev-3.38.2",
+        "scheme": "file"
+    },
+    "relativeLocation": "saoudrizwan.claude-dev-3.38.2",
+    "metadata": {
+        "isApplicationScoped": false,
+        "isMachineScoped": false,
+        "isBuiltin": false,
+        "installedTimestamp": 1764040794975,
+        "pinned": false,
+        "source": "gallery",
+        "id": "ad94c633-a9d5-4f78-b85f-c664e7d91a0f",
+        "publisherId": "6f42e67d-d7ea-4a53-8704-2ae8bf2d86f3",
+        "publisherDisplayName": "Cline",
+        "targetPlatform": "undefined",
+        "updated": true,
+        "private": false,
+        "isPreReleaseVersion": false,
+        "hasPreReleaseVersion": false,
+        "preRelease": false
+    }
+}
