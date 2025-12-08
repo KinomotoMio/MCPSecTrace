@@ -535,7 +535,13 @@ def configure_uv_environment():
                 print(f"错误信息: {result.stderr}")
                 return False
         except FileNotFoundError:
-            print("[ERROR] 未找到 uv 命令。请确保已正确添加路径并重启终端。")
+            print("\n" + "=" * 60)
+            print("[ERROR] 未找到 uv 命令")
+            print("=" * 60)
+            print("环境变量已添加，但需要等待生效。")
+            print("请等待 1 分钟后，重新运行此 exe。")
+            print("=" * 60)
+            wait_for_user()
             return False
         except subprocess.TimeoutExpired:
             print("[ERROR] uv 命令执行超时。")
