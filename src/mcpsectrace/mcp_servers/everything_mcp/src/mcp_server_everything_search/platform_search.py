@@ -1,9 +1,10 @@
 """平台特定的搜索实现和参数模型。"""
 
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
-from enum import Enum
 import platform
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class BaseSearchQuery(BaseModel):

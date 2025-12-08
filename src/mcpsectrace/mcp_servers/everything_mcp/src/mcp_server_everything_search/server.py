@@ -1,15 +1,16 @@
 """跨平台文件搜索的 MCP 服务器实现。"""
 
+import csv
 import json
+import os
 import platform
 import sys
-import os
-import csv
-from typing import List, Dict, Optional
 from pathlib import Path
+from typing import Dict, List, Optional
+
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool, Resource, ResourceTemplate, Prompt
+from mcp.types import Prompt, Resource, ResourceTemplate, TextContent, Tool
 from pydantic import BaseModel, Field
 
 from .platform_search import (

@@ -1,13 +1,13 @@
 """MCP 的平台无关搜索接口。"""
 
 import abc
+import os
 import platform
 import subprocess
-import os
-from datetime import datetime
-from typing import Optional, List
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import List, Optional
 
 
 @dataclass
@@ -197,6 +197,7 @@ class WindowsSearchProvider(SearchProvider):
     def __init__(self):
         """初始化 Everything SDK。"""
         import os
+
         from .everything_sdk import EverythingSDK
 
         dll_path = os.getenv(
