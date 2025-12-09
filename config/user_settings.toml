@@ -14,7 +14,7 @@ environment = "prod"
 everything_root = "D:\\MCPTools\\Everything"
 
 # 火绒安全软件主程序路径（必填）
-huorong_exe = "D:\\HuoRong\\Sysdiag\\bin\\HipsMain.exe"
+huorong_exe = "C:\\Program Files (x86)\\Huorong\\ESEndpoint\\bin\\HipsMain.exe"
 
 # HRKill工具程序路径（必填）
 hrkill_exe = "D:\\MCPTools\\hrkill-1.0.0.86.exe"
@@ -29,7 +29,7 @@ chrome_exe = "D:\\MCPTools\\chrome-win64\\chrome.exe"
 chromedriver_exe = "D:\\MCPTools\\chromedriver-win64\\chromedriver.exe"
 
 # Chrome用户数据目录（IOC查询时保持会话用，{username} 会自动替换为当前用户名）
-chrome_user_data_dir = "C:\\Users\\{username}\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
+chrome_user_data_dir = "C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
 
 [tools]
 # 工具自动搜索配置
