@@ -10,6 +10,9 @@ name = "MCPSecTrace"
 environment = "prod"
 
 [paths]
+# Everything 搜索工具根目录（必填，用于工具路径自动搜索）
+everything_root = "D:\\MCPTools\\Everything"
+
 # 火绒安全软件主程序路径（必填）
 huorong_exe = "D:\\HuoRong\\Sysdiag\\bin\\HipsMain.exe"
 

@@ -166,8 +166,9 @@ def _filter_search_results(results: list, path_patterns: list) -> str | None:
 def configure_tool_paths(mcp_sectrace_dir):
     """
     配置工具路径：
-    使用 Everything 工具自动搜索并填写 user_settings.toml 中的工具路径
-    从 [tools.entries] 配置中读取要搜索的工具列表
+    1. 从配置文件读取 Everything 根目录
+    2. 启动 Everything 服务
+    3. 使用 Everything SDK 自动搜索并填写 user_settings.toml 中的工具路径
     """
     print("[Step 5] 配置工具路径...")
 
@@ -178,14 +179,6 @@ def configure_tool_paths(mcp_sectrace_dir):
             print("[INFO] 可以手动编辑 config/user_settings.toml 配置工具路径")
             return True
 
-        # 获取 Everything DLL 路径
-        everything_dll_path = "D:/Everything/Everything-SDK/dll/Everything64.dll"
-
-        if not Path(everything_dll_path).exists():
-            print(f"[WARN] Everything SDK 未找到: {everything_dll_path}")
-            print("[INFO] 可以手动编辑 config/user_settings.toml 配置工具路径")
-            return True
-
         # 获取 user_settings.toml 路径
         toml_path = mcp_sectrace_dir / "config" / "user_settings.toml"
 
@@ -193,7 +186,7 @@ def configure_tool_paths(mcp_sectrace_dir):
             print(f"[ERROR] user_settings.toml 不存在: {toml_path}")
             return False
 
-        # 读取配置文件，获取工具列表
+        # 读取配置文件
         try:
             with open(toml_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -201,6 +194,60 @@ def configure_tool_paths(mcp_sectrace_dir):
         except Exception as e:
             print(f"[ERROR] 读取 user_settings.toml 失败: {e}")
             return False
+
+        # 从配置文件获取 Everything 根目录（类似 get_config_value 的方式）
+        try:
+            everything_root = doc['paths']['everything_root']
+            print(f"从配置读取 Everything 根目录: {everything_root}")
+        except (KeyError, TypeError):
+            print("[WARN] 配置文件中未找到 paths.everything_root，使用默认路径")
+            everything_root = "D:/MCPTools/Everything"
+
+        everything_root_path = Path(everything_root)
+
+        # 构建 Everything.exe 和 DLL 路径
+        everything_exe = everything_root_path / "Everything.exe"
+        everything_dll_path = everything_root_path / "Everything-SDK" / "dll" / "Everything64.dll"
+
+        # 启动 Everything 服务（以管理员身份）
+        print(f"\n启动 Everything 服务...")
+        if everything_exe.exists():
+            try:
+                # 使用 ShellExecute 以管理员身份启动
+                import ctypes
+                import time
+
+                # 参数说明：
+                # "runas" - 以管理员身份运行
+                # SW_HIDE (0) - 隐藏窗口
+                result = ctypes.windll.shell32.ShellExecuteW(
+                    None,                      # hwnd
+                    "runas",                   # lpOperation (以管理员身份)
+                    str(everything_exe),       # lpFile
+                    "",                        # lpParameters
+                    str(everything_root_path), # lpDirectory
+                    0                          # nShowCmd (0=SW_HIDE 隐藏窗口)
+                )
+
+                if result > 32:  # ShellExecute 成功返回值 > 32
+                    print(f"[SUCCESS] Everything 服务已启动: {everything_exe}")
+                    # 等待服务启动完成
+                    time.sleep(2)
+                else:
+                    print(f"[WARN] 启动 Everything 失败，返回码: {result}")
+                    print("[INFO] 如果 Everything 已在运行，可以忽略此警告")
+
+            except Exception as e:
+                print(f"[WARN] 启动 Everything 失败: {e}")
+                print("[INFO] 如果 Everything 已在运行，可以忽略此警告")
+        else:
+            print(f"[WARN] Everything.exe 未找到: {everything_exe}")
+
+        # 检查 DLL 是否存在
+        if not everything_dll_path.exists():
+            print(f"[WARN] Everything SDK 未找到: {everything_dll_path}")
+            print("[INFO] 可以手动编辑 config/user_settings.toml 配置工具路径")
+            return True
 
         # 从配置中提取工具定义
         if 'tools' not in doc or 'entries' not in doc['tools']:
@@ -229,7 +276,7 @@ def configure_tool_paths(mcp_sectrace_dir):
                 continue
 
             print(f"  搜索 {filename}...", end='', flush=True)
-            results = everything_search(everything_dll_path, filename, search_type)
+            results = everything_search(str(everything_dll_path), filename, search_type)
 
             if results:
                 # 根据配置的路径模式过滤结果
