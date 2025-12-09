@@ -57,8 +57,6 @@
         "--directory",
         "D:/MCPSecTrace/",
         "run",
-        "--with",
-        "D:/MCPSecTrace/src/mcpsectrace/mcp_servers/everything_mcp",
         "mcp-server-everything-search"
       ],
       "env": {

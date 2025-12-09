@@ -48,6 +48,7 @@ mcpsectrace-sysmon = "mcpsectrace.core.sysmon_collector:main"
 mcpsectrace-huorong = "mcpsectrace.automation.huorong:main"
 mcpsectrace-hrkill = "mcpsectrace.automation.hrkill:main"
 mcpsectrace-focus = "mcpsectrace.automation.focus_pack:main"
+mcp-server-everything-search = "mcpsectrace.mcp_servers.everything_mcp.src.mcp_server_everything_search.server:main"
 
 [build-system]
 requires = ["hatchling"]

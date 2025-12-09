@@ -392,7 +392,7 @@ Pattern Wildcards:
 
 Examples:
 - locate -i "*.pdf"
-- locate -r "/home/.*\.txt$"
+- locate -r "/home/.*\\.txt$"
 - locate -c "*.doc"
 """,
             "windows": """Search for files and folders using Everything SDK.
@@ -476,7 +476,7 @@ Examples:
 2. Find large video files:
    ext:mp4|mkv|avi size:>1gb
 3. Find files in specific folder:
-   path:C:\Projects *.js
+   path:C:\\Projects *.js
 """,
         }
 
