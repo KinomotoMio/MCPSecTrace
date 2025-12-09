@@ -13,6 +13,23 @@ except ImportError:
     tomlkit = None
 
 
+def wait_for_user():
+    """
+    等待用户按任意键。
+    用于 exe 执行时保持窗口打开，让用户看到完整的输出结果。
+    """
+    print("\n" + "=" * 50)
+    print("按任意键关闭窗口...")
+    print("=" * 50)
+    try:
+        # Windows 系统上使用 msvcrt
+        import msvcrt
+        msvcrt.getch()
+    except ImportError:
+        # Linux/Mac 系统上使用 input
+        input()
+
+
 def add_to_path_windows(new_path):
     """
     将指定路径添加到 Windows 用户环境变量的 PATH 中。
@@ -634,6 +651,7 @@ def get_mcp_sectrace_dir():
     print("1. 运行本 exe 时，请在 MCPSecTrace 项目目录下运行")
     print("2. 或者设置环境变量: set MCPSECTRACE_PATH=D:\\MCPSecTrace")
     print("3. 或者将本 exe 放在 MCPSecTrace 目录下运行")
+    wait_for_user()
     return None
 
 
@@ -656,6 +674,7 @@ def configure_uv_environment():
         # 验证路径是否存在
         if not mcp_tools_uv_path.exists():
             print(f"[ERROR] MCPTools/uv 路径不存在: {mcp_tools_uv_path}")
+            wait_for_user()
             return False
 
         mcp_tools_uv_str = str(mcp_tools_uv_path)
@@ -677,6 +696,7 @@ def configure_uv_environment():
             else:
                 print(f"[ERROR] uv 命令执行失败，返回码: {result.returncode}")
                 print(f"错误信息: {result.stderr}")
+                wait_for_user()
                 return False
         except FileNotFoundError:
             print("\n" + "=" * 60)
@@ -689,6 +709,7 @@ def configure_uv_environment():
             return False
         except subprocess.TimeoutExpired:
             print("[ERROR] uv 命令执行超时。")
+            wait_for_user()
             return False
 
         # 运行 uv sync 同步依赖
@@ -707,18 +728,22 @@ def configure_uv_environment():
             else:
                 print(f"[ERROR] uv sync 执行失败，返回码: {result.returncode}")
                 print(f"错误信息: {result.stderr}")
+                wait_for_user()
                 return False
         except FileNotFoundError:
             print("[ERROR] 未找到 uv 命令。请确保已正确添加路径并重启终端。")
+            wait_for_user()
             return False
         except subprocess.TimeoutExpired:
             print("[ERROR] uv sync 执行超时（10分钟），请手动运行 'uv sync'。")
+            wait_for_user()
             return False
 
     except Exception as e:
         print(f"[ERROR] 配置 MCPTools/uv 环境失败: {e}")
         import traceback
         traceback.print_exc()
+        wait_for_user()
         return False
 
 
@@ -732,64 +757,54 @@ def initialize_environment():
     # 获取 MCPSecTrace 项目目录
     mcp_sectrace_dir = get_mcp_sectrace_dir()
     if mcp_sectrace_dir is None:
+        wait_for_user()
         return False
 
     print(f"[INFO] 项目目录: {mcp_sectrace_dir}\n")
 
     # Step 1: 配置 uv 环境
     if not configure_uv_environment():
+        wait_for_user()
         return False
 
     print()
 
     # Step 2: 配置 VSCode 插件
     if not configure_vscode_extensions(mcp_sectrace_dir):
+        wait_for_user()
         return False
 
     print()
 
     # Step 3: 配置 MCPTools
     if not configure_mcp_tools(mcp_sectrace_dir):
+        wait_for_user()
         return False
 
     print()
 
     # Step 4: 配置溯源工作流
     if not configure_workflow(mcp_sectrace_dir):
+        wait_for_user()
         return False
 
     print()
 
     # Step 5: 配置工具路径
     if not configure_tool_paths(mcp_sectrace_dir):
+        wait_for_user()
         return False
 
     print()
 
     # Step 6: 配置浏览器并引导微步登录
     if not configure_browser_login(mcp_sectrace_dir):
+        wait_for_user()
         return False
 
     print("-" * 50)
     print("环境配置初始化完成！")
     return True
-
-
-def wait_for_user():
-    """
-    等待用户按任意键。
-    用于 exe 执行时保持窗口打开，让用户看到完整的输出结果。
-    """
-    print("\n" + "=" * 50)
-    print("按任意键关闭窗口...")
-    print("=" * 50)
-    try:
-        # Windows 系统上使用 msvcrt
-        import msvcrt
-        msvcrt.getch()
-    except ImportError:
-        # Linux/Mac 系统上使用 input
-        input()
 
 
 def main():
