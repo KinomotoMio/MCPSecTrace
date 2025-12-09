@@ -330,6 +330,95 @@ def configure_tool_paths(mcp_sectrace_dir):
         return False
 
 
+def configure_browser_login(mcp_sectrace_dir):
+    """
+    配置浏览器并引导用户登录微步：
+    1. 从 user_settings.toml 读取 Chrome 浏览器路径
+    2. 打开浏览器访问 x.threatbook.com
+    3. 提示用户登录微步网站
+    """
+    print("[Step 6] 配置浏览器并引导微步登录...")
+
+    try:
+        # 检查 tomlkit 是否可用
+        if tomlkit is None:
+            print("[WARN] tomlkit 库未安装，跳过浏览器配置")
+            print("[INFO] 请手动编辑 config/user_settings.toml 配置 Chrome 路径后，访问 https://x.threatbook.com 登录")
+            return True
+
+        # 获取 user_settings.toml 路径
+        toml_path = mcp_sectrace_dir / "config" / "user_settings.toml"
+
+        if not toml_path.exists():
+            print(f"[ERROR] user_settings.toml 不存在: {toml_path}")
+            return False
+
+        # 读取配置文件
+        try:
+            with open(toml_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            doc = tomlkit.parse(content)
+        except Exception as e:
+            print(f"[ERROR] 读取 user_settings.toml 失败: {e}")
+            return False
+
+        # 从配置文件获取 Chrome 浏览器路径
+        chrome_path = None
+        try:
+            chrome_path = doc['paths']['chrome_exe']
+            print(f"从配置读取 Chrome 路径: {chrome_path}")
+        except (KeyError, TypeError):
+            print("[WARN] 配置文件中未找到 paths.chrome_exe")
+            print("[INFO] 请先配置 Chrome 浏览器路径，然后手动访问 https://x.threatbook.com 登录")
+            return True
+
+        # 检查 Chrome 路径是否存在
+        if not chrome_path or not Path(chrome_path).exists():
+            print(f"[WARN] Chrome 浏览器未找到: {chrome_path}")
+            print("[INFO] 请在 user_settings.toml 中配置正确的 Chrome 路径，然后手动访问 https://x.threatbook.com 登录")
+            return True
+
+        # 微步登录网址
+        threatbook_url = "https://x.threatbook.com"
+
+        # 打开浏览器
+        try:
+            print(f"\n正在打开 Chrome 浏览器访问微步...")
+            subprocess.Popen([chrome_path, threatbook_url])
+            print(f"[SUCCESS] 已打开浏览器: {threatbook_url}")
+
+            # 提示用户登录
+            print("\n" + "=" * 60)
+            print("[重要提示]")
+            print("=" * 60)
+            print("1. 浏览器已打开微步在线网站 (x.threatbook.com)")
+            print("2. 请在浏览器中完成登录操作")
+            print("3. IOC_MCP 服务器需要使用已登录的浏览器会话")
+            print("4. 登录完成后，请按任意键继续...")
+            print("=" * 60)
+
+            # 等待用户确认登录完成
+            try:
+                import msvcrt
+                msvcrt.getch()
+            except ImportError:
+                input()
+
+            print("[SUCCESS] 浏览器配置完成。")
+            return True
+
+        except Exception as e:
+            print(f"[ERROR] 打开浏览器失败: {e}")
+            print(f"[INFO] 请手动访问 {threatbook_url} 并登录")
+            return True  # 不阻止后续步骤
+
+    except Exception as e:
+        print(f"[ERROR] 配置浏览器失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def configure_workflow(mcp_sectrace_dir):
     """
     配置溯源工作流：
@@ -673,6 +762,12 @@ def initialize_environment():
 
     # Step 5: 配置工具路径
     if not configure_tool_paths(mcp_sectrace_dir):
+        return False
+
+    print()
+
+    # Step 6: 配置浏览器并引导微步登录
+    if not configure_browser_login(mcp_sectrace_dir):
         return False
 
     print("-" * 50)
