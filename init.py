@@ -302,6 +302,14 @@ def configure_tool_paths(mcp_sectrace_dir):
                         d = d[k]
                     d[keys[-1]] = value
 
+                # 替换配置中的 {username} 占位符
+                username = os.getenv("USERNAME")
+                if username and 'paths' in doc:
+                    for key, value in doc['paths'].items():
+                        if isinstance(value, str) and '{username}' in value:
+                            doc['paths'][key] = value.replace('{username}', username)
+                            print(f"  [INFO] 已替换 {key} 中的 {{username}} 为 {username}")
+
                 with open(toml_path, 'w', encoding='utf-8') as f:
                     f.write(tomlkit.dumps(doc))
 

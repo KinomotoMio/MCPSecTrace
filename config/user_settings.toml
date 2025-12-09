@@ -28,8 +28,8 @@ chrome_exe = "D:\\MCPTools\\chrome-win64\\chrome.exe"
 # ChromeDriver程序路径（IOC威胁情报查询用，必填）
 chromedriver_exe = "D:\\MCPTools\\chromedriver-win64\\chromedriver.exe"
 
-# Chrome用户数据目录（IOC查询时保持会话用）
-chrome_user_data_dir = "C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
+# Chrome用户数据目录（IOC查询时保持会话用，{username} 会自动替换为当前用户名）
+chrome_user_data_dir = "C:\\Users\\{username}\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
 
 [tools]
 # 工具自动搜索配置
