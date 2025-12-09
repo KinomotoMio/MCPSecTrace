@@ -439,43 +439,60 @@ def configure_browser_login(mcp_sectrace_dir):
 def configure_workflow(mcp_sectrace_dir):
     """
     配置溯源工作流：
-    将 assets/workflow 目录下的所有 markdown 文件
-    复制到 C:/Users/{username}/Documents/Cline/Workflows/ 目录下
+    1. 将 assets/workflow 目录下的所有 markdown 文件复制到 .clinerules/workflows/ 目录
+    2. 将 assets/rule.md 复制到 .clinerules/ 目录
     """
     print("[Step 4] 配置溯源工作流...")
 
     try:
-        # 获取源目录路径
-        source_dir = mcp_sectrace_dir / "assets" / "workflow"
+        # 1. 复制 workflow 文件夹下的所有 markdown 文件
+        source_workflow_dir = mcp_sectrace_dir / "assets" / "workflow"
 
-        if not source_dir.exists():
-            print(f"[ERROR] workflow 目录不存在: {source_dir}")
+        if not source_workflow_dir.exists():
+            print(f"[ERROR] workflow 目录不存在: {source_workflow_dir}")
             return False
 
-        # 获取目标目录路径
-        username = os.getenv("USERNAME")
-        target_dir = Path(f"C:\\Users\\{username}\\Documents\\Cline\\Workflows")
+        # 获取目标目录路径 (.clinerules/workflows/)
+        target_workflow_dir = mcp_sectrace_dir / ".clinerules" / "workflows"
 
         # 如果目标目录不存在则创建
-        if not target_dir.exists():
-            print(f"创建目标目录: {target_dir}")
-            target_dir.mkdir(parents=True, exist_ok=True)
+        if not target_workflow_dir.exists():
+            print(f"创建目标目录: {target_workflow_dir}")
+            target_workflow_dir.mkdir(parents=True, exist_ok=True)
 
         # 查找所有 markdown 文件
-        md_files = list(source_dir.glob("*.md"))
+        md_files = list(source_workflow_dir.glob("*.md"))
         if not md_files:
-            print(f"[WARN] 未找到任何 markdown 文件在: {source_dir}")
-            return True
+            print(f"[WARN] 未找到任何 markdown 文件在: {source_workflow_dir}")
+        else:
+            print(f"找到 {len(md_files)} 个 workflow 文件，开始复制...")
 
-        print(f"找到 {len(md_files)} 个 markdown 文件，开始复制...")
+            # 复制每个 markdown 文件
+            for md_file in md_files:
+                target_file = target_workflow_dir / md_file.name
+                print(f"  复制: {md_file.name} -> .clinerules/workflows/")
+                shutil.copy2(md_file, target_file)
 
-        # 复制每个 markdown 文件
-        for md_file in md_files:
-            target_file = target_dir / md_file.name
-            print(f"复制: {md_file.name} -> {target_dir.name}/")
-            shutil.copy2(md_file, target_file)
+            print(f"[SUCCESS] workflow 文件复制完成，共 {len(md_files)} 个文件。")
 
-        print(f"[SUCCESS] 溯源工作流配置已完成，共复制 {len(md_files)} 个文件。")
+        # 2. 复制 rule.md 文件到 .clinerules/ 目录
+        source_rule_file = mcp_sectrace_dir / "assets" / "rule.md"
+        target_clinerules_dir = mcp_sectrace_dir / ".clinerules"
+
+        # 确保 .clinerules 目录存在
+        if not target_clinerules_dir.exists():
+            print(f"创建目标目录: {target_clinerules_dir}")
+            target_clinerules_dir.mkdir(parents=True, exist_ok=True)
+
+        if source_rule_file.exists():
+            target_rule_file = target_clinerules_dir / "rule.md"
+            print(f"  复制: rule.md -> .clinerules/")
+            shutil.copy2(source_rule_file, target_rule_file)
+            print(f"[SUCCESS] rule.md 文件复制完成。")
+        else:
+            print(f"[WARN] rule.md 文件不存在: {source_rule_file}")
+
+        print(f"[SUCCESS] 溯源工作流配置已完成。")
         return True
 
     except Exception as e:
