@@ -828,14 +828,14 @@ def main():
     # 2. 运行
     debug_mode = get_config_value("debug_mode", default=False)
     if debug_mode:
-        print("--- 当前处于调试模式 ---")
+        debug_print("--- 当前处于调试模式 ---")
         quick_scan()
     else:
-        print("--- 当前处于正式运行模式 ---")
+        debug_print("--- 当前处于MCP运行模式 ---")
         # mcp.run(transport="stdio")
         # start_app(FOCUS_PACK_PATH)
-        quick_scan()
-        # mcp.run(transport="stdio")
+        # quick_scan()
+        mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---

@@ -331,7 +331,7 @@ def ensure_hrkill_window_active(window_keyword="火绒恶性木马专杀工具")
         hwnd = win32gui.GetForegroundWindow()
         if hwnd:
             current_title = win32gui.GetWindowText(hwnd)
-            print(current_title)
+            debug_print(f"当前窗口: {current_title}")
             # 如果当前窗口已经是 HRKill 相关窗口，不需要切换
             if window_keyword in current_title:
                 return True
@@ -356,7 +356,7 @@ def ensure_hrkill_window_active(window_keyword="火绒恶性木马专杀工具")
         # 置顶找到的第一个窗口
         hwnd, title = windows[0]
         current_title = win32gui.GetWindowText(hwnd)
-        print('第一个窗口是：' + current_title)
+        debug_print(f"置顶第一个窗口: {current_title}")
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
         win32gui.SetForegroundWindow(hwnd)
         time.sleep(0.5)  # 等待窗口切换完成
@@ -539,7 +539,7 @@ def scan_virus():
     try:
         recognizer = ImageRecognition()
         if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
-            print(
+            debug_print(
                 f"检测到'暂停'字符，说明正在执行病毒查杀。截图已保存到: {screenshot_path}"
             )
         else:
@@ -597,10 +597,10 @@ def scan_virus():
                 str(screenshot_path), "查杀完成", case_sensitive=False
             ):
                 msg = f"[SUCCESS] 检测到'查杀完成'字符，病毒查杀已完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
-                print(msg)
+                debug_print(msg)
                 return msg
 
-            print(f"[{int(elapsed_time)}s] 继续等待扫描完成...")
+            debug_print(f"[{int(elapsed_time)}s] 继续等待扫描完成...")
 
         time.sleep(1)
 
@@ -651,8 +651,8 @@ def main():
         scan_virus()
     else:
         debug_print("--- 当前处于MCP运行模式 ---")
-        scan_virus()
-        # mcp.run(transport="stdio")
+        # scan_virus()
+        mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---

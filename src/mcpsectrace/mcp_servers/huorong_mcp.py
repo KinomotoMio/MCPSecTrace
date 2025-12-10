@@ -33,14 +33,62 @@ except ImportError:
 mcp = FastMCP("huorong", log_level="ERROR", port=8888)
 
 # --- 全局变量 ---
+LOG_HANDLE = None  # 日志文件句柄
+LOG_NAME = None
 HUORONG_PATH = ""  # 将在main()中从配置文件加载
 
 
+# --- 日志函数 ---
+def setup_log():
+    # 计算项目根目录(向上3层)
+    project_root = Path(__file__).parent.parent.parent.parent
+    log_dir = project_root / "logs" / "huorong"
+
+    # 如果不存在，则创建目录
+    log_dir.mkdir(parents=True, exist_ok=True)
+    debug_print(f"日志目录: {log_dir}")
+
+    # 生成日志文件名（包含时间戳）
+    timestamp = datetime.now().strftime("%Y%m%d")
+    log_filename = log_dir / f"huorong_mcp_{timestamp}.log"
+    return str(log_filename)
+
+
+def close_log_file():
+    """
+    关闭日志文件句柄。
+    """
+    global LOG_HANDLE
+    if LOG_HANDLE:
+        LOG_HANDLE.close()
+        LOG_HANDLE = None
+        debug_print("日志文件已关闭。")
+
+
 def debug_print(message: str):
-    """仅在调试模式下输出调试信息到标准错误流"""
+    """
+    在调试模式下，输出调试信息到标准错误流和日志文件；
+    在正式运行模式下，输出到日志文件。
+    """
+    global LOG_HANDLE, LOG_NAME
+
     debug_mode = get_config_value("debug_mode", default=False)
     if debug_mode:
         print(message, file=sys.stderr)
+
+    # 如果日志文件名未设置，则直接返回
+    if LOG_NAME is None:
+        return
+
+    try:
+        if LOG_HANDLE is None:
+            LOG_HANDLE = open(LOG_NAME, "a", encoding="utf-8")  # 打开日志文件
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        LOG_HANDLE.write(f"[{timestamp}] {message}\n")  # 写入日志文件
+        LOG_HANDLE.flush()  # 立即写入磁盘，避免数据丢失
+    except Exception as e:
+        print(f"[ERROR] 写入日志失败: {e}", file=sys.stderr)
 
 
 def get_sleep_time(base_type: str) -> float:
@@ -75,7 +123,7 @@ def find_image_on_screen(x_ratio, y_ratio, timeout_seconds=None, description="")
     if not description:
         description = f"位置({x_ratio:.2f}, {y_ratio:.2f})"
 
-    print(
+    debug_print(
         f"正在定位元素: '{description}' (相对位置: {x_ratio:.2f}, {y_ratio:.2f})，时间限制为{timeout_seconds}秒..."
     )
     start_time = time.time()
@@ -84,7 +132,7 @@ def find_image_on_screen(x_ratio, y_ratio, timeout_seconds=None, description="")
             # 获取前台窗口句柄
             hwnd = win32gui.GetForegroundWindow()
             if not hwnd:
-                print("未找到前台窗口，重试中...")
+                debug_print("未找到前台窗口，重试中...")
                 time.sleep(get_sleep_time("short"))
                 continue
 
@@ -99,17 +147,17 @@ def find_image_on_screen(x_ratio, y_ratio, timeout_seconds=None, description="")
             abs_y = int(win_top + win_height * y_ratio)
             location = (abs_x, abs_y)
 
-            print(f"找到 '{description}'，绝对坐标: {location}")
-            print(
+            debug_print(f"找到 '{description}'，绝对坐标: {location}")
+            debug_print(
                 f"窗口信息: 位置({win_left}, {win_top}), 大小 {win_width}x{win_height}"
             )
             return location
 
         except Exception as e:
-            print(f"定位元素 '{description}' 时发生错误: {e}")
+            debug_print(f"定位元素 '{description}' 时发生错误: {e}")
             time.sleep(get_sleep_time("short"))
 
-    print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{description}'。")
+    debug_print(f"超时：在 {timeout_seconds} 秒内未能定位元素 '{description}'。")
     return None
 
 
@@ -178,7 +226,7 @@ def capture_window_region(
         # 获取前台窗口句柄
         hwnd = win32gui.GetForegroundWindow()
         if not hwnd:
-            print("未找到前台窗口")
+            debug_print("未找到前台窗口")
             return None
 
         # 获取窗口位置和大小
@@ -205,7 +253,7 @@ def capture_window_region(
         return cropped
 
     except Exception as e:
-        print(f"截取窗口区域时出错: {e}")
+        debug_print(f"截取窗口区域时出错: {e}")
         return None
 
 
@@ -276,6 +324,7 @@ def read_wlfile_db(db_path, file_path):
 def start_huorong(path):
     """
         启动火绒安全软件（简称火绒）。
+        启动后会检测是否在主界面，如果不在则自动返回主界面。
     Args：
         path: 火绒安全软件的完整安装路径（即HUORONG_PATH）。
     Returns：
@@ -284,19 +333,69 @@ def start_huorong(path):
     """
     try:
         if not path or not os.path.exists(path):
-            print(
+            debug_print(
                 f"错误：应用程序路径 '{path}' 无效或不存在。\n\
                         请确保 HUORONG_PATH 变量已正确设置为火绒安全的启动程序路径。\n\
                         脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。"
             )
             return None
-        print(f"正在尝试启动火绒: {path}")
+        debug_print(f"正在尝试启动火绒: {path}")
         app = subprocess.Popen(path)
-        print(f"应用程序已启动 (进程ID: {app.pid})。")
+        debug_print(f"应用程序已启动 (进程ID: {app.pid})。")
+
+        # 等待应用加载
+        time.sleep(get_sleep_time("medium"))
+
+        # 检测是否在主界面（通过检测右上角是否有"完成"字符）
+        debug_print("检测是否在主界面...")
+        try:
+            # 创建截图保存目录
+            log_dir = Path(__file__).parent / "artifacts" / "huorong"
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            # 截取右上角区域（80%-100%宽度，0%-20%高度）
+            screenshot_path = log_dir / f"startup_check.png"
+            region_img = capture_window_region(
+                x_start_ratio=0.8,
+                y_start_ratio=0.0,
+                x_end_ratio=1.0,
+                y_end_ratio=0.2,
+                save_path=str(screenshot_path),
+            )
+
+            if region_img is not None:
+                recognizer = ImageRecognition()
+                if recognizer.contains_text(str(screenshot_path), "完成", case_sensitive=False):
+                    debug_print("[WARN] 检测到'完成'字符，当前不在主界面，点击返回主页...")
+
+                    # 从配置文件读取完成按钮的相对位置
+                    complete_button_pos = get_config_value(
+                        "positions.huorong.complete_button", default=[0.92, 0.12]
+                    )
+                    return_pos = find_image_on_screen(
+                        x_ratio=complete_button_pos[0],
+                        y_ratio=complete_button_pos[1],
+                        timeout_seconds=5,
+                        description="返回主页按钮",
+                    )
+                    if return_pos:
+                        click_image_at_location(return_pos, description="返回主页按钮")
+                        debug_print("[SUCCESS] 已点击返回主页按钮")
+                        time.sleep(get_sleep_time("short"))
+                    else:
+                        debug_print("[WARN] 未找到返回主页按钮位置")
+                else:
+                    debug_print("[SUCCESS] 当前已在主界面")
+            else:
+                debug_print("[WARN] 截图失败，跳过主页检查")
+
+        except Exception as check_error:
+            debug_print(f"[WARN] 主界面检测时出错: {check_error}，继续执行...")
+
         return app.pid
     except Exception as e:
-        print(f"启动应用程序 '{path}' 时发生错误: {e}")
-        print("脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。")
+        debug_print(f"启动应用程序 '{path}' 时发生错误: {e}")
+        debug_print("脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。")
         return None
 
 
@@ -309,14 +408,14 @@ def quick_scan():
     """
     # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
     start_huorong(HUORONG_PATH)
-    print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
+    debug_print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("short"))  # 等待应用程序加载
 
     # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
     quick_scan_pos = get_config_value(
-        "positions.huorong.quick_scan_button", default=[0.2, 0.4]
+        "positions.huorong.quick_scan_button", default=[0.55, 0.5]
     )
-    print(quick_scan_pos)
+    debug_print(quick_scan_pos)
     img_loc = find_image_on_screen(
         x_ratio=quick_scan_pos[0],
         y_ratio=quick_scan_pos[1],
@@ -325,9 +424,9 @@ def quick_scan():
     )
     if img_loc:
         click_image_at_location(img_loc, description="快速查杀按钮")
-        print("点击快速查杀按钮成功。")
+        debug_print("点击快速查杀按钮成功。")
     else:
-        print("点击快速查杀按钮失败。")
+        debug_print("点击快速查杀按钮失败。")
         return "点击快速查杀按钮失败。"
     time.sleep(get_sleep_time("short"))
 
@@ -337,12 +436,12 @@ def quick_scan():
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
-    screenshot_path = log_dir / f"scan_check_{datetime.now().strftime('%Y%m%d')}.png"
+    screenshot_path = log_dir / f"scan_check.png"
     region_img = capture_window_region(
-        x_start_ratio=0.5,
+        x_start_ratio=0.8,
         y_start_ratio=0.0,
         x_end_ratio=1.0,
-        y_end_ratio=0.5,
+        y_end_ratio=0.2,
         save_path=str(screenshot_path),
     )
 
@@ -354,11 +453,11 @@ def quick_scan():
     try:
         recognizer = ImageRecognition()
         if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
-            print(
+            debug_print(
                 f"检测到'暂停'字符，说明正在执行快速查杀。截图已保存到: {screenshot_path}"
             )
         else:
-            print(
+            debug_print(
                 f"未找到'暂停'字符，说明未成功执行快速查杀。截图已保存到: {screenshot_path}"
             )
             return (
@@ -371,31 +470,31 @@ def quick_scan():
         debug_print(error_msg)
         return error_msg
 
-    # 步骤4：检测查杀是否完成（每10秒截取右上角，使用OCR识别"完成"字符串）
+    # 步骤4：检测查杀是否完成（每60秒截取右上角，使用OCR识别"完成"字符串）
     start_time = time.time()
-    interval = 600  # 10分钟
-    check_interval = 10  # 每10秒检测一次
+    interval = 3600  # 60分钟
+    check_interval = 15  # 每15秒检测一次
     last_check_time = 0
     recognizer = ImageRecognition()
 
-    print("开始监控查杀进度，每10秒检测一次...")
+    debug_print("开始监控查杀进度，每15秒检测一次...")
     while time.time() - start_time < interval:
         current_time = time.time()
 
-        # 每10秒检测一次
+        # 每15秒检测一次
         if current_time - last_check_time >= check_interval:
             last_check_time = current_time
             elapsed_time = current_time - start_time
 
             # 截取右上部分
             screenshot_path = (
-                log_dir / f"scan_progress_{datetime.now().strftime('%Y%m%d')}.png"
+                log_dir / f"scan_progress.png"
             )
             region_img = capture_window_region(
-                x_start_ratio=0.5,
+                x_start_ratio=0.8,
                 y_start_ratio=0.0,
                 x_end_ratio=1.0,
-                y_end_ratio=0.5,
+                y_end_ratio=0.2,
                 save_path=str(screenshot_path),
             )
 
@@ -407,17 +506,17 @@ def quick_scan():
             if recognizer.contains_text(
                 str(screenshot_path), "完成", case_sensitive=False
             ):
-                print(f"检测到'完成'字符，说明查杀已完成。耗时: {int(elapsed_time)}秒")
+                debug_print(f"检测到'完成'字符，说明查杀已完成。耗时: {int(elapsed_time)}秒")
                 ret2_top_page()
                 return f"快速查杀完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
 
             elif recognizer.contains_text(
                 str(screenshot_path), "立即处理", case_sensitive=False
             ):
-                print(f"检测到'立即处理'字符。耗时: {int(elapsed_time)}秒，正在处理...")
+                debug_print(f"检测到'立即处理'字符。耗时: {int(elapsed_time)}秒，正在处理...")
                 # 点击"立即处理"按钮（同样位置）
                 complete_button_pos = get_config_value(
-                    "positions.huorong.complete_button", default=[0.5, 0.7]
+                    "positions.huorong.complete_button", default=[0.92, 0.12]
                 )
                 handle_loc = find_image_on_screen(
                     x_ratio=complete_button_pos[0],
@@ -427,18 +526,18 @@ def quick_scan():
                 )
                 if handle_loc:
                     click_image_at_location(handle_loc, description="立即处理按钮")
-                    print("点击'立即处理'按钮成功。")
+                    debug_print("点击'立即处理'按钮成功。")
                     time.sleep(get_sleep_time("short"))
 
                 ret2_top_page()
                 return f"快速查杀完成（已处理风险项）。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
 
-            print(f"[{int(elapsed_time)}s] 继续等待查杀完成...")
+            debug_print(f"[{int(elapsed_time)}s] 继续等待查杀完成...")
 
         time.sleep(1)
 
     # 超时返回
-    debug_print("查杀监控超时（10分钟）")
+    debug_print("查杀监控超时（60分钟）")
     return f"查杀监控超时，最后的截图保存在: {log_dir}"
 
 
@@ -451,44 +550,26 @@ def full_scan():
     """
     # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
     start_huorong(HUORONG_PATH)
-    print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
+    debug_print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("short"))  # 等待应用程序加载
 
-    # 步骤2：点击"全盘查杀"按钮（分为两步）
-    # 步骤2.1：点击下拉菜单
-    dropdown_menu_pos = get_config_value(
-        "positions.huorong.scan_dropdown_menu", default=[0.3, 0.4]
-    )
-    dropdown_loc = find_image_on_screen(
-        x_ratio=dropdown_menu_pos[0],
-        y_ratio=dropdown_menu_pos[1],
-        timeout_seconds=15,
-        description="查杀下拉菜单",
-    )
-    if dropdown_loc:
-        click_image_at_location(dropdown_loc, description="查杀下拉菜单")
-        print("点击查杀下拉菜单成功。")
-    else:
-        print("点击查杀下拉菜单失败。")
-        return "点击查杀下拉菜单失败。"
-    time.sleep(get_sleep_time("short"))
-
-    # 步骤2.2：点击下拉菜单中的"全盘查杀"选项
+    # 步骤2：点击"全盘查杀"按钮（使用相对位置定位）
     full_scan_pos = get_config_value(
-        "positions.huorong.full_scan_button", default=[0.2, 0.45]
+        "positions.huorong.full_scan_button", default=[0.33, 0.5]
     )
+    debug_print(full_scan_pos)
     full_scan_loc = find_image_on_screen(
         x_ratio=full_scan_pos[0],
         y_ratio=full_scan_pos[1],
         timeout_seconds=15,
-        description="全盘查杀选项",
+        description="全盘查杀按钮",
     )
     if full_scan_loc:
-        click_image_at_location(full_scan_loc, description="全盘查杀选项")
-        print("点击全盘查杀选项成功。")
+        click_image_at_location(full_scan_loc, description="全盘查杀按钮")
+        debug_print("点击全盘查杀按钮成功。")
     else:
-        print("点击全盘查杀选项失败。")
-        return "点击全盘查杀选项失败。"
+        debug_print("点击全盘查杀按钮失败。")
+        return "点击全盘查杀按钮失败。"
     time.sleep(get_sleep_time("short"))
 
     # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
@@ -498,13 +579,13 @@ def full_scan():
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
     screenshot_path = (
-        log_dir / f"full_scan_check_{datetime.now().strftime('%Y%m%d')}.png"
+        log_dir / f"full_scan_check.png"
     )
     region_img = capture_window_region(
-        x_start_ratio=0.5,
+        x_start_ratio=0.8,
         y_start_ratio=0.0,
         x_end_ratio=1.0,
-        y_end_ratio=0.5,
+        y_end_ratio=0.2,
         save_path=str(screenshot_path),
     )
 
@@ -516,11 +597,11 @@ def full_scan():
     try:
         recognizer = ImageRecognition()
         if recognizer.contains_text(str(screenshot_path), "暂停", case_sensitive=False):
-            print(
+            debug_print(
                 f"检测到'暂停'字符，说明正在执行全盘查杀。截图已保存到: {screenshot_path}"
             )
         else:
-            print(
+            debug_print(
                 f"未找到'暂停'字符，说明未成功执行全盘查杀。截图已保存到: {screenshot_path}"
             )
             return (
@@ -533,31 +614,31 @@ def full_scan():
         debug_print(error_msg)
         return error_msg
 
-    # 步骤4：检测查杀是否完成（每10秒截取右上角，使用OCR识别"完成"字符串）
+    # 步骤4：检测查杀是否完成（每15秒截取右上角，使用OCR识别"完成"字符串）
     start_time = time.time()
     interval = 3600  # 60分钟（全盘查杀耗时较长）
-    check_interval = 10  # 每10秒检测一次
+    check_interval = 15  # 每15秒检测一次
     last_check_time = 0
     recognizer = ImageRecognition()
 
-    print("开始监控全盘查杀进度，每10秒检测一次...")
+    debug_print("开始监控全盘查杀进度，每15秒检测一次...")
     while time.time() - start_time < interval:
         current_time = time.time()
 
-        # 每10秒检测一次
+        # 每15秒检测一次
         if current_time - last_check_time >= check_interval:
             last_check_time = current_time
             elapsed_time = current_time - start_time
 
             # 截取右上部分
             screenshot_path = (
-                log_dir / f"full_scan_progress_{datetime.now().strftime('%Y%m%d')}.png"
+                log_dir / f"full_scan_progress.png"
             )
             region_img = capture_window_region(
-                x_start_ratio=0.5,
+                x_start_ratio=0.8,
                 y_start_ratio=0.0,
                 x_end_ratio=1.0,
-                y_end_ratio=0.5,
+                y_end_ratio=0.2,
                 save_path=str(screenshot_path),
             )
 
@@ -569,7 +650,7 @@ def full_scan():
             if recognizer.contains_text(
                 str(screenshot_path), "完成", case_sensitive=False
             ):
-                print(
+                debug_print(
                     f"检测到'完成'字符，说明全盘查杀已完成。耗时: {int(elapsed_time)}秒"
                 )
                 ret2_top_page()
@@ -578,10 +659,10 @@ def full_scan():
             elif recognizer.contains_text(
                 str(screenshot_path), "立即处理", case_sensitive=False
             ):
-                print(f"检测到'立即处理'字符。耗时: {int(elapsed_time)}秒，正在处理...")
+                debug_print(f"检测到'立即处理'字符。耗时: {int(elapsed_time)}秒，正在处理...")
                 # 点击"立即处理"按钮（同样位置）
                 complete_button_pos = get_config_value(
-                    "positions.huorong.complete_button", default=[0.5, 0.7]
+                    "positions.huorong.complete_button", default=[0.92, 0.12]
                 )
                 handle_loc = find_image_on_screen(
                     x_ratio=complete_button_pos[0],
@@ -591,13 +672,13 @@ def full_scan():
                 )
                 if handle_loc:
                     click_image_at_location(handle_loc, description="立即处理按钮")
-                    print("点击'立即处理'按钮成功。")
+                    debug_print("点击'立即处理'按钮成功。")
                     time.sleep(get_sleep_time("short"))
 
                 ret2_top_page()
                 return f"全盘查杀完成（已处理风险项）。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
 
-            print(f"[{int(elapsed_time)}s] 继续等待全盘查杀完成...")
+            debug_print(f"[{int(elapsed_time)}s] 继续等待全盘查杀完成...")
 
         time.sleep(1)
 
@@ -614,24 +695,24 @@ def get_quarantine_file():
         None
     """
     # 读取数据库中信息
-    source_db_path = r"C:/ProgramData/Huorong/Sysdiag/log.db"
+    source_db_path = r"C:/ProgramData/Huorong/ESEndpoint/log.db"
     target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"  # 目标目录
     target_db_path = os.path.join(target_dir, "QuarantineEx.db")
     log_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/quarantine_files.log"
     try:
         # 1. 复制数据库到目标目录下
         if not os.path.exists(source_db_path):
-            print(f"[ERR]隔离区数据库文件不存在: {source_db_path}")
+            debug_print(f"[ERR]隔离区数据库文件不存在: {source_db_path}")
             return f"[ERR]隔离区数据库文件不存在: {source_db_path}"
         shutil.copy(source_db_path, target_dir)
-        print(f"已复制到目标目录下: {source_db_path}")
+        debug_print(f"已复制到目标目录下: {source_db_path}")
 
         # 2. 读取数据库内容到log中
         read_QuarantineEx_db(target_db_path, log_path)
-        print(f"已读取隔离区内容到: {target_db_path}")
+        debug_print(f"已读取隔离区内容到: {target_db_path}")
 
     except Exception as e:
-        print(f"[ERR]执行失败，错误信息: {e}")
+        debug_print(f"[ERR]执行失败，错误信息: {e}")
         return f"[ERR]执行失败，错误信息: {e}"
 
     finally:
@@ -639,9 +720,9 @@ def get_quarantine_file():
         if os.path.exists(target_db_path):
             try:
                 os.remove(target_db_path)
-                print(f"已删除临时数据库文件: {target_db_path}")
+                debug_print(f"已删除临时数据库文件: {target_db_path}")
             except Exception as e:
-                print(f"[ERR]删除临时数据库文件失败: {e}")
+                debug_print(f"[ERR]删除临时数据库文件失败: {e}")
 
     return f"已获取当前隔离区内的文件列表，见 {log_path}。"
 
@@ -656,8 +737,8 @@ def get_trust_zone():
     # 1：复制相关文件到当前目录下（存在才复制）
     target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"
     files = [
-        r"C:/ProgramData/Huorong/Sysdiag/wlfile.db",
-        r"C:/ProgramData/Huorong/Sysdiag/wlfile.db-wal",
+        r"C:/ProgramData/Huorong/ESEndpoint/wlfile.db",
+        r"C:/ProgramData/Huorong/ESEndpoint/wlfile.db-wal",
     ]
     for f in files:
         try:
@@ -690,17 +771,32 @@ def get_security_log():
     time.sleep(get_sleep_time("short"))
     debug_print("请确保火绒安全的首页是当前活动窗口，或者至少是可见的。")
 
-    # 1.点击首页的安全日志图标（使用相对位置定位）
+    # 1.点击首页的安全日志图标（分为两步）
+    # 1.1 先点击展开菜单按钮
+    menu_button_pos = get_config_value(
+        "positions.huorong.menu_button", default=[0.876, 0.05]
+    )
+    if not find_and_click(
+        x_ratio=menu_button_pos[0],
+        y_ratio=menu_button_pos[1],
+        timeout_seconds=15,
+        description="展开菜单按钮",
+    ):
+        return "未能找到展开菜单按钮。"
+    time.sleep(get_sleep_time("short"))
+    debug_print("展开菜单已打开。")
+
+    # 1.2 再点击安全日志按钮
     security_log_pos = get_config_value(
-        "positions.huorong.security_log_icon", default=[0.85, 0.25]
+        "positions.huorong.security_log_icon", default=[0.178, 0.5]
     )
     if not find_and_click(
         x_ratio=security_log_pos[0],
         y_ratio=security_log_pos[1],
         timeout_seconds=20,
-        description="安全日志",
+        description="安全日志按钮",
     ):
-        return "未能找到安全日志图标。"
+        return "未能找到安全日志按钮。"
     time.sleep(get_sleep_time("short"))
     debug_print("安全日志界面已打开。")
 
@@ -729,28 +825,23 @@ def get_security_log():
 
     for attempt in range(15):  # 15次重试，每次等待1秒
         try:
-            # 获取前台窗口句柄
-            hwnd = win32gui.GetForegroundWindow()
-            if not hwnd:
-                debug_print(f"未找到前台窗口，重试中... ({attempt + 1}/15)")
-                time.sleep(1)
-                continue
-
-            # 获取窗口位置和大小
-            rect = win32gui.GetWindowRect(hwnd)
-            win_left, win_top, win_right, win_bottom = rect
-            win_width = win_right - win_left
-            win_height = win_bottom - win_top
-
-            # 截取窗口的左上角部分（宽度的40%，高度的20%）
-            screenshot = pyautogui.screenshot(
-                region=(win_left, win_top, int(win_width * 0.4), int(win_height * 0.2))
-            )
-
             # 保存截图，带上时间戳
             timestamp = datetime.now().strftime("%Y%m%d")
             temp_screenshot_path = logs_dir / f"save_as_check_{timestamp}.png"
-            screenshot.save(str(temp_screenshot_path))
+
+            # 截取窗口的左上角部分（0%-40%宽度，0%-20%高度）
+            region_img = capture_window_region(
+                x_start_ratio=0.0,
+                y_start_ratio=0.0,
+                x_end_ratio=0.4,
+                y_end_ratio=0.2,
+                save_path=str(temp_screenshot_path)
+            )
+
+            if region_img is None:
+                debug_print(f"截图失败，重试中... ({attempt + 1}/15)")
+                time.sleep(1)
+                continue
 
             # 使用OCR检测"另存为"
             if recognizer.contains_text(
@@ -774,24 +865,21 @@ def get_security_log():
     # 3.5 确定文件输出位置
     debug_print("设置文件输出位置...")
 
-    # 获取前台窗口信息，计算绝对坐标
-    hwnd = win32gui.GetForegroundWindow()
-    rect = win32gui.GetWindowRect(hwnd)
-    win_left, win_top, win_right, win_bottom = rect
-    win_width = win_right - win_left
-    win_height = win_bottom - win_top
-
-    # 点击浏览按钮 [0.77, 0.15]
-    browse_x = int(win_left + win_width * 0.77)
-    browse_y = int(win_top + win_height * 0.15)
-    pyautogui.moveTo(browse_x, browse_y, duration=0.5)
-    time.sleep(0.2)
-    pyautogui.click()
-    debug_print(f"点击浏览按钮 ({browse_x}, {browse_y})")
+    # 点击浏览按钮
+    browse_button_pos = get_config_value(
+        "positions.huorong.browse_button", default=[0.77, 0.15]
+    )
+    if not find_and_click(
+        x_ratio=browse_button_pos[0],
+        y_ratio=browse_button_pos[1],
+        timeout_seconds=15,
+        description="浏览按钮",
+    ):
+        return "未能找到浏览按钮。"
     time.sleep(get_sleep_time("medium"))
 
     # 输入路径（使用剪贴板粘贴）
-    log_path = r"D:/MCPSecTrace/logs/huorong/"
+    log_path = r"D:\MCPSecTrace\logs\huorong"
     debug_print(f"输入日志输出路径: {log_path}")
 
     # 复制路径到剪贴板
@@ -803,13 +891,9 @@ def get_security_log():
     debug_print("已粘贴路径")
     time.sleep(get_sleep_time("short"))
 
-    # 点击确定按钮 [0.95, 0.15]
-    confirm_x = int(win_left + win_width * 0.95)
-    confirm_y = int(win_top + win_height * 0.15)
-    pyautogui.moveTo(confirm_x, confirm_y, duration=0.5)
-    time.sleep(0.2)
-    pyautogui.click()
-    debug_print(f"点击确定按钮 ({confirm_x}, {confirm_y})")
+    # 按回车键确定
+    pyautogui.press("enter")
+    debug_print("已按回车键确定")
     time.sleep(get_sleep_time("medium"))
 
     # 4.点击文件名输入框
@@ -858,20 +942,16 @@ def get_security_log():
 
     # 6.5 点击返回按钮
     debug_print("点击返回按钮...")
-    # 获取前台窗口信息，计算绝对坐标
-    hwnd = win32gui.GetForegroundWindow()
-    rect = win32gui.GetWindowRect(hwnd)
-    win_left, win_top, win_right, win_bottom = rect
-    win_width = win_right - win_left
-    win_height = win_bottom - win_top
-
-    # 点击返回按钮 [0.855, 0.88]
-    back_x = int(win_left + win_width * 0.855)
-    back_y = int(win_top + win_height * 0.88)
-    pyautogui.moveTo(back_x, back_y, duration=0.5)
-    time.sleep(0.2)
-    pyautogui.click()
-    debug_print(f"已点击返回按钮 ({back_x}, {back_y})")
+    back_button_pos = get_config_value(
+        "positions.huorong.back_button", default=[0.855, 0.88]
+    )
+    if not find_and_click(
+        x_ratio=back_button_pos[0],
+        y_ratio=back_button_pos[1],
+        timeout_seconds=15,
+        description="返回按钮",
+    ):
+        debug_print("未能找到返回按钮，继续执行...")
     time.sleep(get_sleep_time("medium"))
 
     # 7.检查是否导出成功（返回到火绒主界面）
@@ -883,7 +963,11 @@ def main():
     """
     根据是否处于调试模式，执行不同的操作。
     """
-    # 从配置文件读取火绒路径
+    # 1. 初始化日志
+    global LOG_NAME
+    LOG_NAME = setup_log()
+
+    # 2. 从配置文件读取火绒路径
     global HUORONG_PATH
     HUORONG_PATH = get_config_value("paths.huorong_exe", default="")
 
@@ -902,6 +986,8 @@ def main():
     print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
+    # start_huorong(HUORONG_PATH)
+    # quick_scan()
     # full_scan()
     # get_quarantine_file()
     # get_trust_zone()

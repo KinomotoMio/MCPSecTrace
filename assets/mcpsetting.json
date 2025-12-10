@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "huorong": {
-      "disabled": true,
-      "timeout": 60,
+      "disabled": false,
+      "timeout": 3600,
       "type": "stdio",
       "command": "uv",
       "args": [
@@ -13,8 +13,8 @@
       ]
     },
     "ioc": {
-      "disabled": true,
-      "timeout": 60,
+      "disabled": false,
+      "timeout": 3600,
       "type": "stdio",
       "command": "uv",
       "args": [
@@ -25,8 +25,8 @@
       ]
     },
     "hrkill": {
-      "disabled": true,
-      "timeout": 60,
+      "disabled": false,
+      "timeout": 3600,
       "type": "stdio",
       "command": "uv",
       "args": [
@@ -37,8 +37,8 @@
       ]
     },
     "focus_pack": {
-      "disabled": true,
-      "timeout": 60,
+      "disabled": false,
+      "timeout": 3600,
       "type": "stdio",
       "command": "uv",
       "args": [
@@ -50,7 +50,7 @@
     },
     "everything-search": {
       "disabled": false,
-      "timeout": 60,
+      "timeout": 3600,
       "type": "stdio",
       "command": "uv",
       "args": [
