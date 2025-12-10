@@ -1,6 +1,7 @@
 import ctypes
 import io
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -503,7 +504,7 @@ def quick_scan():
 
     # 4. 检测是否扫描完成（每30秒截取页面上半部分，使用OCR识别"扫描完成"字符串）
     start_time = time.time()
-    interval = 600  # 10分钟
+    interval = 3600  # 60分钟
     check_interval = 30  # 每30秒检测一次
     last_check_time = 0
     recognizer = ImageRecognition()
@@ -546,7 +547,7 @@ def quick_scan():
         time.sleep(1)
     else:
         # 超时返回
-        debug_print("扫描监控超时（10分钟）")
+        debug_print("扫描监控超时（60分钟）")
         return f"扫描监控超时，最后的截图保存在: {log_dir}"
 
     # 5. 获取扫描结果日志
@@ -554,9 +555,24 @@ def quick_scan():
     debug_print(f"扫描结果日志目录: {focus_logs_path}")
     scan_log = get_scan_log(focus_logs_path, initial_files)
     if scan_log:
-        msg = f"[SUCCESS] 扫描新结果日志文件: {scan_log}，请用户自主查看。"
-        debug_print(msg)
-        return msg
+        # 复制扫描日志到项目目录
+        project_root = Path(__file__).parent.parent.parent.parent
+        target_log_dir = project_root / "logs" / "focus_pack"
+        target_log_dir.mkdir(parents=True, exist_ok=True)
+
+        # 生成目标文件名: focus_pack_scan_YYYYMMDD_HHMMSS.log
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        target_log_path = target_log_dir / f"focus_pack_scan_{timestamp}.log"
+
+        try:
+            shutil.copy2(scan_log, target_log_path)
+            msg = f"[SUCCESS] 扫描新结果日志文件: {scan_log}\n已复制到: {target_log_path}，请用户自主查看。"
+            debug_print(msg)
+            return msg
+        except Exception as e:
+            error_msg = f"[ERROR] 复制日志文件失败: {e}\n原始日志位置: {scan_log}"
+            debug_print(error_msg)
+            return error_msg
     else:
         msg = "[WARN] 快速扫描完成，但未成功获取扫描结果日志。"
         debug_print(msg)
