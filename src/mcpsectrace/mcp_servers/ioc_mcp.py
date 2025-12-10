@@ -27,7 +27,9 @@ _log_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "ioc"
 )
 os.makedirs(_log_dir, exist_ok=True)
-_log_file = os.path.join(_log_dir, "ioc_mcp.log")
+# 生成带时间戳的日志文件名
+_timestamp = datetime.now().strftime("%Y%m%d")
+_log_file = os.path.join(_log_dir, f"ioc_mcp_{_timestamp}.log")
 
 logging.basicConfig(
     filename=_log_file,
