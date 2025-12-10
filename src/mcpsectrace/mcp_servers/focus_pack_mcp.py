@@ -8,7 +8,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import psutil
 import pyautogui
+import win32con
 import win32gui
 
 # --- 输出使用utf-8编码（仅在非测试环境） --
@@ -138,6 +140,62 @@ def run_as_admin(exe_path=None, params=""):
 
     except Exception as e:
         debug_print(f"[ERROR] 程序启动失败：{e}")
+        return False
+
+
+def is_process_running(process_name):
+    """
+    检查指定进程是否正在运行
+
+    Args:
+        process_name: 进程名称(如 "FocusPack.exe")
+
+    Returns:
+        bool: 进程是否正在运行
+    """
+    try:
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] and proc.info['name'].lower() == process_name.lower():
+                debug_print(f"检测到进程 {process_name} 正在运行")
+                return True
+        return False
+    except Exception as e:
+        debug_print(f"[ERROR] 检查进程时出错: {e}")
+        return False
+
+
+def bring_window_to_front(window_title_keyword):
+    """
+    将包含指定关键字的窗口置顶
+
+    Args:
+        window_title_keyword: 窗口标题关键字(如 "Focus")
+
+    Returns:
+        bool: 是否成功找到并置顶窗口
+    """
+    def enum_windows_callback(hwnd, result):
+        if win32gui.IsWindowVisible(hwnd):
+            window_title = win32gui.GetWindowText(hwnd)
+            if window_title_keyword.lower() in window_title.lower():
+                result.append((hwnd, window_title))
+
+    try:
+        windows = []
+        win32gui.EnumWindows(enum_windows_callback, windows)
+
+        if windows:
+            hwnd, title = windows[0]
+            # 显示窗口并置顶
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)  # 先还原窗口(如果最小化)
+            win32gui.SetForegroundWindow(hwnd)  # 置顶窗口
+            debug_print(f"[SUCCESS] 窗口 '{title}' 已置顶")
+            return True
+        else:
+            debug_print(f"[WARN] 未找到包含 '{window_title_keyword}' 的窗口")
+            return False
+    except Exception as e:
+        debug_print(f"[ERROR] 窗口置顶失败: {e}")
         return False
 
 
@@ -400,7 +458,7 @@ def capture_window_region(
 @mcp.tool()
 def start_app(exe_path):
     """
-        以管理员身份启动软件。
+        以管理员身份启动软件。如果软件已经运行,则将窗口置顶。
     Args：
         path: 软件的完整安装路径。
     """
@@ -409,15 +467,34 @@ def start_app(exe_path):
         debug_print(msg)
         return False
 
-    debug_print(f"正在尝试启动软件: {exe_path}")
+    # 获取进程名称
+    process_name = Path(exe_path).name
+    debug_print(f"检查进程 {process_name} 是否已运行...")
+
+    # 检查进程是否已经运行
+    if is_process_running(process_name):
+        debug_print(f"[INFO] 检测到 {process_name} 已在运行,尝试将窗口置顶...")
+        # 尝试将窗口置顶(使用进程名的前几个字符作为关键字)
+        window_keyword = Path(exe_path).stem  # 获取不带扩展名的文件名
+        if bring_window_to_front(window_keyword):
+            debug_print(f"[SUCCESS] 窗口已置顶,无需重复启动")
+            return True
+        else:
+            debug_print(f"[WARN] 进程正在运行但未找到窗口,可能程序未完全启动")
+            # 等待一段时间再尝试
+            time.sleep(get_sleep_time("medium"))
+            return bring_window_to_front(window_keyword)
+
+    # 进程未运行,启动软件
+    debug_print(f"进程未运行,正在启动软件: {exe_path}")
     try:
         if not run_as_admin(exe_path):
-            # 如果管理员权限运行失败，则尝试以普通用户身份运行
+            # 如果管理员权限运行失败,则尝试以普通用户身份运行
             debug_print(
-                f"[WARN] 管理员权限运行失败，尝试以普通用户身份启动应用程序: {exe_path}"
+                f"[WARN] 管理员权限运行失败,尝试以普通用户身份启动应用程序: {exe_path}"
             )
             app = subprocess.Popen(exe_path)
-            debug_print(f"[SUCCESS] 应用程序已成功启动，进程号为{app.pid}。")
+            debug_print(f"[SUCCESS] 应用程序已成功启动,进程号为{app.pid}。")
             return True
 
     except Exception as e:
