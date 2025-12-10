@@ -502,7 +502,7 @@ def quick_scan():
         return error_msg
     time.sleep(get_sleep_time("long"))
 
-    # 4. 检测是否扫描完成（每30秒截取页面上半部分，使用OCR识别"扫描完成"字符串）
+    # 4. 检测是否扫描完成（每30秒截取页面并识别状态）
     start_time = time.time()
     interval = 3600  # 60分钟
     check_interval = 30  # 每30秒检测一次
@@ -520,29 +520,87 @@ def quick_scan():
             last_check_time = current_time
             elapsed_time = current_time - start_time
 
-            # 截取页面上半部分
-            screenshot_path = log_dir / f"scan_progress.png"
-            region_img = capture_window_region(
+            # 第一步: 截取左下角区域检查扫描状态
+            bottom_left_screenshot = log_dir / f"scan_bottom_left.png"
+            bottom_left_img = capture_window_region(
+                x_start_ratio=0.0,
+                y_start_ratio=0.8,
+                x_end_ratio=0.2,
+                y_end_ratio=1.0,
+                save_path=str(bottom_left_screenshot),
+            )
+
+            if bottom_left_img is None:
+                debug_print("截取窗口左下角失败。")
+                continue
+
+            # 检查是否包含"扫描完成"
+            if recognizer.contains_text(
+                str(bottom_left_screenshot), "扫描完成", case_sensitive=False
+            ):
+                msg = f"[SUCCESS] 检测到'扫描完成'字符，快速扫描已完成。耗时: {int(elapsed_time)}秒"
+                debug_print(msg)
+                break
+
+            # 检查是否包含"当前模式"
+            if recognizer.contains_text(
+                str(bottom_left_screenshot), "当前模式", case_sensitive=False
+            ):
+                debug_print(f"[{int(elapsed_time)}s] 检测到'当前模式'，正在扫描中，继续等待...")
+                continue
+
+            # 第二步: 都不是，则检查左上角区域
+            debug_print("左下角未检测到状态信息，检查左上角...")
+            top_left_screenshot = log_dir / f"scan_top_left.png"
+            top_left_img = capture_window_region(
                 x_start_ratio=0.0,
                 y_start_ratio=0.0,
                 x_end_ratio=0.2,
                 y_end_ratio=0.2,
-                save_path=str(screenshot_path),
+                save_path=str(top_left_screenshot),
             )
 
-            if region_img is None:
-                debug_print("截取窗口上半部分失败。")
+            if top_left_img is None:
+                debug_print("截取窗口左上角失败。")
                 continue
 
-            # 使用OCR识别是否包含"扫描完成"字符串
+            # 检查是否包含"警告"
             if recognizer.contains_text(
-                str(screenshot_path), "提示", case_sensitive=False
+                str(top_left_screenshot), "警告", case_sensitive=False
             ):
-                msg = f"[SUCCESS] 检测到'提示'字符，快速扫描已完成。耗时: {int(elapsed_time)}秒，截图保存在: {screenshot_path}"
+                debug_print(f"[WARN] 检测到'警告'弹窗，点击(0.85, 0.85)关闭...")
+                # 点击(0.85, 0.85)位置关闭警告窗口
+                warning_close_pos = find_image_on_screen_by_ratio(
+                    x_ratio=0.85,
+                    y_ratio=0.85,
+                    timeout_seconds=5,
+                    description="警告关闭按钮",
+                )
+                if warning_close_pos:
+                    click_image_at_location(warning_close_pos, description="警告关闭按钮")
+                    time.sleep(get_sleep_time("short"))
+                continue
+
+            # 检查是否包含"提示"
+            if recognizer.contains_text(
+                str(top_left_screenshot), "提示", case_sensitive=False
+            ):
+                debug_print(f"[SUCCESS] 检测到'提示'弹窗，点击(0.8, 0.8)确认...")
+                # 点击(0.8, 0.8)位置确认提示窗口
+                confirm_pos = find_image_on_screen_by_ratio(
+                    x_ratio=0.8,
+                    y_ratio=0.8,
+                    timeout_seconds=5,
+                    description="提示确认按钮",
+                )
+                if confirm_pos:
+                    click_image_at_location(confirm_pos, description="提示确认按钮")
+                msg = f"[SUCCESS] 扫描已完成并确认。耗时: {int(elapsed_time)}秒"
                 debug_print(msg)
                 break
 
-            debug_print(f"[{int(elapsed_time)}s] 继续等待扫描完成...")
+            # 未识别到任何已知状态
+            debug_print(f"[{int(elapsed_time)}s] 未识别到明确状态，继续等待...")
 
         time.sleep(1)
     else:
