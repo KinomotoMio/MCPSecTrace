@@ -1,3 +1,15 @@
+"""
+火绒安全软件个人版 MCP 服务器
+
+本模块专门用于控制火绒安全软件个人版，提供以下功能：
+- 快速查杀
+- 全盘查杀
+- 获取隔离区文件列表
+- 获取信任区文件列表
+- 导出安全日志
+
+注意：本模块仅适用于火绒个人版，企业版请使用 huorong_enterprise_mcp.py
+"""
 import asyncio
 import io
 import os
@@ -30,10 +42,10 @@ except ImportError:
     debug_print('[致命错误] 请先运行: uv add "mcp[cli]" httpx')
     sys.exit(1)
 
-mcp = FastMCP("huorong", log_level="ERROR", port=8888)
+mcp = FastMCP("huorong_personal", log_level="ERROR", port=8888)
 
 # --- 全局变量 ---
-HUORONG_PATH = ""  # 将在main()中从配置文件加载
+HUORONG_PERSONAL_PATH = ""  # 火绒个人版路径，将在main()中从配置文件加载
 
 
 def debug_print(message: str):
@@ -273,11 +285,11 @@ def read_wlfile_db(db_path, file_path):
 
 # --- MCP工具 ---
 @mcp.tool()
-def start_huorong(path):
+def start_huorong_personal(path):
     """
-        启动火绒安全软件（简称火绒）。
+        启动火绒安全软件个人版。
     Args：
-        path: 火绒安全软件的完整安装路径（即HUORONG_PATH）。
+        path: 火绒安全软件个人版的完整安装路径（即HUORONG_PERSONAL_PATH）。
     Returns：
         int: 如果成功启动，返回启动后的进程ID (PID)。
         None: 如果路径无效，或者在启动过程中发生错误，返回 None。
@@ -286,30 +298,30 @@ def start_huorong(path):
         if not path or not os.path.exists(path):
             print(
                 f"错误：应用程序路径 '{path}' 无效或不存在。\n\
-                        请确保 HUORONG_PATH 变量已正确设置为火绒安全的启动程序路径。\n\
-                        脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。"
+                        请确保 HUORONG_PERSONAL_PATH 变量已正确设置为火绒个人版的启动程序路径。\n\
+                        脚本将尝试在不启动新进程的情况下继续（假设火绒个人版已打开）。"
             )
             return None
-        print(f"正在尝试启动火绒: {path}")
+        print(f"正在尝试启动火绒个人版: {path}")
         app = subprocess.Popen(path)
-        print(f"应用程序已启动 (进程ID: {app.pid})。")
+        print(f"火绒个人版已启动 (进程ID: {app.pid})。")
         return app.pid
     except Exception as e:
-        print(f"启动应用程序 '{path}' 时发生错误: {e}")
-        print("脚本将尝试在不启动新进程的情况下继续（假设火绒已打开）。")
+        print(f"启动火绒个人版 '{path}' 时发生错误: {e}")
+        print("脚本将尝试在不启动新进程的情况下继续（假设火绒个人版已打开）。")
         return None
 
 
 @mcp.tool()
 def quick_scan():
     """
-        执行火绒安全软件的快速查杀功能。
+        执行火绒个人版的快速查杀功能。
     Args：
         None
     """
-    # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
-    start_huorong(HUORONG_PATH)
-    print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
+    # 步骤1：打开火绒个人版（不足：必须在火绒的首页）
+    start_huorong_personal(HUORONG_PERSONAL_PATH)
+    print(f"火绒个人版已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("short"))  # 等待应用程序加载
 
     # 步骤2：点击"快速查杀"按钮（使用相对位置定位）
@@ -333,7 +345,7 @@ def quick_scan():
 
     # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
     # 创建 mcp_servers/artifacts/huorong 目录
-    log_dir = Path(__file__).parent / "artifacts" / "huorong"
+    log_dir = Path(__file__).parent / "artifacts" / "huorong_personal"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
@@ -445,13 +457,13 @@ def quick_scan():
 @mcp.tool()
 def full_scan():
     """
-        执行火绒安全软件的全盘查杀功能。
+        执行火绒个人版的全盘查杀功能。
     Args：
         None
     """
-    # 步骤1：打开火绒安全软件（不足：必须在火绒的首页）
-    start_huorong(HUORONG_PATH)
-    print(f"火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。")
+    # 步骤1：打开火绒个人版（不足：必须在火绒的首页）
+    start_huorong_personal(HUORONG_PERSONAL_PATH)
+    print(f"火绒个人版已启动，请确保火绒处于首页，否则后续可能执行失败。")
     time.sleep(get_sleep_time("short"))  # 等待应用程序加载
 
     # 步骤2：点击"全盘查杀"按钮（分为两步）
@@ -493,7 +505,7 @@ def full_scan():
 
     # 步骤3：检测是否正在查杀（使用OCR识别"暂停"字符串）
     # 创建 mcp_servers/artifacts/huorong 目录
-    log_dir = Path(__file__).parent / "artifacts" / "huorong"
+    log_dir = Path(__file__).parent / "artifacts" / "huorong_personal"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
@@ -609,15 +621,15 @@ def full_scan():
 @mcp.tool()
 def get_quarantine_file():
     """
-        执行火绒的查看隔离区功能，获取当前隔离区内的文件列表，有可能为空，注意导出后还要进行读取分析工作。
+        执行火绒个人版的查看隔离区功能，获取当前隔离区内的文件列表，有可能为空，注意导出后还要进行读取分析工作。
     Args:
         None
     """
     # 读取数据库中信息
     source_db_path = r"C:/ProgramData/Huorong/Sysdiag/log.db"
-    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"  # 目标目录
+    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong_personal/"  # 目标目录
     target_db_path = os.path.join(target_dir, "QuarantineEx.db")
-    log_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/quarantine_files.log"
+    log_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong_personal/quarantine_files.log"
     try:
         # 1. 复制数据库到目标目录下
         if not os.path.exists(source_db_path):
@@ -649,12 +661,12 @@ def get_quarantine_file():
 @mcp.tool()
 def get_trust_zone():
     """
-        执行火绒的查看信任区功能，获取当前信任区内的文件列表，有可能为空，注意导出后还要进行读取分析工作。
+        执行火绒个人版的查看信任区功能，获取当前信任区内的文件列表，有可能为空，注意导出后还要进行读取分析工作。
     Args:
         None
     """
     # 1：复制相关文件到当前目录下（存在才复制）
-    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"
+    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong_personal/"
     files = [
         r"C:/ProgramData/Huorong/Sysdiag/wlfile.db",
         r"C:/ProgramData/Huorong/Sysdiag/wlfile.db-wal",
@@ -667,7 +679,7 @@ def get_trust_zone():
             debug_print(f"文件复制失败: {f}, 错误: {e}")
             return f"复制文件失败: {f}, 错误: {e}"
     # 2：读取表内容
-    file_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/trust_files.log"
+    file_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong_personal/trust_files.log"
     read_wlfile_db(target_dir + "wlfile.db", file_path)
     # 3：删除复制的文件
     for f in ["wlfile.db", "wlfile.db-wal"]:
@@ -683,12 +695,12 @@ def get_trust_zone():
 @mcp.tool()
 def get_security_log():
     """
-    执行火绒的获取今日安全日志功能，具体为导出今日的安全日志为txt文件。
+    执行火绒个人版的获取今日安全日志功能，具体为导出今日的安全日志为txt文件。
     """
-    # 0.打开火绒
-    start_huorong(HUORONG_PATH)
+    # 0.打开火绒个人版
+    start_huorong_personal(HUORONG_PERSONAL_PATH)
     time.sleep(get_sleep_time("short"))
-    debug_print("请确保火绒安全的首页是当前活动窗口，或者至少是可见的。")
+    debug_print("请确保火绒个人版的首页是当前活动窗口，或者至少是可见的。")
 
     # 1.点击首页的安全日志图标（使用相对位置定位）
     security_log_pos = get_config_value(
@@ -791,7 +803,7 @@ def get_security_log():
     time.sleep(get_sleep_time("medium"))
 
     # 输入路径（使用剪贴板粘贴）
-    log_path = r"D:/MCPSecTrace/logs/huorong/"
+    log_path = r"D:/MCPSecTrace/logs/huorong_personal/"
     debug_print(f"输入日志输出路径: {log_path}")
 
     # 复制路径到剪贴板
@@ -829,7 +841,7 @@ def get_security_log():
 
     # 5.输入文件名（使用剪贴板粘贴）
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"huorong_securitylog_{timestamp}"
+    filename = f"huorong_personal_securitylog_{timestamp}"
     debug_print(f"准备输入文件名: {filename}")
 
     # 复制文件名到剪贴板
@@ -883,23 +895,23 @@ def main():
     """
     根据是否处于调试模式，执行不同的操作。
     """
-    # 从配置文件读取火绒路径
-    global HUORONG_PATH
-    HUORONG_PATH = get_config_value("paths.huorong_exe", default="")
+    # 从配置文件读取火绒个人版路径
+    global HUORONG_PERSONAL_PATH
+    HUORONG_PERSONAL_PATH = get_config_value("paths.huorong_exe", default="")
 
-    # 验证火绒路径
-    if not HUORONG_PATH:
-        error_msg = "错误：未配置火绒路径。请在 config/user_settings.toml 中设置 paths.huorong_exe"
+    # 验证火绒个人版路径
+    if not HUORONG_PERSONAL_PATH:
+        error_msg = "错误：未配置火绒个人版路径。请在 config/user_settings.toml 中设置 paths.huorong_exe"
         print(error_msg, file=sys.stderr)
         debug_print(error_msg)
-    elif not os.path.exists(HUORONG_PATH):
-        warning_msg = f"警告：火绒路径不存在: {HUORONG_PATH}"
+    elif not os.path.exists(HUORONG_PERSONAL_PATH):
+        warning_msg = f"警告：火绒个人版路径不存在: {HUORONG_PERSONAL_PATH}"
         print(warning_msg, file=sys.stderr)
         debug_print(warning_msg)
     else:
-        debug_print(f"已从配置文件加载火绒路径: {HUORONG_PATH}")
+        debug_print(f"已从配置文件加载火绒个人版路径: {HUORONG_PERSONAL_PATH}")
 
-    print("--- 火绒MCP服务器启动 ---", file=sys.stderr)
+    print("--- 火绒个人版 MCP 服务器启动 ---", file=sys.stderr)
     debug_print(f"调试模式: {get_config_value('debug_mode', default=False)}")
     debug_print(f"设备性能等级: {get_config_value('device_level', default=2)}")
     # full_scan()
