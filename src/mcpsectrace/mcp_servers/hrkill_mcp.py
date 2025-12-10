@@ -316,7 +316,7 @@ def bring_window_to_front(window_title_keyword, silent=False):
         return False
 
 
-def ensure_hrkill_window_active(window_keyword="火绒"):
+def ensure_hrkill_window_active(window_keyword="火绒恶性木马专杀工具"):
     """
     确保 HRKill 窗口在前台
 
@@ -331,16 +331,39 @@ def ensure_hrkill_window_active(window_keyword="火绒"):
         hwnd = win32gui.GetForegroundWindow()
         if hwnd:
             current_title = win32gui.GetWindowText(hwnd)
+            print(current_title)
             # 如果当前窗口已经是 HRKill 相关窗口，不需要切换
             if window_keyword in current_title:
                 return True
     except:
         pass
 
-    # 第二步：当前窗口不是 HRKill，将 HRKill 窗口置顶
-    if bring_window_to_front(window_keyword, silent=True):
+    # 第二步：当前窗口不是 HRKill，需要将 HRKill 窗口置顶
+    # 收集所有 HRKill 相关窗口
+    def enum_windows_callback(hwnd, result):
+        if win32gui.IsWindowVisible(hwnd):
+            window_title = win32gui.GetWindowText(hwnd)
+            if window_keyword in window_title:
+                result.append((hwnd, window_title))
+
+    try:
+        windows = []
+        win32gui.EnumWindows(enum_windows_callback, windows)
+
+        if not windows:
+            return False
+
+        # 置顶找到的第一个窗口
+        hwnd, title = windows[0]
+        current_title = win32gui.GetWindowText(hwnd)
+        print('第一个窗口是：' + current_title)
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.SetForegroundWindow(hwnd)
         time.sleep(0.5)  # 等待窗口切换完成
         return True
+
+    except Exception:
+        pass
 
     return False
 
@@ -425,6 +448,53 @@ def scan_virus():
         "hrkill软件已启动，请确保处于首页，否则后续可能执行失败。"
     )  # 能否显示在mcp上
 
+    # 1.5. 检查是否在结果页面，如果是则返回主页
+    debug_print("[Step 1.5] 检查是否需要返回主页")
+    ensure_hrkill_window_active()
+
+    # 创建截图保存目录
+    log_dir = Path(__file__).parent / "artifacts" / "hrkill"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 截取上半部分检查是否有"查杀完成"
+    check_screenshot = log_dir / "startup_check.png"
+    region_img = capture_window_region(
+        x_start_ratio=0.0,
+        y_start_ratio=0.0,
+        x_end_ratio=1.0,
+        y_end_ratio=0.5,
+        save_path=str(check_screenshot),
+    )
+
+    if region_img is not None:
+        recognizer = ImageRecognition()
+        if recognizer.contains_text(str(check_screenshot), "查杀完成", case_sensitive=False):
+            debug_print("[WARN] 检测到'查杀完成'，当前不在主界面，点击(0.5, 0.67)返回主页")
+
+            # 点击返回主页按钮
+            return_pos = find_image_on_screen(
+                x_ratio=0.5,
+                y_ratio=0.67,
+                timeout_seconds=5,
+                description="返回主页按钮",
+            )
+            if return_pos:
+                click_image_at_location(return_pos, description="返回主页按钮")
+                time.sleep(get_sleep_time("medium"))
+            else:
+                debug_print("[WARN] 未找到返回主页按钮位置，尝试继续")
+
+            # 重新打开程序
+            debug_print("重新打开hrkill软件...")
+            if start_app(HRKILL_PATH) is False:
+                return "[ERROR] 重新启动hrkill软件失败"
+            time.sleep(get_sleep_time("long"))
+            debug_print("[SUCCESS] 已重新打开hrkill软件")
+        else:
+            debug_print("[SUCCESS] 当前在主界面，继续执行")
+    else:
+        debug_print("[WARN] 截图失败，跳过主页检查")
+
     # 2. 点击'开始扫描按钮'（使用相对位置定位）
     debug_print(f"[Step 2] 点击'开始扫描按钮'")
     # 确保窗口在前台（用于点击）
@@ -450,9 +520,6 @@ def scan_virus():
     debug_print(f"[Step 3] 检测是否正在查杀病毒")
     # 确保窗口在前台（用于截图）
     ensure_hrkill_window_active()
-    # 创建 mcp_servers/artifacts/hrkill 目录
-    log_dir = Path(__file__).parent / "artifacts" / "hrkill"
-    log_dir.mkdir(parents=True, exist_ok=True)
 
     # 截取右上部分（从50%宽度到100%，从0%高度到50%）
     screenshot_path = log_dir / f"scan_check.png"
@@ -584,8 +651,8 @@ def main():
         scan_virus()
     else:
         debug_print("--- 当前处于MCP运行模式 ---")
-        # scan_virus()
-        mcp.run(transport="stdio")
+        scan_virus()
+        # mcp.run(transport="stdio")
 
 
 # --- 主程序入口 ---
