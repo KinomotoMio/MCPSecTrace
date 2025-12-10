@@ -396,7 +396,7 @@ def scan_virus():
 
     # 4. 检测是否扫描完成（每15秒截取页面上半部分，使用OCR识别"查杀完成"字符串）
     start_time = time.time()
-    interval = 600  # 10分钟
+    interval = 3600  # 60分钟
     check_interval = 15  # 每15秒检测一次
     last_check_time = 0
     recognizer = ImageRecognition()
@@ -439,7 +439,7 @@ def scan_virus():
         time.sleep(1)
 
     # 超时返回
-    debug_print("扫描监控超时（10分钟）")
+    debug_print("扫描监控超时（60分钟）")
     return f"扫描监控超时，最后的截图保存在: {log_dir}"
 
 
