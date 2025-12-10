@@ -112,3 +112,78 @@
 [2025-12-10 17:40:05] [Step 3] 检测是否正在扫描
 [2025-12-10 17:40:05] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251210.png
 [2025-12-10 17:40:08] 日志文件已关闭。
+[2025-12-10 17:43:31] --- VS code 管理员权限检查 ---
+[2025-12-10 17:43:31] 当前已具备管理员权限。
+[2025-12-10 17:43:31] [Step 1] 打开Focus_Pack软件
+[2025-12-10 17:43:31] 检查进程 Focus_Pack.exe 是否已运行...
+[2025-12-10 17:43:31] 进程未运行,正在启动软件: D:\MCPTools\Focus_Pack.exe
+[2025-12-10 17:43:31] 尝试以管理员身份运行指定程序：D:\MCPTools\Focus_Pack.exe 
+[2025-12-10 17:43:31] [SUCCESS] 程序'D:\MCPTools\Focus_Pack.exe'成功以管理员权限运行。
+[2025-12-10 17:43:41] Focus_Pack软件已启动，请确保处于首页，否则后续可能执行失败。
+[2025-12-10 17:43:41] [Step 2] 点击'快速扫描'按钮
+[2025-12-10 17:43:41] 正在定位元素: '快速扫描按钮' (相对位置: 0.10, 0.13)，时间限制为15秒...
+[2025-12-10 17:43:41] 找到 '快速扫描按钮'，绝对坐标: (914, 364)
+[2025-12-10 17:43:41] 窗口信息: 位置(823, 254), 大小 914x860
+[2025-12-10 17:43:42] 成功点击 '快速扫描按钮' 在坐标: (914, 364)
+[2025-12-10 17:43:42] 点击快速扫描按钮成功。
+[2025-12-10 17:43:52] [Step 3] 检测是否正在扫描
+[2025-12-10 17:43:52] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251210.png
+[2025-12-10 17:43:54] 日志文件已关闭。
+[2025-12-10 17:47:16] --- VS code 管理员权限检查 ---
+[2025-12-10 17:47:16] 当前已具备管理员权限。
+[2025-12-10 17:47:16] [Step 1] 打开Focus_Pack软件
+[2025-12-10 17:47:16] 检查进程 Focus_Pack.exe 是否已运行...
+[2025-12-10 17:47:16] 进程未运行,正在启动软件: D:\MCPTools\Focus_Pack.exe
+[2025-12-10 17:47:16] 尝试以管理员身份运行指定程序：D:\MCPTools\Focus_Pack.exe 
+[2025-12-10 17:47:16] [SUCCESS] 程序'D:\MCPTools\Focus_Pack.exe'成功以管理员权限运行。
+[2025-12-10 17:47:26] Focus_Pack软件已启动，请确保处于首页，否则后续可能执行失败。
+[2025-12-10 17:47:26] [Step 2] 点击'快速扫描'按钮
+[2025-12-10 17:47:26] 正在定位元素: '快速扫描按钮' (相对位置: 0.10, 0.13)，时间限制为15秒...
+[2025-12-10 17:47:26] 找到 '快速扫描按钮'，绝对坐标: (914, 364)
+[2025-12-10 17:47:26] 窗口信息: 位置(823, 254), 大小 914x860
+[2025-12-10 17:47:27] 成功点击 '快速扫描按钮' 在坐标: (914, 364)
+[2025-12-10 17:47:27] 点击快速扫描按钮成功。
+[2025-12-10 17:47:37] [Step 3] 检测是否正在扫描
+[2025-12-10 17:47:37] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251210.png
+[2025-12-10 17:47:44] 正在执行快速扫描。截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251210.png
+[2025-12-10 17:47:54] [Step 4] 检测是否扫描完成（时长3600s，可调节）
+[2025-12-10 17:47:54] 开始监控扫描进度，每30秒检测一次...
+[2025-12-10 17:47:54] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_bottom_left.png
+[2025-12-10 17:48:01] [0s] 检测到'当前模式'，正在扫描中，继续等待...
+[2025-12-10 17:48:24] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_bottom_left.png
+[2025-12-10 17:48:27] [SUCCESS] 检测到'扫描完成'字符，快速扫描已完成。耗时: 30秒
+[2025-12-10 17:48:27] [Step 5] 获取扫描结果日志
+[2025-12-10 17:48:27] 扫描结果日志目录: C:\Users\User\AppData\Roaming\FocusLogs
+[2025-12-10 17:48:27] 检测到新日志文件: C:\Users\User\AppData\Roaming\FocusLogs\Scan_2025-12-10_17-47-27.log
+[2025-12-10 17:48:27] [SUCCESS] 扫描新结果日志文件: C:\Users\User\AppData\Roaming\FocusLogs\Scan_2025-12-10_17-47-27.log
+已复制到: D:\MCPSecTrace\logs\focus_pack\focus_pack_scan_20251210_174827.log，请用户自主查看。
+[2025-12-10 17:48:27] 日志文件已关闭。
+[2025-12-10 17:51:22] --- VS code 管理员权限检查 ---
+[2025-12-10 17:51:22] 当前已具备管理员权限。
+[2025-12-10 17:51:22] [Step 1] 打开Focus_Pack软件
+[2025-12-10 17:51:22] 检查进程 Focus_Pack.exe 是否已运行...
+[2025-12-10 17:51:22] 进程未运行,正在启动软件: D:\MCPTools\Focus_Pack.exe
+[2025-12-10 17:51:22] 尝试以管理员身份运行指定程序：D:\MCPTools\Focus_Pack.exe 
+[2025-12-10 17:51:22] [SUCCESS] 程序'D:\MCPTools\Focus_Pack.exe'成功以管理员权限运行。
+[2025-12-10 17:51:32] Focus_Pack软件已启动，请确保处于首页，否则后续可能执行失败。
+[2025-12-10 17:51:32] [Step 2] 点击'快速扫描'按钮
+[2025-12-10 17:51:32] 正在定位元素: '快速扫描按钮' (相对位置: 0.10, 0.13)，时间限制为15秒...
+[2025-12-10 17:51:32] 找到 '快速扫描按钮'，绝对坐标: (914, 364)
+[2025-12-10 17:51:32] 窗口信息: 位置(823, 254), 大小 914x860
+[2025-12-10 17:51:33] 成功点击 '快速扫描按钮' 在坐标: (914, 364)
+[2025-12-10 17:51:33] 点击快速扫描按钮成功。
+[2025-12-10 17:51:43] [Step 3] 检测是否正在扫描
+[2025-12-10 17:51:44] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251210.png
+[2025-12-10 17:51:49] 正在执行快速扫描。截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251210.png
+[2025-12-10 17:51:59] [Step 4] 检测是否扫描完成（时长3600s，可调节）
+[2025-12-10 17:51:59] 开始监控扫描进度，每30秒检测一次...
+[2025-12-10 17:51:59] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_bottom_left.png
+[2025-12-10 17:52:06] [0s] 检测到'当前模式'，正在扫描中，继续等待...
+[2025-12-10 17:52:30] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_bottom_left.png
+[2025-12-10 17:52:34] [SUCCESS] 检测到'扫描完成'字符，快速扫描已完成。耗时: 30秒
+[2025-12-10 17:52:34] [Step 5] 获取扫描结果日志
+[2025-12-10 17:52:34] 扫描结果日志目录: C:\Users\User\AppData\Roaming\FocusLogs
+[2025-12-10 17:52:34] 检测到新日志文件: C:\Users\User\AppData\Roaming\FocusLogs\Scan_2025-12-10_17-51-33.log
+[2025-12-10 17:52:34] [SUCCESS] 扫描新结果日志文件: C:\Users\User\AppData\Roaming\FocusLogs\Scan_2025-12-10_17-51-33.log
+已复制到: D:\MCPSecTrace\logs\focus_pack\focus_pack_scan_20251210_175234.log，请用户自主查看。
+[2025-12-10 17:52:34] 日志文件已关闭。

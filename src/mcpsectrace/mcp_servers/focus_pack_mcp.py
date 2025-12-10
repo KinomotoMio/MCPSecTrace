@@ -164,12 +164,13 @@ def is_process_running(process_name):
         return False
 
 
-def bring_window_to_front(window_title_keyword):
+def bring_window_to_front(window_title_keyword, silent=False):
     """
     将包含指定关键字的窗口置顶
 
     Args:
         window_title_keyword: 窗口标题关键字(如 "Focus")
+        silent: 是否静默模式(不输出日志)
 
     Returns:
         bool: 是否成功找到并置顶窗口
@@ -189,14 +190,84 @@ def bring_window_to_front(window_title_keyword):
             # 显示窗口并置顶
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)  # 先还原窗口(如果最小化)
             win32gui.SetForegroundWindow(hwnd)  # 置顶窗口
-            debug_print(f"[SUCCESS] 窗口 '{title}' 已置顶")
+            if not silent:
+                debug_print(f"[SUCCESS] 窗口 '{title}' 已置顶")
             return True
         else:
-            debug_print(f"[WARN] 未找到包含 '{window_title_keyword}' 的窗口")
+            if not silent:
+                debug_print(f"[WARN] 未找到包含 '{window_title_keyword}' 的窗口")
             return False
     except Exception as e:
-        debug_print(f"[ERROR] 窗口置顶失败: {e}")
+        if not silent:
+            debug_print(f"[ERROR] 窗口置顶失败: {e}")
         return False
+
+
+def ensure_focus_pack_window_active():
+    """
+    确保 Focus Pack 窗口在前台，优先保持弹窗置顶
+
+    逻辑：
+    1. 如果当前窗口是奇安信相关（主窗口或弹窗），保持不变
+    2. 如果当前窗口不是奇安信，则置顶奇安信窗口：
+       - 优先置顶弹窗（"提示"、"警告"）
+       - 其次置顶主窗口
+
+    Returns:
+        bool: 是否成功将窗口置顶
+    """
+    # 第一步：检查当前前台窗口是否已经是 Focus Pack 相关
+    try:
+        hwnd = win32gui.GetForegroundWindow()
+        if hwnd:
+            current_title = win32gui.GetWindowText(hwnd)
+            # 如果当前窗口已经是奇安信相关窗口（包括弹窗和主窗口），不需要切换
+            if "奇安信" in current_title:
+                return True
+    except:
+        pass
+
+    # 第二步：当前窗口不是奇安信，需要将奇安信窗口置顶
+    # 收集所有奇安信相关窗口
+    def enum_windows_callback(hwnd, result):
+        if win32gui.IsWindowVisible(hwnd):
+            window_title = win32gui.GetWindowText(hwnd)
+            if "奇安信" in window_title:
+                result.append((hwnd, window_title))
+
+    try:
+        windows = []
+        win32gui.EnumWindows(enum_windows_callback, windows)
+
+        if not windows:
+            return False
+
+        # 第三步：优先选择弹窗，其次选择主窗口
+        # 弹窗特征：标题包含 "提示" 或 "警告"
+        popup_window = None
+        main_window = None
+
+        for hwnd, title in windows:
+            if "提示" in title or "警告" in title:
+                popup_window = (hwnd, title)
+                break  # 找到弹窗，优先使用
+            else:
+                main_window = (hwnd, title)  # 记录主窗口作为备选
+
+        # 优先置顶弹窗，如果没有弹窗则置顶主窗口
+        target_window = popup_window if popup_window else main_window
+
+        if target_window:
+            hwnd, title = target_window
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+            win32gui.SetForegroundWindow(hwnd)
+            time.sleep(0.5)  # 等待窗口切换完成
+            return True
+
+    except Exception:
+        pass
+
+    return False
 
 
 # --- 功能函数 ---
@@ -529,6 +600,8 @@ def quick_scan():
 
     # 2. 点击'快速扫描'按钮（使用相对位置定位）
     debug_print(f"[Step 2] 点击'快速扫描'按钮")
+    # 确保窗口在前台（用于点击）
+    ensure_focus_pack_window_active()
     quick_scan_pos = get_config_value(
         "positions.focus_pack.start_scan_button", default=[0.1, 0.128]
     )
@@ -548,6 +621,8 @@ def quick_scan():
 
     # 3. 检测是否正在扫描（使用OCR识别"扫描中"字符串）
     debug_print(f"[Step 3] 检测是否正在扫描")
+    # 确保窗口在前台（用于截图）
+    ensure_focus_pack_window_active()
     screenshot_path = log_dir / f"scan_check_{datetime.now().strftime('%Y%m%d')}.png"
     region_img = capture_window_region(
         x_start_ratio=0.0,
@@ -596,6 +671,9 @@ def quick_scan():
         if current_time - last_check_time >= check_interval:
             last_check_time = current_time
             elapsed_time = current_time - start_time
+
+            # 确保窗口在前台（用于截图）
+            ensure_focus_pack_window_active()
 
             # 第一步: 截取左下角区域检查扫描状态
             bottom_left_screenshot = log_dir / f"scan_bottom_left.png"
