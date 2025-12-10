@@ -654,15 +654,15 @@ def quick_scan():
         return error_msg
     time.sleep(get_sleep_time("long"))
 
-    # 4. 检测是否扫描完成（每30秒截取页面并识别状态）
+    # 4. 检测是否扫描完成（每15秒截取页面并识别状态）
     start_time = time.time()
     interval = 3600  # 60分钟
-    check_interval = 30  # 每30秒检测一次
+    check_interval = 15  # 每15秒检测一次
     last_check_time = 0
     recognizer = ImageRecognition()
 
     debug_print(f"[Step 4] 检测是否扫描完成（时长{interval}s，可调节）")
-    debug_print("开始监控扫描进度，每30秒检测一次...")
+    debug_print("开始监控扫描进度，每15秒检测一次...")
 
     while time.time() - start_time < interval:
         current_time = time.time()
