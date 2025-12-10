@@ -474,8 +474,8 @@ def start_app(exe_path):
     # 检查进程是否已经运行
     if is_process_running(process_name):
         debug_print(f"[INFO] 检测到 {process_name} 已在运行,尝试将窗口置顶...")
-        # 尝试将窗口置顶(使用进程名的前几个字符作为关键字)
-        window_keyword = Path(exe_path).stem  # 获取不带扩展名的文件名
+        # Focus Pack的窗口标题是"奇安信-顽固病毒查杀工具"
+        window_keyword = "奇安信"  # 使用窗口标题的关键字
         if bring_window_to_front(window_keyword):
             debug_print(f"[SUCCESS] 窗口已置顶,无需重复启动")
             return True

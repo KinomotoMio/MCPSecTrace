@@ -1,3 +1,81 @@
 [2025-12-09 00:28:31] --- VS code 管理员权限检查 ---
 [2025-12-09 00:28:31] 当前已具备管理员权限。
 [2025-12-09 00:30:06] 日志文件已关闭。
+[2025-12-09 16:32:16] --- VS code 管理员权限检查 ---
+[2025-12-09 16:32:16] 当前已具备管理员权限。
+[2025-12-09 16:32:16] 日志文件已关闭。
+[2025-12-09 16:32:16] --- VS code 管理员权限检查 ---
+[2025-12-09 16:32:16] 当前已具备管理员权限。
+[2025-12-09 16:32:16] 日志文件已关闭。
+[2025-12-09 16:32:19] --- VS code 管理员权限检查 ---
+[2025-12-09 16:32:19] 当前已具备管理员权限。
+[2025-12-09 16:32:22] 日志文件已关闭。
+[2025-12-09 16:32:24] --- VS code 管理员权限检查 ---
+[2025-12-09 16:32:24] 当前已具备管理员权限。
+[2025-12-09 16:32:28] 日志文件已关闭。
+[2025-12-09 16:32:31] --- VS code 管理员权限检查 ---
+[2025-12-09 16:32:31] 当前已具备管理员权限。
+[2025-12-09 16:32:47] 日志文件已关闭。
+[2025-12-09 16:32:49] --- VS code 管理员权限检查 ---
+[2025-12-09 16:32:49] 当前已具备管理员权限。
+[2025-12-09 16:35:06] [Step 1] 打开Focus_Pack软件
+[2025-12-09 16:35:06] 正在尝试启动软件: D:\MCPTools\Focus_Pack.exe
+[2025-12-09 16:35:06] 尝试以管理员身份运行指定程序：D:\MCPTools\Focus_Pack.exe 
+[2025-12-09 16:35:08] [SUCCESS] 程序'D:\MCPTools\Focus_Pack.exe'成功以管理员权限运行。
+[2025-12-09 16:35:18] Focus_Pack软件已启动，请确保处于首页，否则后续可能执行失败。
+[2025-12-09 16:35:18] [Step 2] 点击'快速扫描'按钮
+[2025-12-09 16:35:18] 正在定位元素: '快速扫描按钮' (相对位置: 0.10, 0.13)，时间限制为15秒...
+[2025-12-09 16:35:18] 找到 '快速扫描按钮'，绝对坐标: (914, 364)
+[2025-12-09 16:35:18] 窗口信息: 位置(823, 254), 大小 914x860
+[2025-12-09 16:35:19] 成功点击 '快速扫描按钮' 在坐标: (914, 364)
+[2025-12-09 16:35:19] 点击快速扫描按钮成功。
+[2025-12-09 16:35:29] [Step 3] 检测是否正在扫描
+[2025-12-09 16:35:29] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251209.png
+[2025-12-09 16:35:35] 正在执行快速扫描。截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_check_20251209.png
+[2025-12-09 16:35:45] [Step 4] 检测是否扫描完成（时长600s，可调节）
+[2025-12-09 16:35:45] 开始监控扫描进度，每30秒检测一次...
+[2025-12-09 16:35:45] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:35:50] [0s] 继续等待扫描完成...
+[2025-12-09 16:36:16] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:36:25] [30s] 继续等待扫描完成...
+[2025-12-09 16:36:46] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:37:01] [60s] 继续等待扫描完成...
+[2025-12-09 16:37:17] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:37:40] [91s] 继续等待扫描完成...
+[2025-12-09 16:37:48] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:38:07] [122s] 继续等待扫描完成...
+[2025-12-09 16:38:18] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:38:25] [152s] 继续等待扫描完成...
+[2025-12-09 16:38:48] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:39:06] [182s] 继续等待扫描完成...
+[2025-12-09 16:39:19] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:39:34] [213s] 继续等待扫描完成...
+[2025-12-09 16:39:49] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:40:07] [243s] 继续等待扫描完成...
+[2025-12-09 16:40:19] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:40:39] [273s] 继续等待扫描完成...
+[2025-12-09 16:40:50] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:40:56] [304s] 继续等待扫描完成...
+[2025-12-09 16:41:21] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:41:28] [335s] 继续等待扫描完成...
+[2025-12-09 16:41:51] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:41:58] --- VS code 管理员权限检查 ---
+[2025-12-09 16:41:58] 当前已具备管理员权限。
+[2025-12-09 16:41:58] [365s] 继续等待扫描完成...
+[2025-12-09 16:42:21] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:42:32] [395s] 继续等待扫描完成...
+[2025-12-09 16:42:52] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:42:59] [426s] 继续等待扫描完成...
+[2025-12-09 16:43:22] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:43:31] [456s] 继续等待扫描完成...
+[2025-12-09 16:43:52] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:44:01] [486s] 继续等待扫描完成...
+[2025-12-09 16:44:23] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:44:26] [517s] 继续等待扫描完成...
+[2025-12-09 16:44:54] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:44:56] [548s] 继续等待扫描完成...
+[2025-12-09 16:45:24] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\focus_pack\scan_progress.png
+[2025-12-09 16:45:27] [578s] 继续等待扫描完成...
+[2025-12-09 16:45:46] 扫描监控超时（10分钟）
+[2025-12-09 16:45:46] 日志文件已关闭。
+[2025-12-09 17:31:34] 日志文件已关闭。
