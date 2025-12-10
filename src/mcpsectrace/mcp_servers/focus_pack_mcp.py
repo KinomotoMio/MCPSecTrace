@@ -49,16 +49,19 @@ def get_sleep_time(base_type: str) -> float:
 
 
 # --- 日志函数 ---
-def setup_log(log_dir="./logs/focus_pack"):
+def setup_log():
+    # 计算项目根目录(向上3层)
+    project_root = Path(__file__).parent.parent.parent.parent
+    log_dir = project_root / "logs" / "focus_pack"
+
     # 如果不存在，则创建目录
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
     debug_print(f"日志目录: {log_dir}")
 
     # 生成日志文件名（包含时间戳）
     timestamp = datetime.now().strftime("%Y%m%d")
-    log_filename = os.path.join(log_dir, f"focus_pack_mcp_{timestamp}.log")
-    return log_filename
+    log_filename = log_dir / f"focus_pack_mcp_{timestamp}.log"
+    return str(log_filename)
 
 
 def close_log_file():
@@ -581,7 +584,7 @@ def main():
     else:
         debug_print(f"已从配置文件加载Focus Pack路径: {FOCUS_PACK_PATH}")
 
-    LOG_NAME = setup_log("./logs/focus_pack")
+    LOG_NAME = setup_log()
 
     # 1. 检查VS code权限
     debug_print("--- VS code 管理员权限检查 ---")
@@ -600,9 +603,9 @@ def main():
         quick_scan()
     else:
         print("--- 当前处于正式运行模式 ---")
-        mcp.run(transport="stdio")
+        # mcp.run(transport="stdio")
         # start_app(FOCUS_PACK_PATH)
-        # quick_scan()
+        quick_scan()
         # mcp.run(transport="stdio")
 
 
