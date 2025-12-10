@@ -7,7 +7,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import psutil
 import pyautogui
+import win32con
 import win32gui
 
 # --- 输出使用utf-8编码（仅在非测试环境） --
@@ -253,6 +255,96 @@ def capture_window_region(
         return None
 
 
+# --- 进程和窗口管理函数 ---
+def is_process_running(process_name):
+    """
+    检查指定进程是否正在运行
+
+    Args:
+        process_name: 进程名称(如 "HRKill.exe")
+
+    Returns:
+        bool: 进程是否正在运行
+    """
+    try:
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] and proc.info['name'].lower() == process_name.lower():
+                debug_print(f"检测到进程 {process_name} 正在运行")
+                return True
+        return False
+    except Exception as e:
+        debug_print(f"[ERROR] 检查进程时出错: {e}")
+        return False
+
+
+def bring_window_to_front(window_title_keyword, silent=False):
+    """
+    将包含指定关键字的窗口置顶
+
+    Args:
+        window_title_keyword: 窗口标题关键字(如 "火绒")
+        silent: 是否静默模式(不输出日志)
+
+    Returns:
+        bool: 是否成功找到并置顶窗口
+    """
+    def enum_windows_callback(hwnd, result):
+        if win32gui.IsWindowVisible(hwnd):
+            window_title = win32gui.GetWindowText(hwnd)
+            if window_title_keyword.lower() in window_title.lower():
+                result.append((hwnd, window_title))
+
+    try:
+        windows = []
+        win32gui.EnumWindows(enum_windows_callback, windows)
+
+        if windows:
+            hwnd, title = windows[0]
+            # 显示窗口并置顶
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)  # 先还原窗口(如果最小化)
+            win32gui.SetForegroundWindow(hwnd)  # 置顶窗口
+            if not silent:
+                debug_print(f"[SUCCESS] 窗口 '{title}' 已置顶")
+            return True
+        else:
+            if not silent:
+                debug_print(f"[WARN] 未找到包含 '{window_title_keyword}' 的窗口")
+            return False
+    except Exception as e:
+        if not silent:
+            debug_print(f"[ERROR] 窗口置顶失败: {e}")
+        return False
+
+
+def ensure_hrkill_window_active(window_keyword="火绒"):
+    """
+    确保 HRKill 窗口在前台
+
+    Args:
+        window_keyword: HRKill 窗口标题关键字
+
+    Returns:
+        bool: 是否成功将窗口置顶
+    """
+    # 第一步：检查当前前台窗口是否已经是 HRKill 相关
+    try:
+        hwnd = win32gui.GetForegroundWindow()
+        if hwnd:
+            current_title = win32gui.GetWindowText(hwnd)
+            # 如果当前窗口已经是 HRKill 相关窗口，不需要切换
+            if window_keyword in current_title:
+                return True
+    except:
+        pass
+
+    # 第二步：当前窗口不是 HRKill，将 HRKill 窗口置顶
+    if bring_window_to_front(window_keyword, silent=True):
+        time.sleep(0.5)  # 等待窗口切换完成
+        return True
+
+    return False
+
+
 # --- 权限相关函数 ---
 def is_admin():
     """
@@ -335,6 +427,8 @@ def scan_virus():
 
     # 2. 点击'开始扫描按钮'（使用相对位置定位）
     debug_print(f"[Step 2] 点击'开始扫描按钮'")
+    # 确保窗口在前台（用于点击）
+    ensure_hrkill_window_active()
     start_scan_pos = get_config_value(
         "positions.hrkill.start_scan_button", default=[0.5, 0.72]
     )
@@ -354,6 +448,8 @@ def scan_virus():
 
     # 3. 检测是否正在查杀病毒（使用OCR识别"暂停"字符串）
     debug_print(f"[Step 3] 检测是否正在查杀病毒")
+    # 确保窗口在前台（用于截图）
+    ensure_hrkill_window_active()
     # 创建 mcp_servers/artifacts/hrkill 目录
     log_dir = Path(__file__).parent / "artifacts" / "hrkill"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -411,6 +507,9 @@ def scan_virus():
         if current_time - last_check_time >= check_interval:
             last_check_time = current_time
             elapsed_time = current_time - start_time
+
+            # 确保窗口在前台（用于截图）
+            ensure_hrkill_window_active()
 
             # 截取页面上半部分
             screenshot_path = log_dir / f"scan_progress.png"
