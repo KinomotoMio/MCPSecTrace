@@ -347,6 +347,66 @@ def configure_tool_paths(mcp_sectrace_dir):
         return False
 
 
+def configure_paddlex_models(mcp_sectrace_dir):
+    """
+    配置 PaddleX 模型文件：
+    将 MCPTools/official_models 目录复制到 C:/Users/{username}/.paddlex 路径下
+    """
+    print("[Step 6] 配置 PaddleX 模型文件...")
+
+    try:
+        # 获取当前用户名
+        username = os.getenv("USERNAME")
+        if not username:
+            print("[ERROR] 无法获取当前用户名")
+            return False
+
+        # 源目录：MCPTools/official_models
+        source_dir = mcp_sectrace_dir.parent / "MCPTools" / "official_models"
+
+        # 目标目录：C:/Users/{username}/.paddlex
+        target_dir = Path(f"C:/Users/{username}/.paddlex")
+
+        # 检查源目录是否存在
+        if not source_dir.exists():
+            print(f"[ERROR] 源目录不存在: {source_dir}")
+            print("[INFO] 请确保 MCPTools/official_models 目录存在")
+            return False
+
+        # 检查源目录是否为空
+        if not any(source_dir.iterdir()):
+            print(f"[WARN] 源目录为空: {source_dir}")
+            print("[INFO] 跳过模型文件复制")
+            return True
+
+        # 如果目标目录不存在，创建它
+        if not target_dir.exists():
+            print(f"创建目标目录: {target_dir}")
+            target_dir.mkdir(parents=True, exist_ok=True)
+
+        # 复制 official_models 文件夹
+        target_models_dir = target_dir / "official_models"
+
+        if target_models_dir.exists():
+            print(f"[INFO] 目标目录已存在: {target_models_dir}")
+            print("[INFO] 跳过复制，保留现有文件")
+        else:
+            print(f"复制模型文件...")
+            print(f"  源: {source_dir}")
+            print(f"  目标: {target_models_dir}")
+            shutil.copytree(source_dir, target_models_dir)
+            print(f"[SUCCESS] 模型文件已复制完成")
+
+        print("[SUCCESS] PaddleX 模型配置完成")
+        return True
+
+    except Exception as e:
+        print(f"[ERROR] 配置 PaddleX 模型失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def configure_browser_login(mcp_sectrace_dir):
     """
     配置浏览器并引导用户登录微步：
@@ -354,7 +414,7 @@ def configure_browser_login(mcp_sectrace_dir):
     2. 打开浏览器访问 x.threatbook.com
     3. 提示用户登录微步网站
     """
-    print("[Step 6] 配置浏览器并引导微步登录...")
+    print("[Step 7] 配置浏览器并引导微步登录...")
 
     try:
         # 检查 tomlkit 是否可用
@@ -814,7 +874,14 @@ def initialize_environment():
 
     print()
 
-    # Step 6: 配置浏览器并引导微步登录
+    # Step 6: 配置 PaddleX 模型
+    if not configure_paddlex_models(mcp_sectrace_dir):
+        wait_for_user()
+        return False
+
+    print()
+
+    # Step 7: 配置浏览器并引导微步登录
     if not configure_browser_login(mcp_sectrace_dir):
         wait_for_user()
         return False
