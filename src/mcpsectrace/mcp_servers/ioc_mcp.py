@@ -24,12 +24,12 @@ from mcpsectrace.config import get_config_value
 # 配置日志，将日志输出到文件而不是 stdout（避免污染 MCP JSON-RPC 通信）
 # 日志保存到项目根目录的 logs/ioc 目录
 _log_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "ioc"
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "logs", "ioc"
 )
 os.makedirs(_log_dir, exist_ok=True)
 # 生成带时间戳的日志文件名
 _timestamp = datetime.now().strftime("%Y%m%d")
-_log_file = os.path.join(_log_dir, f"ioc_mcp_{_timestamp}.log")
+_log_file = os.path.join(_log_dir, f"ioc_mcp_runtime_{_timestamp}.log")
 
 logging.basicConfig(
     filename=_log_file,

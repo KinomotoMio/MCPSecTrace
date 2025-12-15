@@ -50,7 +50,7 @@ def setup_log():
 
     # 生成日志文件名（包含时间戳）
     timestamp = datetime.now().strftime("%Y%m%d")
-    log_filename = log_dir / f"huorong_mcp_{timestamp}.log"
+    log_filename = log_dir / f"huorong_mcp_runtime_{timestamp}.log"
     return str(log_filename)
 
 
@@ -696,20 +696,32 @@ def get_quarantine_file():
     """
     # 读取数据库中信息
     source_db_path = r"C:/ProgramData/Huorong/ESEndpoint/log.db"
-    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"  # 目标目录
-    target_db_path = os.path.join(target_dir, "QuarantineEx.db")
-    log_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/quarantine_files.log"
+
+    # 计算项目根目录和日志目录
+    project_root = Path(__file__).parent.parent.parent.parent
+    log_dir = project_root / "logs" / "huorong"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 临时数据库存放在 artifacts 目录
+    temp_dir = Path(__file__).parent / "artifacts" / "huorong"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    target_db_path = temp_dir / "QuarantineEx.db"
+
+    # 生成带时间戳的日志文件名
+    timestamp = datetime.now().strftime("%Y%m%d")
+    log_path = log_dir / f"quarantine_files_{timestamp}.log"
+
     try:
-        # 1. 复制数据库到目标目录下
+        # 1. 复制数据库到临时目录下
         if not os.path.exists(source_db_path):
             debug_print(f"[ERR]隔离区数据库文件不存在: {source_db_path}")
             return f"[ERR]隔离区数据库文件不存在: {source_db_path}"
-        shutil.copy(source_db_path, target_dir)
-        debug_print(f"已复制到目标目录下: {source_db_path}")
+        shutil.copy(source_db_path, temp_dir)
+        debug_print(f"已复制到临时目录下: {source_db_path}")
 
         # 2. 读取数据库内容到log中
-        read_QuarantineEx_db(target_db_path, log_path)
-        debug_print(f"已读取隔离区内容到: {target_db_path}")
+        read_QuarantineEx_db(str(target_db_path), str(log_path))
+        debug_print(f"已读取隔离区内容到: {log_path}")
 
     except Exception as e:
         debug_print(f"[ERR]执行失败，错误信息: {e}")
@@ -717,9 +729,9 @@ def get_quarantine_file():
 
     finally:
         # 3. 删除临时数据库文件
-        if os.path.exists(target_db_path):
+        if target_db_path.exists():
             try:
-                os.remove(target_db_path)
+                target_db_path.unlink()
                 debug_print(f"已删除临时数据库文件: {target_db_path}")
             except Exception as e:
                 debug_print(f"[ERR]删除临时数据库文件失败: {e}")
@@ -734,31 +746,48 @@ def get_trust_zone():
     Args:
         None
     """
-    # 1：复制相关文件到当前目录下（存在才复制）
-    target_dir = r"./src/mcpsectrace/mcp_servers/artifacts/huorong/"
+    # 计算项目根目录和日志目录
+    project_root = Path(__file__).parent.parent.parent.parent
+    log_dir = project_root / "logs" / "huorong"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # 临时数据库存放在 artifacts 目录
+    temp_dir = Path(__file__).parent / "artifacts" / "huorong"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
+    # 生成带时间戳的日志文件名
+    timestamp = datetime.now().strftime("%Y%m%d")
+    log_path = log_dir / f"trust_files_{timestamp}.log"
+
+    # 源数据库文件
     files = [
         r"C:/ProgramData/Huorong/ESEndpoint/wlfile.db",
         r"C:/ProgramData/Huorong/ESEndpoint/wlfile.db-wal",
     ]
+
+    # 1：复制相关文件到临时目录下（存在才复制）
     for f in files:
         try:
-            shutil.copy(f, target_dir)
+            shutil.copy(f, temp_dir)
             debug_print(f"已复制文件: {f}")
         except Exception as e:
             debug_print(f"文件复制失败: {f}, 错误: {e}")
             return f"复制文件失败: {f}, 错误: {e}"
+
     # 2：读取表内容
-    file_path = "./src/mcpsectrace/mcp_servers/artifacts/huorong/trust_files.log"
-    read_wlfile_db(target_dir + "wlfile.db", file_path)
-    # 3：删除复制的文件
+    temp_db_path = temp_dir / "wlfile.db"
+    read_wlfile_db(str(temp_db_path), str(log_path))
+
+    # 3：删除复制的临时文件
     for f in ["wlfile.db", "wlfile.db-wal"]:
-        f_path = os.path.join(target_dir, f)
-        if os.path.exists(f_path):
-            os.remove(f_path)
+        f_path = temp_dir / f
+        if f_path.exists():
+            f_path.unlink()
             debug_print(f"已删除临时文件: {f}")
         else:
             debug_print(f"未找到临时文件（跳过删除）: {f}")
-    return f"已获取当前信任区内的文件列表，见{file_path}。"
+
+    return f"已获取当前信任区内的文件列表，见 {log_path}。"
 
 
 @mcp.tool()
@@ -827,7 +856,7 @@ def get_security_log():
         try:
             # 保存截图，带上时间戳
             timestamp = datetime.now().strftime("%Y%m%d")
-            temp_screenshot_path = logs_dir / f"save_as_check_{timestamp}.png"
+            temp_screenshot_path = logs_dir / f"save_as_check.png"
 
             # 截取窗口的左上角部分（0%-40%宽度，0%-20%高度）
             region_img = capture_window_region(
@@ -912,7 +941,7 @@ def get_security_log():
     time.sleep(get_sleep_time("medium"))  # 给输入框获取焦点的时间
 
     # 5.输入文件名（使用剪贴板粘贴）
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d")
     filename = f"huorong_securitylog_{timestamp}"
     debug_print(f"准备输入文件名: {filename}")
 
