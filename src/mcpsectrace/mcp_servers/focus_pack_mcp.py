@@ -63,7 +63,7 @@ def setup_log():
 
     # 生成日志文件名（包含时间戳）
     timestamp = datetime.now().strftime("%Y%m%d")
-    log_filename = log_dir / f"focus_pack_mcp_{timestamp}.log"
+    log_filename = log_dir / f"focus_pack_mcp_runtime_{timestamp}.log"
     return str(log_filename)
 
 
@@ -623,7 +623,7 @@ def quick_scan():
     debug_print(f"[Step 3] 检测是否正在扫描")
     # 确保窗口在前台（用于截图）
     ensure_focus_pack_window_active()
-    screenshot_path = log_dir / f"scan_check_{datetime.now().strftime('%Y%m%d')}.png"
+    screenshot_path = log_dir / "scan_check.png"
     region_img = capture_window_region(
         x_start_ratio=0.0,
         y_start_ratio=0.8,
@@ -676,7 +676,7 @@ def quick_scan():
             ensure_focus_pack_window_active()
 
             # 第一步: 截取左下角区域检查扫描状态
-            bottom_left_screenshot = log_dir / f"scan_bottom_left.png"
+            bottom_left_screenshot = log_dir / "scan_bottom_left.png"
             bottom_left_img = capture_window_region(
                 x_start_ratio=0.0,
                 y_start_ratio=0.8,
@@ -706,7 +706,7 @@ def quick_scan():
 
             # 第二步: 都不是，则检查左上角区域
             debug_print("左下角未检测到状态信息，检查左上角...")
-            top_left_screenshot = log_dir / f"scan_top_left.png"
+            top_left_screenshot = log_dir / "scan_top_left.png"
             top_left_img = capture_window_region(
                 x_start_ratio=0.0,
                 y_start_ratio=0.0,
@@ -773,8 +773,8 @@ def quick_scan():
         target_log_dir = project_root / "logs" / "focus_pack"
         target_log_dir.mkdir(parents=True, exist_ok=True)
 
-        # 生成目标文件名: focus_pack_scan_YYYYMMDD_HHMMSS.log
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # 生成目标文件名: focus_pack_scan_YYYYMMDD.log
+        timestamp = datetime.now().strftime("%Y%m%d")
         target_log_path = target_log_dir / f"focus_pack_scan_{timestamp}.log"
 
         try:

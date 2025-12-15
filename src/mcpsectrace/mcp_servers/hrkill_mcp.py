@@ -61,7 +61,7 @@ def setup_log():
 
     # 生成日志文件名（包含时间戳）
     timestamp = datetime.now().strftime("%Y%m%d")
-    log_filename = log_dir / f"hrkill_mcp_{timestamp}.log"
+    log_filename = log_dir / f"hrkill_mcp_runtime_{timestamp}.log"
     return str(log_filename)
 
 
