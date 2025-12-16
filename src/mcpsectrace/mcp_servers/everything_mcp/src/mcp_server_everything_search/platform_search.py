@@ -114,9 +114,13 @@ class UnifiedSearchQuery(BaseSearchQuery):
                 "linux_params"
             ] = LinuxSpecificParams.model_json_schema()
         elif system == "windows":
-            schema["properties"][
-                "windows_params"
-            ] = WindowsSpecificParams.model_json_schema()
+            windows_schema = WindowsSpecificParams.model_json_schema()
+            schema["properties"]["windows_params"] = windows_schema
+            # 将 Windows 参数中的 $defs 提升到根级别
+            if "$defs" in windows_schema:
+                schema["$defs"] = windows_schema["$defs"]
+                # 从 windows_params 中移除 $defs，避免重复
+                del schema["properties"]["windows_params"]["$defs"]
 
         return schema
 

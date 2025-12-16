@@ -54,6 +54,15 @@ class MaliciousFileQuery(BaseModel):
     )
 
 
+class ThreatFileQuery(BaseModel):
+    """威胁文件查询参数的模型。"""
+
+    csv_file_path: str = Field(description="CSV 文件路径，包含威胁文件信息")
+    max_results_per_file: int = Field(
+        default=5, ge=1, le=20, description="每个文件最多返回的搜索结果数（默认为5）"
+    )
+
+
 def query_malicious_files_from_csv(
     csv_path: str, search_provider: SearchProvider, max_search_depth: int = 2
 ) -> str:
@@ -325,6 +334,140 @@ def query_malicious_files_from_csv(
         return f"查询失败: {str(e)}"
 
 
+def query_threat_files_from_csv(
+    csv_path: str, search_provider: SearchProvider, max_results_per_file: int = 5
+) -> str:
+    """
+    从CSV文件查询威胁文件。
+
+    Args:
+        csv_path: CSV文件路径
+        search_provider: 搜索提供者
+        max_results_per_file: 每个文件最多返回的搜索结果数
+
+    Returns:
+        查询结果字符串
+    """
+    try:
+        # 检查CSV文件是否存在
+        if not os.path.exists(csv_path):
+            return f"错误: CSV文件不存在: {csv_path}"
+
+        # 读取CSV文件
+        results_by_status = {
+            "找到的文件": [],
+            "未找到的文件": [],
+        }
+
+        with open(csv_path, "r", encoding="utf-8") as f:
+            csv_reader = csv.DictReader(f)
+
+            for row in csv_reader:
+                file_name = row.get("文件名称", "").strip()
+                file_type = row.get("类型", "").strip()
+                scan_time = row.get("扫描时间", "").strip()
+                sha256 = row.get("SHA256", "").strip()
+                detection = row.get("多引擎检出", "").strip()
+                threat_family = row.get("木马家族和类型", "").strip()
+                threat_level = row.get("威胁等级", "").strip()
+
+                if not file_name:
+                    continue
+
+                # 文件信息记录
+                file_info = {
+                    "文件名": file_name,
+                    "类型": file_type,
+                    "扫描时间": scan_time,
+                    "SHA256": sha256,
+                    "多引擎检出": detection,
+                    "木马家族": threat_family,
+                    "威胁等级": threat_level,
+                }
+
+                # 搜索文件
+                try:
+                    results = search_provider.search_files(
+                        query=file_name, max_results=max_results_per_file
+                    )
+                    if results:
+                        # 找到文件
+                        found_paths = [r.path for r in results]
+                        file_info["找到的路径"] = found_paths
+                        file_info["找到数量"] = len(found_paths)
+                        results_by_status["找到的文件"].append(file_info)
+                    else:
+                        # 未找到文件
+                        results_by_status["未找到的文件"].append(file_info)
+                except Exception as e:
+                    print(f"搜索文件 {file_name} 失败: {e}", file=sys.stderr)
+                    results_by_status["未找到的文件"].append(file_info)
+
+        # 格式化输出
+        output_lines = []
+        output_lines.append(f"威胁文件查询结果")
+        output_lines.append(f"CSV文件: {csv_path}")
+        output_lines.append("")
+
+        # 统计信息
+        total_files = len(results_by_status["找到的文件"]) + len(
+            results_by_status["未找到的文件"]
+        )
+        output_lines.append(f"统计信息:")
+        output_lines.append(f"  总文件数: {total_files}")
+        output_lines.append(
+            f"  ⚠️ 找到: {len(results_by_status['找到的文件'])}个（系统中存在威胁文件）"
+        )
+        output_lines.append(
+            f"  ✓ 未找到: {len(results_by_status['未找到的文件'])}个（系统安全）"
+        )
+        output_lines.append("")
+
+        # 找到的文件（高风险）
+        if results_by_status["找到的文件"]:
+            output_lines.append("=" * 80)
+            output_lines.append(
+                f"【⚠️ 系统中发现威胁文件】({len(results_by_status['找到的文件'])}个)"
+            )
+            output_lines.append("=" * 80)
+            output_lines.append("状态: 系统中存在威胁文件，建议立即处理")
+            output_lines.append("")
+            for file_info in results_by_status["找到的文件"]:
+                output_lines.append(f"  文件名: {file_info['文件名']}")
+                output_lines.append(f"  威胁等级: {file_info['威胁等级']}")
+                output_lines.append(f"  木马家族: {file_info['木马家族']}")
+                output_lines.append(f"  多引擎检出: {file_info['多引擎检出']}")
+                output_lines.append(f"  找到数量: {file_info['找到数量']}个位置")
+                output_lines.append(f"  发现路径:")
+                for path in file_info["找到的路径"]:
+                    output_lines.append(f"    - {path}")
+                output_lines.append(f"  SHA256: {file_info['SHA256']}")
+                output_lines.append(f"  类型: {file_info['类型']}")
+                output_lines.append(f"  扫描时间: {file_info['扫描时间']}")
+                output_lines.append("")
+
+        # 未找到的文件（安全）
+        if results_by_status["未找到的文件"]:
+            output_lines.append("=" * 80)
+            output_lines.append(
+                f"【✓ 系统中未发现威胁文件】({len(results_by_status['未找到的文件'])}个)"
+            )
+            output_lines.append("=" * 80)
+            output_lines.append("状态: 这些威胁文件在系统中不存在，系统安全")
+            output_lines.append("")
+            for file_info in results_by_status["未找到的文件"]:
+                output_lines.append(f"  文件名: {file_info['文件名']}")
+                output_lines.append(f"  威胁等级: {file_info['威胁等级']}")
+                output_lines.append(f"  木马家族: {file_info['木马家族']}")
+                output_lines.append(f"  SHA256: {file_info['SHA256']}")
+                output_lines.append("")
+
+        return "\n".join(output_lines)
+
+    except Exception as e:
+        return f"查询失败: {str(e)}"
+
+
 async def serve() -> None:
     """运行服务器。"""
     current_platform = platform.system().lower()
@@ -553,6 +696,35 @@ CSV文件由 IOC MCP 自动生成：
 - 风险等级分类（高风险 → 无风险）
 - 每个文件详情（路径、SHA256、环境）"""
 
+        # ============ Tool 3: query_threat_files 描述 ============
+        threat_file_description = """【工具描述】
+威胁情报专用工具 - 批量检查威胁文件本身是否存在。
+读取 IOC MCP 生成的 CSV 文件，检查威胁文件是否在本机存在。
+
+【适用场景】
+仅用于威胁情报分析：
+✅ 检查已知威胁文件是否存在于系统中
+✅ 威胁狩猎（批量检查IOC文件列表）
+✅ 事件响应取证（验证恶意样本是否残留）
+
+❌ 日常文件查找请使用 search 工具
+
+【数据来源】
+CSV文件由 IOC MCP 自动生成：
+1. 先用 IOC MCP 查询 IP/域名威胁情报
+2. 自动生成 logs/ioc/{target}_threat_data.csv
+3. 将 CSV 路径传给本工具批量检查
+
+【Args 参数】
+- csv_file_path (str): CSV文件绝对路径（由IOC MCP生成）
+- max_results_per_file (int): 每个文件最多返回结果数，1-20，默认5
+
+【Return 返回值】
+查询结果报告，包含：
+- 统计信息（总数、找到数、未找到数）
+- 找到的威胁文件详情（文件名、路径、威胁等级、木马家族、SHA256）
+- 未找到的文件列表（系统安全）"""
+
         return [
             Tool(
                 name="search",
@@ -564,12 +736,17 @@ CSV文件由 IOC MCP 自动生成：
                 description=malicious_file_description,
                 inputSchema=MaliciousFileQuery.model_json_schema(),
             ),
+            Tool(
+                name="query_threat_files",
+                description=threat_file_description,
+                inputSchema=ThreatFileQuery.model_json_schema(),
+            ),
         ]
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict) -> List[TextContent]:
         if name == "query_malicious_release_files":
-            # 处理恶意文件查询工具
+            # 处理恶意释放文件查询工具
             try:
                 csv_path = arguments.get("csv_file_path")
                 max_search_depth = arguments.get("max_search_depth", 2)
@@ -585,7 +762,26 @@ CSV文件由 IOC MCP 自动生成：
 
                 return [TextContent(type="text", text=result_text)]
             except Exception as e:
-                return [TextContent(type="text", text=f"恶意文件查询失败: {str(e)}")]
+                return [TextContent(type="text", text=f"恶意释放文件查询失败: {str(e)}")]
+
+        elif name == "query_threat_files":
+            # 处理威胁文件查询工具
+            try:
+                csv_path = arguments.get("csv_file_path")
+                max_results_per_file = arguments.get("max_results_per_file", 5)
+
+                if not csv_path:
+                    raise ValueError("csv_file_path 是必需的参数")
+
+                result_text = query_threat_files_from_csv(
+                    csv_path=csv_path,
+                    search_provider=search_provider,
+                    max_results_per_file=max_results_per_file,
+                )
+
+                return [TextContent(type="text", text=result_text)]
+            except Exception as e:
+                return [TextContent(type="text", text=f"威胁文件查询失败: {str(e)}")]
 
         elif name == "search":
             # 处理标准搜索工具
