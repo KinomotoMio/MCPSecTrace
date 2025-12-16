@@ -62,6 +62,30 @@
       "env": {
         "EVERYTHING_SDK_PATH": "D:/MCPTools/Everything/Everything-SDK/dll/Everything64.dll"
       }
+    },
+    "browser": {
+      "disabled": false,
+      "timeout": 3600,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/",
+        "run",
+        "src/mcpsectrace/mcp_servers/browser_mcp.py"
+      ]
+    },
+    "winlog_mcp": {
+      "disabled": false,
+      "timeout": 3600,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:/MCPSecTrace/",
+        "run",
+        "src/mcpsectrace/mcp_servers/sysmon.py"
+      ]
     }
   }
 }

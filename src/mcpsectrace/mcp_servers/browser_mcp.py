@@ -67,6 +67,102 @@ def find_chromium_profiles_sync(browser_base_path: Path) -> List[Path]:
     return profile_paths
 
 
+def detect_installed_browsers_sync() -> Dict[str, Any]:
+    """检测当前系统已安装的浏览器"""
+    debug_print("[调试] 开始检测已安装的浏览器")
+    try:
+        profile_path = _get_user_profile_path_sync()
+        if not profile_path or platform.system() != "Windows":
+            return {"status": "error", "message": "此工具当前仅支持Windows操作系统。"}
+
+        # 定义浏览器检测信息
+        browsers_to_check = {
+            "Google Chrome": {
+                "user_data_path": profile_path / "AppData/Local/Google/Chrome/User Data",
+                "exe_paths": [
+                    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+                    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+                ],
+            },
+            "Microsoft Edge": {
+                "user_data_path": profile_path / "AppData/Local/Microsoft/Edge/User Data",
+                "exe_paths": [
+                    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+                    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+                ],
+            },
+            "Firefox": {
+                "user_data_path": profile_path / "AppData/Roaming/Mozilla/Firefox/Profiles",
+                "exe_paths": [
+                    "C:/Program Files/Mozilla Firefox/firefox.exe",
+                    "C:/Program Files (x86)/Mozilla Firefox/firefox.exe",
+                ],
+            },
+            "Brave": {
+                "user_data_path": profile_path / "AppData/Local/BraveSoftware/Brave-Browser/User Data",
+                "exe_paths": [
+                    "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
+                    "C:/Program Files (x86)/BraveSoftware/Brave-Browser/Application/brave.exe",
+                ],
+            },
+        }
+
+        installed_browsers = []
+
+        for browser_name, browser_info in browsers_to_check.items():
+            browser_data = {
+                "name": browser_name,
+                "installed": False,
+                "has_user_data": False,
+                "executable_path": None,
+                "user_data_path": None,
+                "profile_count": 0,
+            }
+
+            # 检查用户数据目录是否存在
+            user_data_path = browser_info["user_data_path"]
+            if user_data_path.exists():
+                browser_data["has_user_data"] = True
+                browser_data["user_data_path"] = str(user_data_path)
+
+                # 统计配置文件数量(仅对Chromium内核浏览器)
+                if browser_name != "Firefox":
+                    profiles = find_chromium_profiles_sync(user_data_path)
+                    browser_data["profile_count"] = len(profiles)
+                else:
+                    # Firefox使用不同的配置文件结构
+                    try:
+                        profile_count = len([p for p in user_data_path.iterdir() if p.is_dir()])
+                        browser_data["profile_count"] = profile_count
+                    except:
+                        browser_data["profile_count"] = 0
+
+            # 检查可执行文件是否存在
+            for exe_path in browser_info["exe_paths"]:
+                if Path(exe_path).exists():
+                    browser_data["installed"] = True
+                    browser_data["executable_path"] = exe_path
+                    break
+
+            # 如果有用户数据或可执行文件,则认为浏览器已安装
+            if browser_data["has_user_data"] or browser_data["installed"]:
+                installed_browsers.append(browser_data)
+
+        debug_print(f"[调试] 检测完成,找到 {len(installed_browsers)} 个已安装的浏览器")
+        return {
+            "status": "success",
+            "count": len(installed_browsers),
+            "browsers": installed_browsers,
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"检测浏览器时出错: {str(e)}",
+            "traceback": traceback.format_exc(),
+        }
+
+
 def get_chromium_data_sync(
     browser_name: str, data_type: str, max_items_per_profile: int
 ) -> Dict[str, Any]:
@@ -181,7 +277,20 @@ def get_chromium_data_sync(
 # --- 异步MCP工具 ---
 
 
-@mcp.tool()  # 添加资源绑定
+@mcp.tool()
+async def detect_installed_browsers() -> Dict[str, Any]:
+    """
+    检测当前Windows系统已安装的浏览器。
+
+    返回每个浏览器的安装状态、可执行文件路径、用户数据路径和配置文件数量。
+    支持检测: Google Chrome, Microsoft Edge, Firefox, Brave。
+    """
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, detect_installed_browsers_sync)
+    return result
+
+
+@mcp.tool()
 async def get_chrome_history(max_items_per_profile: int = None) -> Dict[str, Any]:
     """
     从Google Chrome的所有用户配置中获取浏览历史记录。

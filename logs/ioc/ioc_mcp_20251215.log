@@ -1,0 +1,48 @@
+2025-12-15 20:54:59,797 - DEBUG - Initializing server 'ioc'
+2025-12-15 20:54:59,797 - DEBUG - Registering handler for ListToolsRequest
+2025-12-15 20:54:59,797 - DEBUG - Registering handler for CallToolRequest
+2025-12-15 20:54:59,797 - DEBUG - Registering handler for ListResourcesRequest
+2025-12-15 20:54:59,798 - DEBUG - Registering handler for ReadResourceRequest
+2025-12-15 20:54:59,798 - DEBUG - Registering handler for PromptListRequest
+2025-12-15 20:54:59,798 - DEBUG - Registering handler for GetPromptRequest
+2025-12-15 20:54:59,798 - DEBUG - Registering handler for ListResourceTemplatesRequest
+2025-12-15 20:54:59,804 - DEBUG - Using proactor: IocpProactor
+2025-12-15 20:54:59,807 - DEBUG - Received message: root=InitializedNotification(method='notifications/initialized', params=None, jsonrpc='2.0')
+2025-12-15 20:54:59,808 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x000001D4DFE45BD0>
+2025-12-15 20:54:59,808 - INFO - Processing request of type ListToolsRequest
+2025-12-15 20:54:59,808 - DEBUG - Dispatching request of type ListToolsRequest
+2025-12-15 20:54:59,808 - DEBUG - Response sent
+2025-12-15 20:54:59,809 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x000001D4DFE45D10>
+2025-12-15 20:54:59,810 - INFO - Processing request of type ListResourcesRequest
+2025-12-15 20:54:59,810 - DEBUG - Dispatching request of type ListResourcesRequest
+2025-12-15 20:54:59,810 - DEBUG - Listing resources
+2025-12-15 20:54:59,810 - DEBUG - Response sent
+2025-12-15 20:54:59,810 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x000001D4DFCC3E10>
+2025-12-15 20:54:59,810 - INFO - Processing request of type ListResourceTemplatesRequest
+2025-12-15 20:54:59,810 - DEBUG - Dispatching request of type ListResourceTemplatesRequest
+2025-12-15 20:54:59,810 - DEBUG - Listing templates
+2025-12-15 20:54:59,810 - DEBUG - Response sent
+2025-12-15 20:55:05,898 - DEBUG - Initializing server 'ioc'
+2025-12-15 20:55:05,898 - DEBUG - Registering handler for ListToolsRequest
+2025-12-15 20:55:05,899 - DEBUG - Registering handler for CallToolRequest
+2025-12-15 20:55:05,899 - DEBUG - Registering handler for ListResourcesRequest
+2025-12-15 20:55:05,899 - DEBUG - Registering handler for ReadResourceRequest
+2025-12-15 20:55:05,899 - DEBUG - Registering handler for PromptListRequest
+2025-12-15 20:55:05,899 - DEBUG - Registering handler for GetPromptRequest
+2025-12-15 20:55:05,899 - DEBUG - Registering handler for ListResourceTemplatesRequest
+2025-12-15 20:55:05,904 - DEBUG - Using proactor: IocpProactor
+2025-12-15 20:55:05,908 - DEBUG - Received message: root=InitializedNotification(method='notifications/initialized', params=None, jsonrpc='2.0')
+2025-12-15 20:55:05,908 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x000001A13C5D5BD0>
+2025-12-15 20:55:05,909 - INFO - Processing request of type ListToolsRequest
+2025-12-15 20:55:05,909 - DEBUG - Dispatching request of type ListToolsRequest
+2025-12-15 20:55:05,909 - DEBUG - Response sent
+2025-12-15 20:55:05,910 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x000001A13C5D5D10>
+2025-12-15 20:55:05,910 - INFO - Processing request of type ListResourcesRequest
+2025-12-15 20:55:05,910 - DEBUG - Dispatching request of type ListResourcesRequest
+2025-12-15 20:55:05,910 - DEBUG - Listing resources
+2025-12-15 20:55:05,910 - DEBUG - Response sent
+2025-12-15 20:55:05,911 - DEBUG - Received message: <mcp.shared.session.RequestResponder object at 0x000001A13C3B3E10>
+2025-12-15 20:55:05,911 - INFO - Processing request of type ListResourceTemplatesRequest
+2025-12-15 20:55:05,911 - DEBUG - Dispatching request of type ListResourceTemplatesRequest
+2025-12-15 20:55:05,911 - DEBUG - Listing templates
+2025-12-15 20:55:05,911 - DEBUG - Response sent
