@@ -777,8 +777,8 @@ def configure_uv_environment():
     """
     配置 MCPTools/uv 环境：
     1. 将 MCPTools/uv 路径添加到系统环境变量的 PATH 中
-    2. 验证 uv 安装
-    3. 运行 uv sync 同步依赖
+    2. 复制预装的 Python 环境到 uv 目录
+    3. 修改 .venv/pyvenv.cfg 指向正确的 Python 路径
     """
     print("[Step 1] 配置 MCPTools/uv 路径...")
     try:
@@ -800,66 +800,83 @@ def configure_uv_environment():
         add_to_path_windows(mcp_tools_uv_str)
         print("[SUCCESS] MCPTools/uv 路径配置完成。")
 
-        # 构建 uv.exe 的完整路径（直接使用完整路径，避免 PATH 查找问题）
-        uv_exe_path = mcp_tools_uv_path / "uv.exe"
-        if not uv_exe_path.exists():
-            print(f"[ERROR] uv.exe 不存在: {uv_exe_path}")
+        # 获取当前用户名
+        username = os.getenv("USERNAME")
+        if not username:
+            print("[ERROR] 无法获取当前用户名")
             wait_for_user()
             return False
 
-        uv_exe_str = str(uv_exe_path)
+        # 复制预装的 Python 环境
+        print("\n配置 Python 环境...")
+        python_folder_name = "cpython-3.13.5-windows-x86_64-none"
+        source_python_dir = mcp_sectrace_dir / "assets" / python_folder_name
+        target_python_dir = Path(f"C:/Users/{username}/AppData/Roaming/uv/python")
+        target_python_path = target_python_dir / python_folder_name
 
-        # 验证 uv 安装
-        print("\n验证 uv 安装...")
+        # 检查源目录是否存在
+        if not source_python_dir.exists():
+            print(f"[ERROR] 预装 Python 环境不存在: {source_python_dir}")
+            wait_for_user()
+            return False
+
+        # 创建目标目录（如果不存在）
+        if not target_python_dir.exists():
+            print(f"创建目录: {target_python_dir}")
+            target_python_dir.mkdir(parents=True, exist_ok=True)
+
+        # 复制 Python 环境
+        if target_python_path.exists():
+            print(f"[INFO] Python 环境已存在: {target_python_path}")
+            print("[INFO] 跳过复制，保留现有文件")
+        else:
+            print(f"复制 Python 环境...")
+            print(f"  源: {source_python_dir}")
+            print(f"  目标: {target_python_path}")
+            shutil.copytree(source_python_dir, target_python_path)
+            print(f"[SUCCESS] Python 环境复制完成")
+
+        # 修改 .venv/pyvenv.cfg 文件
+        print("\n配置虚拟环境...")
+        pyvenv_cfg_path = mcp_sectrace_dir / ".venv" / "pyvenv.cfg"
+
+        if not pyvenv_cfg_path.exists():
+            print(f"[ERROR] pyvenv.cfg 不存在: {pyvenv_cfg_path}")
+            wait_for_user()
+            return False
+
+        # 读取原文件内容
         try:
-            result = subprocess.run(
-                [uv_exe_str, "--help"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            if result.returncode == 0:
-                print("[SUCCESS] uv 已成功安装并可用。")
-            else:
-                print(f"[ERROR] uv 命令执行失败，返回码: {result.returncode}")
-                print(f"错误信息: {result.stderr}")
-                wait_for_user()
-                return False
-        except FileNotFoundError:
-            print(f"[ERROR] 未找到 uv.exe: {uv_exe_str}")
-            wait_for_user()
-            return False
-        except subprocess.TimeoutExpired:
-            print("[ERROR] uv 命令执行超时。")
+            with open(pyvenv_cfg_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        except Exception as e:
+            print(f"[ERROR] 读取 pyvenv.cfg 失败: {e}")
             wait_for_user()
             return False
 
-        # 运行 uv sync 同步依赖
-        print("\n正在同步项目依赖 (uv sync)，这可能需要几分钟...")
+        # 构建新的 home 路径（使用反斜杠，符合 Windows 习惯）
+        new_home_path = f"C:\\Users\\{username}\\AppData\\Roaming\\uv\\python\\{python_folder_name}"
+
+        # 修改第一行
+        if lines:
+            old_first_line = lines[0].strip()
+            lines[0] = f"home = {new_home_path}\n"
+            print(f"  修改 pyvenv.cfg:")
+            print(f"    原: {old_first_line}")
+            print(f"    新: home = {new_home_path}")
+
+        # 写回文件
         try:
-            result = subprocess.run(
-                [uv_exe_str, "sync"],
-                cwd=str(mcp_sectrace_dir),
-                capture_output=True,
-                text=True,
-                timeout=600  # 10分钟超时
-            )
-            if result.returncode == 0:
-                print("[SUCCESS] 项目依赖同步完成。")
-                return True
-            else:
-                print(f"[ERROR] uv sync 执行失败，返回码: {result.returncode}")
-                print(f"错误信息: {result.stderr}")
-                wait_for_user()
-                return False
-        except FileNotFoundError:
-            print(f"[ERROR] 未找到 uv.exe: {uv_exe_str}")
+            with open(pyvenv_cfg_path, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+            print(f"[SUCCESS] pyvenv.cfg 配置完成")
+        except Exception as e:
+            print(f"[ERROR] 写入 pyvenv.cfg 失败: {e}")
             wait_for_user()
             return False
-        except subprocess.TimeoutExpired:
-            print("[ERROR] uv sync 执行超时（10分钟），请手动运行 'uv sync'。")
-            wait_for_user()
-            return False
+
+        print("[SUCCESS] MCPTools/uv 环境配置完成。")
+        return True
 
     except Exception as e:
         print(f"[ERROR] 配置 MCPTools/uv 环境失败: {e}")
