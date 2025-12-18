@@ -65,10 +65,51 @@ def add_to_path_windows(new_path):
             # 6. 写入注册表
             winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path_value)
             print(f"成功将路径添加到用户环境变量: {new_path}")
-            print("注意：您可能需要注销或重启电脑才能使更改在所有程序中生效。")
 
-            # (可选) 通知系统环境发生变化，让部分程序立即感知
-            # ctypes.windll.user32.SendMessageTimeoutW(0xFFFF, 0x001A, 0, "Environment", 0, 5000, None)
+            # 7. 更新当前进程的 PATH 环境变量（让后续子进程能立即使用）
+            current_process_path = os.environ.get("PATH", "")
+            if new_path.lower() not in current_process_path.lower():
+                os.environ["PATH"] = new_path + ";" + current_process_path
+                print(f"已更新当前进程的 PATH 环境变量")
+
+            # 8. 广播 WM_SETTINGCHANGE 消息，通知其他程序环境变量已更改
+            try:
+                HWND_BROADCAST = 0xFFFF
+                WM_SETTINGCHANGE = 0x001A
+                SMTO_ABORTIFHUNG = 0x0002
+
+                # 设置函数参数类型，确保正确传递参数
+                SendMessageTimeoutW = ctypes.windll.user32.SendMessageTimeoutW
+                SendMessageTimeoutW.argtypes = [
+                    ctypes.c_void_p,  # hWnd
+                    ctypes.c_uint,    # Msg
+                    ctypes.c_void_p,  # wParam
+                    ctypes.c_wchar_p, # lParam (字符串指针)
+                    ctypes.c_uint,    # fuFlags
+                    ctypes.c_uint,    # uTimeout
+                    ctypes.POINTER(ctypes.c_ulong)  # lpdwResult
+                ]
+                SendMessageTimeoutW.restype = ctypes.c_long
+
+                # 用于接收返回结果
+                result_value = ctypes.c_ulong()
+
+                result = SendMessageTimeoutW(
+                    HWND_BROADCAST,
+                    WM_SETTINGCHANGE,
+                    0,
+                    "Environment",
+                    SMTO_ABORTIFHUNG,
+                    5000,
+                    ctypes.byref(result_value)
+                )
+                if result:
+                    print(f"已通知系统环境变量更改，新开的终端窗口将立即生效")
+                else:
+                    print(f"[WARN] 广播消息返回失败，错误码: {ctypes.get_last_error()}")
+            except Exception as e:
+                print(f"[WARN] 广播环境变量更改通知失败: {e}")
+                print("[INFO] 新开的终端窗口可能需要重启后才能使用新路径")
 
         winreg.CloseKey(key)
 
@@ -759,11 +800,20 @@ def configure_uv_environment():
         add_to_path_windows(mcp_tools_uv_str)
         print("[SUCCESS] MCPTools/uv 路径配置完成。")
 
+        # 构建 uv.exe 的完整路径（直接使用完整路径，避免 PATH 查找问题）
+        uv_exe_path = mcp_tools_uv_path / "uv.exe"
+        if not uv_exe_path.exists():
+            print(f"[ERROR] uv.exe 不存在: {uv_exe_path}")
+            wait_for_user()
+            return False
+
+        uv_exe_str = str(uv_exe_path)
+
         # 验证 uv 安装
         print("\n验证 uv 安装...")
         try:
             result = subprocess.run(
-                ["uv", "--help"],
+                [uv_exe_str, "--help"],
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -776,12 +826,7 @@ def configure_uv_environment():
                 wait_for_user()
                 return False
         except FileNotFoundError:
-            print("\n" + "=" * 60)
-            print("[ERROR] 未找到 uv 命令")
-            print("=" * 60)
-            print("环境变量已添加，但需要等待生效。")
-            print("请等待 1 分钟后，重新运行此 exe。")
-            print("=" * 60)
+            print(f"[ERROR] 未找到 uv.exe: {uv_exe_str}")
             wait_for_user()
             return False
         except subprocess.TimeoutExpired:
@@ -793,7 +838,7 @@ def configure_uv_environment():
         print("\n正在同步项目依赖 (uv sync)，这可能需要几分钟...")
         try:
             result = subprocess.run(
-                ["uv", "sync"],
+                [uv_exe_str, "sync"],
                 cwd=str(mcp_sectrace_dir),
                 capture_output=True,
                 text=True,
@@ -808,7 +853,7 @@ def configure_uv_environment():
                 wait_for_user()
                 return False
         except FileNotFoundError:
-            print("[ERROR] 未找到 uv 命令。请确保已正确添加路径并重启终端。")
+            print(f"[ERROR] 未找到 uv.exe: {uv_exe_str}")
             wait_for_user()
             return False
         except subprocess.TimeoutExpired:
