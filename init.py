@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import ctypes
 import sys
+import re
 from pathlib import Path
 
 try:
@@ -361,13 +362,28 @@ def configure_tool_paths(mcp_sectrace_dir):
                         d = d[k]
                     d[keys[-1]] = value
 
-            # 替换配置中的 {username} 占位符（无论是否有搜索结果都要执行）
+            # 替换配置中的用户名占位符（无论是否有搜索结果都要执行）
             username = os.getenv("USERNAME")
             if username and 'paths' in doc:
                 for key, value in doc['paths'].items():
-                    if isinstance(value, str) and '{username}' in value:
-                        doc['paths'][key] = value.replace('{username}', username)
-                        print(f"  [INFO] 已替换 {key} 中的 {{username}} 为 {username}")
+                    if isinstance(value, str):
+                        original_value = value
+
+                        # 替换 {username} 占位符
+                        if '{username}' in value:
+                            value = value.replace('{username}', username)
+
+                        # 替换 C:\Users\User\ 或 C:/Users/User/ 中的 User
+                        # 使用正则表达式匹配并替换，匹配 C:\Users\任意用户名\ 或 C:/Users/任意用户名/
+                        value = re.sub(r'(C:\\Users\\)[^\\]+', rf'\1{username}', value, flags=re.IGNORECASE)
+                        value = re.sub(r'(C:/Users/)[^/]+', rf'\1{username}', value, flags=re.IGNORECASE)
+
+                        # 如果值发生了变化，更新并输出日志
+                        if value != original_value:
+                            doc['paths'][key] = value
+                            print(f"  [INFO] 已替换 {key} 中的用户名为 {username}")
+                            print(f"    原路径: {original_value}")
+                            print(f"    新路径: {value}")
 
             # 写回文件
             with open(toml_path, 'w', encoding='utf-8') as f:
