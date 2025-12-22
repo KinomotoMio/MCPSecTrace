@@ -29,7 +29,7 @@ chrome_exe = "D:\\MCPTools\\chrome-win64\\chrome.exe"
 chromedriver_exe = "D:\\MCPTools\\chromedriver-win64\\chromedriver.exe"
 
 # Chrome用户数据目录（IOC查询时保持会话用，{username} 会自动替换为当前用户名）
-chrome_user_data_dir = "C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
+chrome_user_data_dir = "C:\\Users\\{username}\\AppData\\Local\\Google\\Chrome for Testing\\User Data"
 
 [tools]
 # 工具自动搜索配置
@@ -45,35 +45,36 @@ filename = "HipsMain.exe"
 type = "file"
 path_patterns = []
 
-[[tools.entries]]
-config_key = "hrkill_exe"
-filename = "hrkill-1.0.0.86.exe"
-type = "file"
-path_patterns = []
+# 以下工具使用默认路径，不进行自动搜索
+# [[tools.entries]]
+# config_key = "hrkill_exe"
+# filename = "hrkill-1.0.0.86.exe"
+# type = "file"
+# path_patterns = []
 
-[[tools.entries]]
-config_key = "focus_pack_exe"
-filename = "Focus_Pack.exe"
-type = "file"
-path_patterns = []
+# [[tools.entries]]
+# config_key = "focus_pack_exe"
+# filename = "Focus_Pack.exe"
+# type = "file"
+# path_patterns = []
 
-[[tools.entries]]
-config_key = "chrome_exe"
-filename = "chrome.exe"
-type = "file"
-path_patterns = ["chrome-win64"]
+# [[tools.entries]]
+# config_key = "chrome_exe"
+# filename = "chrome.exe"
+# type = "file"
+# path_patterns = ["chrome-win64"]
 
-[[tools.entries]]
-config_key = "chromedriver_exe"
-filename = "chromedriver.exe"
-type = "file"
-path_patterns = ["chromedriver-win64"]
+# [[tools.entries]]
+# config_key = "chromedriver_exe"
+# filename = "chromedriver.exe"
+# type = "file"
+# path_patterns = ["chromedriver-win64"]
 
-[[tools.entries]]
-config_key = "chrome_user_data_dir"
-filename = "User Data"
-type = "folder"
-path_patterns = ["google\\chrome for testing"]
+# [[tools.entries]]
+# config_key = "chrome_user_data_dir"
+# filename = "User Data"
+# type = "folder"
+# path_patterns = ["google\\chrome for testing"]
 
 [images]
 # GUI自动化所需的截图文件根目录

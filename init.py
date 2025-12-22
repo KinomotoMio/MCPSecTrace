@@ -349,8 +349,9 @@ def configure_tool_paths(mcp_sectrace_dir):
                 print(f" [NOT FOUND] 未找到")
 
         # 更新 TOML 文件
-        if update_dict:
-            try:
+        try:
+            # 如果有搜索到的工具，更新配置
+            if update_dict:
                 for key_path, value in update_dict.items():
                     keys = key_path.split('.')
                     d = doc
@@ -360,26 +361,27 @@ def configure_tool_paths(mcp_sectrace_dir):
                         d = d[k]
                     d[keys[-1]] = value
 
-                # 替换配置中的 {username} 占位符
-                username = os.getenv("USERNAME")
-                if username and 'paths' in doc:
-                    for key, value in doc['paths'].items():
-                        if isinstance(value, str) and '{username}' in value:
-                            doc['paths'][key] = value.replace('{username}', username)
-                            print(f"  [INFO] 已替换 {key} 中的 {{username}} 为 {username}")
+            # 替换配置中的 {username} 占位符（无论是否有搜索结果都要执行）
+            username = os.getenv("USERNAME")
+            if username and 'paths' in doc:
+                for key, value in doc['paths'].items():
+                    if isinstance(value, str) and '{username}' in value:
+                        doc['paths'][key] = value.replace('{username}', username)
+                        print(f"  [INFO] 已替换 {key} 中的 {{username}} 为 {username}")
 
-                with open(toml_path, 'w', encoding='utf-8') as f:
-                    f.write(tomlkit.dumps(doc))
+            # 写回文件
+            with open(toml_path, 'w', encoding='utf-8') as f:
+                f.write(tomlkit.dumps(doc))
 
+            if update_dict:
                 print(f"[SUCCESS] 工具路径配置完成，共更新 {found_count} 个路径。")
-                return True
-
-            except Exception as e:
-                print(f"[ERROR] 更新 user_settings.toml 失败: {e}")
-                return False
-        else:
-            print("[WARN] 未找到任何符合条件的工具，请手动编辑 config/user_settings.toml 配置工具路径")
+            else:
+                print("[INFO] 未搜索到新工具，已完成 {username} 占位符替换。")
             return True
+
+        except Exception as e:
+            print(f"[ERROR] 更新 user_settings.toml 失败: {e}")
+            return False
 
     except Exception as e:
         print(f"[ERROR] 配置工具路径失败: {e}")
