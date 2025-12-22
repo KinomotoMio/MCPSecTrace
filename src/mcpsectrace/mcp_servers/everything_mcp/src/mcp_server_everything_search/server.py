@@ -683,7 +683,7 @@ Examples:
 【数据来源】
 CSV文件由 IOC MCP 自动生成：
 1. 先用 IOC MCP 查询 IP/域名威胁情报
-2. 自动生成 logs/ioc/{target}_release_files.csv
+2. 自动生成 logs/ioc/{target}_可疑进程和文件路径.csv
 3. 将 CSV 路径传给本工具批量检查
 
 【Args 参数】
@@ -712,7 +712,7 @@ CSV文件由 IOC MCP 自动生成：
 【数据来源】
 CSV文件由 IOC MCP 自动生成：
 1. 先用 IOC MCP 查询 IP/域名威胁情报
-2. 自动生成 logs/ioc/{target}_threat_data.csv
+2. 自动生成 logs/ioc/{target}_相关样本列表.csv
 3. 将 CSV 路径传给本工具批量检查
 
 【Args 参数】
