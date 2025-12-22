@@ -5,7 +5,6 @@ import json
 import os
 import platform
 import sys
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from mcp.server import Server
@@ -45,40 +44,28 @@ class SearchQuery(BaseModel):
     )
 
 
-class MaliciousFileQuery(BaseModel):
-    """恶意释放文件查询参数的模型。"""
+class SuspiciousItemsQuery(BaseModel):
+    """可疑进程和文件路径查询参数的模型。"""
 
-    csv_file_path: str = Field(description="CSV 文件路径，包含释放文件信息")
-    max_search_depth: int = Field(
-        default=2, ge=0, le=5, description="最大向上搜索目录层数（默认为2）"
+    csv_file_path: str = Field(description="CSV 文件路径，包含可疑进程和文件路径信息")
+    max_results_per_item: int = Field(
+        default=10, ge=1, le=50, description="每个项目最多返回的搜索结果数（默认为10）"
     )
 
 
-class ThreatFileQuery(BaseModel):
-    """威胁文件查询参数的模型。"""
-
-    csv_file_path: str = Field(description="CSV 文件路径，包含威胁文件信息")
-    max_results_per_file: int = Field(
-        default=5, ge=1, le=20, description="每个文件最多返回的搜索结果数（默认为5）"
-    )
-
-
-def query_malicious_files_from_csv(
-    csv_path: str, search_provider: SearchProvider, max_search_depth: int = 2
+def query_suspicious_items_from_csv(
+    csv_path: str, search_provider: SearchProvider, max_results_per_item: int = 10
 ) -> str:
     """
-    从CSV文件查询恶意释放的文件。
+    从CSV文件查询可疑进程和文件路径。
 
-    检查逻辑：
-    - 第0层：在预期路径所在目录下，使用Everything查找文件
-    - 第1层：在上一层目录下，使用Everything查找文件
-    - 第2层：在上两层目录下，使用Everything查找文件
-    - 第3层：在全局范围内，使用Everything查找文件
+    读取 IOC MCP 生成的 {target}_可疑进程和文件路径.csv 文件，
+    提取最后两列（可疑进程和可疑释放文件），去重后使用 Everything 搜索。
 
     Args:
         csv_path: CSV文件路径
         search_provider: 搜索提供者
-        max_search_depth: 最大向上检查目录层数
+        max_results_per_item: 每个项目最多返回的搜索结果数
 
     Returns:
         查询结果字符串
@@ -88,379 +75,142 @@ def query_malicious_files_from_csv(
         if not os.path.exists(csv_path):
             return f"错误: CSV文件不存在: {csv_path}"
 
-        # 读取CSV文件
-        results_by_status = {
-            "找到的文件": [],
-            "文件存在": [],
-            "上一层目录存在": [],
-            "上两层目录存在": [],
-            "全局范围存在": [],
-            "未找到的文件": [],
-        }
+        # 用于存储去重后的项目
+        suspicious_processes = set()
+        suspicious_files = set()
 
+        # 读取CSV文件
         with open(csv_path, "r", encoding="utf-8") as f:
             csv_reader = csv.DictReader(f)
 
             for row in csv_reader:
-                file_path = row.get("文件路径", "").strip()
-                file_name = row.get("文件名称", "").strip()
-                sha256 = row.get("文件SHA256", "").strip()
-                target = row.get("查询目标", "").strip()
-                environment = row.get("环境", "").strip()
+                # 读取可疑进程列（倒数第二列）
+                processes_str = row.get("可疑进程", "").strip()
+                if processes_str:
+                    # 按英文分号分割
+                    for process in processes_str.split(";"):
+                        process = process.strip()
+                        if process:
+                            suspicious_processes.add(process)
 
-                if not file_path or not file_name:
-                    continue
+                # 读取可疑释放文件列（最后一列）
+                files_str = row.get("可疑释放文件", "").strip()
+                if files_str:
+                    # 按英文分号分割
+                    for file in files_str.split(";"):
+                        file = file.strip()
+                        if file:
+                            suspicious_files.add(file)
 
-                # 文件信息记录
-                file_info = {
-                    "查询目标": target,
-                    "环境": environment,
-                    "文件名": file_name,
-                    "预期路径": file_path,
-                    "SHA256": sha256,
-                }
+        # 转换为排序列表
+        suspicious_processes = sorted(suspicious_processes)
+        suspicious_files = sorted(suspicious_files)
 
-                found = False
-                found_status = None
-                check_result = None
+        # 搜索结果存储
+        process_results = {}
+        file_results = {}
 
-                # 第0层：在预期路径所在目录下查找文件
-                try:
-                    file_dir = str(Path(file_path).parent)
-                    search_query = f"path:{file_dir} {file_name}"
-                    results = search_provider.search_files(
-                        query=search_query, max_results=10
-                    )
-                    if results and any(
-                        file_name.lower() in r.filename.lower() for r in results
-                    ):
-                        found = True
-                        found_status = "文件存在"
-                        check_result = f"在预期目录 {file_dir} 中找到"
-                except Exception as e:
-                    print(f"第0层查询失败: {e}", file=sys.stderr)
+        # 搜索可疑进程
+        for process in suspicious_processes:
+            try:
+                results = search_provider.search_files(
+                    query=process, max_results=max_results_per_item
+                )
+                if results:
+                    process_results[process] = [r.path for r in results]
+            except Exception as e:
+                print(f"搜索进程 {process} 失败: {e}", file=sys.stderr)
 
-                # 如果文件未找到，检查第1层：上一层目录下查找文件
-                if not found and max_search_depth >= 1:
-                    try:
-                        parent_dir = str(Path(file_path).parent.parent)
-                        search_query = f"path:{parent_dir} {file_name}"
-                        results = search_provider.search_files(
-                            query=search_query, max_results=10
-                        )
-                        if results and any(
-                            file_name.lower() in r.filename.lower() for r in results
-                        ):
-                            found = True
-                            found_status = "上一层目录存在"
-                            check_result = f"在上一层目录 {parent_dir} 中找到"
-                    except Exception as e:
-                        print(f"第1层查询失败: {e}", file=sys.stderr)
-
-                # 如果仍未找到，检查第2层：上两层目录下查找文件
-                if not found and max_search_depth >= 2:
-                    try:
-                        grandparent_dir = str(Path(file_path).parent.parent.parent)
-                        search_query = f"path:{grandparent_dir} {file_name}"
-                        results = search_provider.search_files(
-                            query=search_query, max_results=10
-                        )
-                        if results and any(
-                            file_name.lower() in r.filename.lower() for r in results
-                        ):
-                            found = True
-                            found_status = "上两层目录存在"
-                            check_result = f"在上两层目录 {grandparent_dir} 中找到"
-                    except Exception as e:
-                        print(f"第2层查询失败: {e}", file=sys.stderr)
-
-                # 如果仍未找到，检查第3层：在全局范围内查找文件
-                if not found:
-                    try:
-                        search_query = file_name
-                        results = search_provider.search_files(
-                            query=search_query, max_results=10
-                        )
-                        if results and any(
-                            file_name.lower() in r.filename.lower() for r in results
-                        ):
-                            found = True
-                            found_status = "全局范围存在"
-                            found_paths = [
-                                r.path
-                                for r in results
-                                if file_name.lower() in r.filename.lower()
-                            ]
-                            check_result = (
-                                f"在全局范围内找到: {', '.join(found_paths[:3])}"
-                            )
-                    except Exception as e:
-                        print(f"第3层查询失败: {e}", file=sys.stderr)
-
-                # 记录结果
-                if found:
-                    file_info["检查结果"] = check_result
-                    file_info["状态"] = found_status
-                    results_by_status["找到的文件"].append(file_info)
-                    results_by_status[found_status].append(file_info)
-                else:
-                    results_by_status["未找到的文件"].append(file_info)
+        # 搜索可疑文件
+        for file in suspicious_files:
+            try:
+                results = search_provider.search_files(
+                    query=file, max_results=max_results_per_item
+                )
+                if results:
+                    file_results[file] = [r.path for r in results]
+            except Exception as e:
+                print(f"搜索文件 {file} 失败: {e}", file=sys.stderr)
 
         # 格式化输出
         output_lines = []
-        output_lines.append(f"恶意释放文件查询结果")
+        output_lines.append("=" * 80)
+        output_lines.append("可疑进程和文件路径查询结果")
+        output_lines.append("=" * 80)
         output_lines.append(f"CSV文件: {csv_path}")
         output_lines.append("")
 
         # 统计信息
-        total_files = len(results_by_status["找到的文件"]) + len(
-            results_by_status["未找到的文件"]
-        )
-        output_lines.append(f"统计信息:")
-        output_lines.append(f"  总文件数: {total_files}")
-        output_lines.append(f"  找到: {len(results_by_status['找到的文件'])}")
+        output_lines.append("统计信息:")
+        output_lines.append(f"  可疑进程总数: {len(suspicious_processes)}")
+        output_lines.append(f"    ├─ 找到: {len(process_results)}个")
         output_lines.append(
-            f"    ├─ 文件存在（第0层）: {len(results_by_status['文件存在'])}个 ⭐⭐⭐"
+            f"    └─ 未找到: {len(suspicious_processes) - len(process_results)}个"
         )
+        output_lines.append(f"  可疑释放文件总数: {len(suspicious_files)}")
+        output_lines.append(f"    ├─ 找到: {len(file_results)}个")
         output_lines.append(
-            f"    ├─ 上一层目录存在（第1层）: {len(results_by_status['上一层目录存在'])}个 ⭐⭐"
+            f"    └─ 未找到: {len(suspicious_files) - len(file_results)}个"
         )
-        output_lines.append(
-            f"    ├─ 上两层目录存在（第2层）: {len(results_by_status['上两层目录存在'])}个 ⭐"
-        )
-        output_lines.append(
-            f"    └─ 全局范围存在（第3层）: {len(results_by_status['全局范围存在'])}个 ⭐"
-        )
-        output_lines.append(f"  未找到: {len(results_by_status['未找到的文件'])}个 ✓")
         output_lines.append("")
 
-        # 文件存在
-        if results_by_status["文件存在"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【⭐⭐⭐ 文件直接存在】({len(results_by_status['文件存在'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append("状态: 恶意文件仍保留在系统中，风险最高")
-            output_lines.append("")
-            for file_info in results_by_status["文件存在"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  查询目标: {file_info['查询目标']}")
-                output_lines.append(f"  环境: {file_info['环境']}")
-                output_lines.append(f"  预期路径: {file_info['预期路径']}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
-                output_lines.append("")
+        # ========== 可疑进程搜索结果 ==========
+        output_lines.append("=" * 80)
+        output_lines.append(
+            f"【⚠️ 可疑进程搜索结果】(找到 {len(process_results)}/{len(suspicious_processes)} 个)"
+        )
+        output_lines.append("=" * 80)
+        output_lines.append("")
 
-        # 上一层目录存在
-        if results_by_status["上一层目录存在"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【⭐⭐ 上一层目录存在】({len(results_by_status['上一层目录存在'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append(
-                "状态: 释放文件被删除，但释放目录仍存在（可能被清理工具部分清理）"
-            )
-            output_lines.append("")
-            for file_info in results_by_status["上一层目录存在"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  查询目标: {file_info['查询目标']}")
-                output_lines.append(f"  环境: {file_info['环境']}")
-                output_lines.append(f"  预期路径: {file_info['预期路径']}")
-                output_lines.append(f"  存在目录: {file_info['检查结果']}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
+        if process_results:
+            for process, paths in process_results.items():
+                output_lines.append(f"进程名: {process}")
+                output_lines.append(f"  找到数量: {len(paths)}个位置")
+                output_lines.append(f"  发现路径:")
+                for path in paths:
+                    output_lines.append(f"    - {path}")
                 output_lines.append("")
+        else:
+            output_lines.append("✓ 未找到任何可疑进程（系统安全）")
+            output_lines.append("")
 
-        # 上两层目录存在
-        if results_by_status["上两层目录存在"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【⭐ 上两层目录存在】({len(results_by_status['上两层目录存在'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append(
-                "状态: 释放目录也被删除，但上层目录仍存在（清理相对彻底）"
-            )
+        # 未找到的进程
+        not_found_processes = [p for p in suspicious_processes if p not in process_results]
+        if not_found_processes:
+            output_lines.append(f"【✓ 未找到的可疑进程】({len(not_found_processes)}个)")
+            output_lines.append("-" * 80)
+            for process in not_found_processes:
+                output_lines.append(f"  - {process}")
             output_lines.append("")
-            for file_info in results_by_status["上两层目录存在"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  查询目标: {file_info['查询目标']}")
-                output_lines.append(f"  环境: {file_info['环境']}")
-                output_lines.append(f"  预期路径: {file_info['预期路径']}")
-                output_lines.append(f"  存在目录: {file_info['检查结果']}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
-                output_lines.append("")
 
-        # 全局范围存在
-        if results_by_status["全局范围存在"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【⭐ 全局范围存在】({len(results_by_status['全局范围存在'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append(
-                "状态: 文件在系统其他位置被找到（可能被移动或恶意软件仍在运行）"
-            )
-            output_lines.append("")
-            for file_info in results_by_status["全局范围存在"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  查询目标: {file_info['查询目标']}")
-                output_lines.append(f"  环境: {file_info['环境']}")
-                output_lines.append(f"  预期路径: {file_info['预期路径']}")
-                output_lines.append(f"  发现位置: {file_info['检查结果']}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
+        # ========== 可疑释放文件搜索结果 ==========
+        output_lines.append("=" * 80)
+        output_lines.append(
+            f"【⚠️ 可疑释放文件搜索结果】(找到 {len(file_results)}/{len(suspicious_files)} 个)"
+        )
+        output_lines.append("=" * 80)
+        output_lines.append("")
+
+        if file_results:
+            for file, paths in file_results.items():
+                output_lines.append(f"文件名: {file}")
+                output_lines.append(f"  找到数量: {len(paths)}个位置")
+                output_lines.append(f"  发现路径:")
+                for path in paths:
+                    output_lines.append(f"    - {path}")
                 output_lines.append("")
+        else:
+            output_lines.append("✓ 未找到任何可疑释放文件（系统安全）")
+            output_lines.append("")
 
         # 未找到的文件
-        if results_by_status["未找到的文件"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【✓ 完全未找到】({len(results_by_status['未找到的文件'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append("状态: 文件和目录均不存在，清理完全（最低风险）")
+        not_found_files = [f for f in suspicious_files if f not in file_results]
+        if not_found_files:
+            output_lines.append(f"【✓ 未找到的可疑释放文件】({len(not_found_files)}个)")
+            output_lines.append("-" * 80)
+            for file in not_found_files:
+                output_lines.append(f"  - {file}")
             output_lines.append("")
-            for file_info in results_by_status["未找到的文件"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  查询目标: {file_info['查询目标']}")
-                output_lines.append(f"  环境: {file_info['环境']}")
-                output_lines.append(f"  预期路径: {file_info['预期路径']}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
-                output_lines.append("")
-
-        return "\n".join(output_lines)
-
-    except Exception as e:
-        return f"查询失败: {str(e)}"
-
-
-def query_threat_files_from_csv(
-    csv_path: str, search_provider: SearchProvider, max_results_per_file: int = 5
-) -> str:
-    """
-    从CSV文件查询威胁文件。
-
-    Args:
-        csv_path: CSV文件路径
-        search_provider: 搜索提供者
-        max_results_per_file: 每个文件最多返回的搜索结果数
-
-    Returns:
-        查询结果字符串
-    """
-    try:
-        # 检查CSV文件是否存在
-        if not os.path.exists(csv_path):
-            return f"错误: CSV文件不存在: {csv_path}"
-
-        # 读取CSV文件
-        results_by_status = {
-            "找到的文件": [],
-            "未找到的文件": [],
-        }
-
-        with open(csv_path, "r", encoding="utf-8") as f:
-            csv_reader = csv.DictReader(f)
-
-            for row in csv_reader:
-                file_name = row.get("文件名称", "").strip()
-                file_type = row.get("类型", "").strip()
-                scan_time = row.get("扫描时间", "").strip()
-                sha256 = row.get("SHA256", "").strip()
-                detection = row.get("多引擎检出", "").strip()
-                threat_family = row.get("木马家族和类型", "").strip()
-                threat_level = row.get("威胁等级", "").strip()
-
-                if not file_name:
-                    continue
-
-                # 文件信息记录
-                file_info = {
-                    "文件名": file_name,
-                    "类型": file_type,
-                    "扫描时间": scan_time,
-                    "SHA256": sha256,
-                    "多引擎检出": detection,
-                    "木马家族": threat_family,
-                    "威胁等级": threat_level,
-                }
-
-                # 搜索文件
-                try:
-                    results = search_provider.search_files(
-                        query=file_name, max_results=max_results_per_file
-                    )
-                    if results:
-                        # 找到文件
-                        found_paths = [r.path for r in results]
-                        file_info["找到的路径"] = found_paths
-                        file_info["找到数量"] = len(found_paths)
-                        results_by_status["找到的文件"].append(file_info)
-                    else:
-                        # 未找到文件
-                        results_by_status["未找到的文件"].append(file_info)
-                except Exception as e:
-                    print(f"搜索文件 {file_name} 失败: {e}", file=sys.stderr)
-                    results_by_status["未找到的文件"].append(file_info)
-
-        # 格式化输出
-        output_lines = []
-        output_lines.append(f"威胁文件查询结果")
-        output_lines.append(f"CSV文件: {csv_path}")
-        output_lines.append("")
-
-        # 统计信息
-        total_files = len(results_by_status["找到的文件"]) + len(
-            results_by_status["未找到的文件"]
-        )
-        output_lines.append(f"统计信息:")
-        output_lines.append(f"  总文件数: {total_files}")
-        output_lines.append(
-            f"  ⚠️ 找到: {len(results_by_status['找到的文件'])}个（系统中存在威胁文件）"
-        )
-        output_lines.append(
-            f"  ✓ 未找到: {len(results_by_status['未找到的文件'])}个（系统安全）"
-        )
-        output_lines.append("")
-
-        # 找到的文件（高风险）
-        if results_by_status["找到的文件"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【⚠️ 系统中发现威胁文件】({len(results_by_status['找到的文件'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append("状态: 系统中存在威胁文件，建议立即处理")
-            output_lines.append("")
-            for file_info in results_by_status["找到的文件"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  威胁等级: {file_info['威胁等级']}")
-                output_lines.append(f"  木马家族: {file_info['木马家族']}")
-                output_lines.append(f"  多引擎检出: {file_info['多引擎检出']}")
-                output_lines.append(f"  找到数量: {file_info['找到数量']}个位置")
-                output_lines.append(f"  发现路径:")
-                for path in file_info["找到的路径"]:
-                    output_lines.append(f"    - {path}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
-                output_lines.append(f"  类型: {file_info['类型']}")
-                output_lines.append(f"  扫描时间: {file_info['扫描时间']}")
-                output_lines.append("")
-
-        # 未找到的文件（安全）
-        if results_by_status["未找到的文件"]:
-            output_lines.append("=" * 80)
-            output_lines.append(
-                f"【✓ 系统中未发现威胁文件】({len(results_by_status['未找到的文件'])}个)"
-            )
-            output_lines.append("=" * 80)
-            output_lines.append("状态: 这些威胁文件在系统中不存在，系统安全")
-            output_lines.append("")
-            for file_info in results_by_status["未找到的文件"]:
-                output_lines.append(f"  文件名: {file_info['文件名']}")
-                output_lines.append(f"  威胁等级: {file_info['威胁等级']}")
-                output_lines.append(f"  木马家族: {file_info['木马家族']}")
-                output_lines.append(f"  SHA256: {file_info['SHA256']}")
-                output_lines.append("")
 
         return "\n".join(output_lines)
 
@@ -661,24 +411,19 @@ Examples:
 - Modified: 修改时间（ISO格式）
 - Accessed: 访问时间（ISO格式）"""
 
-        # ============ Tool 2: query_malicious_release_files 描述 ============
-        malicious_file_description = """【工具描述】
-威胁情报专用工具 - 批量检查恶意释放文件清理程度。
-读取 IOC MCP 生成的 CSV 文件，分4层检查文件是否残留。
+        # ============ Tool 2: query_suspicious_items 描述 ============
+        suspicious_items_description = """【工具描述】
+威胁情报专用工具 - 批量查询可疑进程和文件路径。
+读取 IOC MCP 生成的 {target}_可疑进程和文件路径.csv 文件，
+提取可疑进程和可疑释放文件两列，去重后批量搜索系统中是否存在。
 
 【适用场景】
 仅用于威胁情报分析：
-✅ 评估恶意软件清理程度
-✅ 事件响应取证（验证IOC文件是否残留）
-✅ 威胁狩猎（批量检查已知恶意文件路径）
+✅ 事件响应取证（验证IOC中的可疑进程和文件是否残留）
+✅ 威胁狩猎（批量检查已知恶意进程和文件）
+✅ 评估恶意软件清理程度（查看残留项目）
 
 ❌ 日常文件查找请使用 search 工具
-
-【分层检查策略】
-- 第0层：文件本身（风险最高）
-- 第1层：上一层目录（风险中等）
-- 第2层：上两层目录（风险较低）
-- 第3层：全局搜索（可能被移动）
 
 【数据来源】
 CSV文件由 IOC MCP 自动生成：
@@ -686,44 +431,32 @@ CSV文件由 IOC MCP 自动生成：
 2. 自动生成 logs/ioc/{target}_可疑进程和文件路径.csv
 3. 将 CSV 路径传给本工具批量检查
 
-【Args 参数】
-- csv_file_path (str): CSV文件绝对路径（由IOC MCP生成）
-- max_search_depth (int): 最大搜索层数，0-5，默认2
+【CSV格式】
+CSV文件包含以下列：
+- 查询目标
+- 样本SHA256
+- 样本名称
+- 环境
+- 可疑进程（最后第二列，英文分号间隔）
+- 可疑释放文件（最后一列，英文分号间隔）
 
-【Return 返回值】
-分层统计报告，包含：
-- 统计信息（总数、找到数、未找到数）
-- 风险等级分类（高风险 → 无风险）
-- 每个文件详情（路径、SHA256、环境）"""
-
-        # ============ Tool 3: query_threat_files 描述 ============
-        threat_file_description = """【工具描述】
-威胁情报专用工具 - 批量检查威胁文件本身是否存在。
-读取 IOC MCP 生成的 CSV 文件，检查威胁文件是否在本机存在。
-
-【适用场景】
-仅用于威胁情报分析：
-✅ 检查已知威胁文件是否存在于系统中
-✅ 威胁狩猎（批量检查IOC文件列表）
-✅ 事件响应取证（验证恶意样本是否残留）
-
-❌ 日常文件查找请使用 search 工具
-
-【数据来源】
-CSV文件由 IOC MCP 自动生成：
-1. 先用 IOC MCP 查询 IP/域名威胁情报
-2. 自动生成 logs/ioc/{target}_相关样本列表.csv
-3. 将 CSV 路径传给本工具批量检查
+【处理逻辑】
+1. 读取CSV最后两列（可疑进程、可疑释放文件）
+2. 按英文分号分割，提取所有项目
+3. 去重处理
+4. 使用 Everything 搜索每个项目
+5. 分类输出：找到的项目（高风险）、未找到的项目（安全）
 
 【Args 参数】
 - csv_file_path (str): CSV文件绝对路径（由IOC MCP生成）
-- max_results_per_file (int): 每个文件最多返回结果数，1-20，默认5
+- max_results_per_item (int): 每个项目最多返回结果数，1-50，默认10
 
 【Return 返回值】
 查询结果报告，包含：
 - 统计信息（总数、找到数、未找到数）
-- 找到的威胁文件详情（文件名、路径、威胁等级、木马家族、SHA256）
-- 未找到的文件列表（系统安全）"""
+- 可疑进程搜索结果（进程名、发现路径、数量）
+- 可疑释放文件搜索结果（文件名、发现路径、数量）
+- 未找到的项目列表（系统安全）"""
 
         return [
             Tool(
@@ -732,56 +465,32 @@ CSV文件由 IOC MCP 自动生成：
                 inputSchema=UnifiedSearchQuery.get_schema_for_platform(),
             ),
             Tool(
-                name="query_malicious_release_files",
-                description=malicious_file_description,
-                inputSchema=MaliciousFileQuery.model_json_schema(),
-            ),
-            Tool(
-                name="query_threat_files",
-                description=threat_file_description,
-                inputSchema=ThreatFileQuery.model_json_schema(),
+                name="query_suspicious_items",
+                description=suspicious_items_description,
+                inputSchema=SuspiciousItemsQuery.model_json_schema(),
             ),
         ]
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict) -> List[TextContent]:
-        if name == "query_malicious_release_files":
-            # 处理恶意释放文件查询工具
+        if name == "query_suspicious_items":
+            # 处理可疑进程和文件路径查询工具
             try:
                 csv_path = arguments.get("csv_file_path")
-                max_search_depth = arguments.get("max_search_depth", 2)
+                max_results_per_item = arguments.get("max_results_per_item", 10)
 
                 if not csv_path:
                     raise ValueError("csv_file_path 是必需的参数")
 
-                result_text = query_malicious_files_from_csv(
+                result_text = query_suspicious_items_from_csv(
                     csv_path=csv_path,
                     search_provider=search_provider,
-                    max_search_depth=max_search_depth,
+                    max_results_per_item=max_results_per_item,
                 )
 
                 return [TextContent(type="text", text=result_text)]
             except Exception as e:
-                return [TextContent(type="text", text=f"恶意释放文件查询失败: {str(e)}")]
-
-        elif name == "query_threat_files":
-            # 处理威胁文件查询工具
-            try:
-                csv_path = arguments.get("csv_file_path")
-                max_results_per_file = arguments.get("max_results_per_file", 5)
-
-                if not csv_path:
-                    raise ValueError("csv_file_path 是必需的参数")
-
-                result_text = query_threat_files_from_csv(
-                    csv_path=csv_path,
-                    search_provider=search_provider,
-                    max_results_per_file=max_results_per_file,
-                )
-
-                return [TextContent(type="text", text=result_text)]
-            except Exception as e:
-                return [TextContent(type="text", text=f"威胁文件查询失败: {str(e)}")]
+                return [TextContent(type="text", text=f"可疑进程和文件查询失败: {str(e)}")]
 
         elif name == "search":
             # 处理标准搜索工具

@@ -1,0 +1,52 @@
+[2025-12-19 01:10:23] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 01:10:23] 调试模式: False
+[2025-12-19 01:10:23] 设备性能等级: 2
+[2025-12-19 02:36:28] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:36:28] 调试模式: False
+[2025-12-19 02:36:28] 设备性能等级: 2
+[2025-12-19 02:38:00] 正在尝试启动火绒: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:38:00] 应用程序已启动 (进程ID: 29548)。
+[2025-12-19 02:38:06] 检测是否在主界面...
+[2025-12-19 02:38:06] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\startup_check.png
+[2025-12-19 02:38:13] [SUCCESS] 当前已在主界面
+[2025-12-19 02:38:13] 火绒安全软件已启动，请确保火绒处于首页，否则后续可能执行失败。
+[2025-12-19 02:38:15] [0.55, 0.5]
+[2025-12-19 02:38:15] 正在定位元素: '快速查杀按钮' (相对位置: 0.55, 0.50)，时间限制为15秒...
+[2025-12-19 02:38:15] 找到 '快速查杀按钮'，绝对坐标: (1341, 684)
+[2025-12-19 02:38:15] 窗口信息: 位置(665, 279), 大小 1230x810
+[2025-12-19 02:38:16] 成功点击 '快速查杀按钮' 在坐标: (1341, 684)
+[2025-12-19 02:38:16] 点击快速查杀按钮成功。
+[2025-12-19 02:38:18] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\scan_check.png
+[2025-12-19 02:38:22] 检测到'暂停'字符，说明正在执行快速查杀。截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\scan_check.png
+[2025-12-19 02:38:22] 开始监控查杀进度，每15秒检测一次...
+[2025-12-19 02:38:22] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\scan_progress.png
+[2025-12-19 02:38:33] [0s] 继续等待查杀完成...
+[2025-12-19 02:38:37] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\scan_progress.png
+[2025-12-19 02:38:46] [15s] 继续等待查杀完成...
+[2025-12-19 02:38:53] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\scan_progress.png
+[2025-12-19 02:39:01] [30s] 继续等待查杀完成...
+[2025-12-19 02:39:08] 截图已保存到: D:\MCPSecTrace\src\mcpsectrace\mcp_servers\artifacts\huorong\scan_progress.png
+[2025-12-19 02:39:12] 检测到'完成'字符，说明查杀已完成。耗时: 46秒
+[2025-12-19 02:39:12] 正在定位元素: '完成按钮' (相对位置: 0.92, 0.12)，时间限制为15秒...
+[2025-12-19 02:39:12] 找到 '完成按钮'，绝对坐标: (1796, 376)
+[2025-12-19 02:39:12] 窗口信息: 位置(665, 279), 大小 1230x810
+[2025-12-19 02:39:13] 成功点击 '完成按钮' 在坐标: (1796, 376)
+[2025-12-19 02:39:13] 已经返回首页。
+[2025-12-19 02:49:47] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:49:47] 调试模式: False
+[2025-12-19 02:49:47] 设备性能等级: 2
+[2025-12-19 02:49:50] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:49:50] 调试模式: False
+[2025-12-19 02:49:50] 设备性能等级: 2
+[2025-12-19 02:51:53] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:51:53] 调试模式: False
+[2025-12-19 02:51:53] 设备性能等级: 2
+[2025-12-19 02:51:59] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:51:59] 调试模式: False
+[2025-12-19 02:51:59] 设备性能等级: 2
+[2025-12-19 02:54:34] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:54:34] 调试模式: False
+[2025-12-19 02:54:34] 设备性能等级: 2
+[2025-12-19 02:54:39] 已从配置文件加载火绒路径: C:\Program Files (x86)\Huorong\ESEndpoint\bin\HipsMain.exe
+[2025-12-19 02:54:39] 调试模式: False
+[2025-12-19 02:54:39] 设备性能等级: 2

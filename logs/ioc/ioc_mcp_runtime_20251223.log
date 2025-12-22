@@ -1,0 +1,174 @@
+2025-12-23 00:48:12,773 - DEBUG - Initializing server 'ioc'
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for ListToolsRequest
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for CallToolRequest
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for ListResourcesRequest
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for ReadResourceRequest
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for PromptListRequest
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for GetPromptRequest
+2025-12-23 00:48:12,773 - DEBUG - Registering handler for ListResourceTemplatesRequest
+2025-12-23 00:48:12,778 - DEBUG - Skipping Selenium Manager; path to chrome driver specified in Service class: D:\MCPTools\chromedriver-win64\chromedriver.exe
+2025-12-23 00:48:12,788 - DEBUG - Started executable: `D:\MCPTools\chromedriver-win64\chromedriver.exe` in a child process with pid: 233632 using 0 to output -3
+2025-12-23 00:48:13,309 - DEBUG - POST http://localhost:59736/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': <PageLoadStrategy.normal: 'normal'>, 'goog:chromeOptions': {'extensions': [], 'binary': 'D:\\MCPTools\\chrome-win64\\chrome.exe', 'args': ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-extensions', '--disable-infobars', '--disable-notifications', '--user-data-dir=C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data']}}}}
+2025-12-23 00:48:13,309 - DEBUG - Starting new HTTP connection (1): localhost:59736
+2025-12-23 00:48:13,538 - DEBUG - Initializing server 'ioc'
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for ListToolsRequest
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for CallToolRequest
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for ListResourcesRequest
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for ReadResourceRequest
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for PromptListRequest
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for GetPromptRequest
+2025-12-23 00:48:13,538 - DEBUG - Registering handler for ListResourceTemplatesRequest
+2025-12-23 00:48:13,544 - DEBUG - Skipping Selenium Manager; path to chrome driver specified in Service class: D:\MCPTools\chromedriver-win64\chromedriver.exe
+2025-12-23 00:48:13,559 - DEBUG - Started executable: `D:\MCPTools\chromedriver-win64\chromedriver.exe` in a child process with pid: 14776 using 0 to output -3
+2025-12-23 00:48:13,839 - DEBUG - http://localhost:59736 "POST /session HTTP/1.1" 200 0
+2025-12-23 00:48:13,839 - DEBUG - Remote response: status=200 | data={"value":{"capabilities":{"acceptInsecureCerts":false,"browserName":"chrome","browserVersion":"139.0.7258.5","chrome":{"chromedriverVersion":"139.0.7258.5 (fbf9452ec20f078528f7056a9b48d1f97a37fbd6-refs/branch-heads/7258@{#13})","userDataDir":"C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data"},"fedcm:accounts":true,"goog:chromeOptions":{"debuggerAddress":"localhost:59741"},"networkConnectionEnabled":false,"pageLoadStrategy":"normal","platformName":"windows","proxy":{},"setWindowRect":true,"strictFileInteractability":false,"timeouts":{"implicit":0,"pageLoad":300000,"script":30000},"unhandledPromptBehavior":"dismiss and notify","webauthn:extension:credBlob":true,"webauthn:extension:largeBlob":true,"webauthn:extension:minPinLength":true,"webauthn:extension:prf":true,"webauthn:virtualAuthenticators":true},"sessionId":"d907cf24bb3d6a7a8918b1a5998a7d9a"}} | headers=HTTPHeaderDict({'Content-Length': '882', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:13,839 - DEBUG - Finished Request
+2025-12-23 00:48:13,839 - DEBUG - POST http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a/window/rect {'x': None, 'y': None, 'width': 1920, 'height': 1200}
+2025-12-23 00:48:14,095 - DEBUG - POST http://localhost:59743/session {'capabilities': {'firstMatch': [{}], 'alwaysMatch': {'browserName': 'chrome', 'pageLoadStrategy': <PageLoadStrategy.normal: 'normal'>, 'goog:chromeOptions': {'extensions': [], 'binary': 'D:\\MCPTools\\chrome-win64\\chrome.exe', 'args': ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-extensions', '--disable-infobars', '--disable-notifications', '--user-data-dir=C:\\Users\\User\\AppData\\Local\\Google\\Chrome for Testing\\User Data']}}}}
+2025-12-23 00:48:14,095 - DEBUG - Starting new HTTP connection (1): localhost:59743
+2025-12-23 00:48:14,204 - DEBUG - http://localhost:59736 "POST /session/d907cf24bb3d6a7a8918b1a5998a7d9a/window/rect HTTP/1.1" 200 0
+2025-12-23 00:48:14,205 - DEBUG - Remote response: status=200 | data={"value":{"height":978,"width":1724,"x":-288,"y":90}} | headers=HTTPHeaderDict({'Content-Length': '53', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:14,205 - DEBUG - Finished Request
+2025-12-23 00:48:14,205 - INFO - 正在访问: https://x.threatbook.com/v5/domain/fget-career.com
+2025-12-23 00:48:14,205 - DEBUG - POST http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a/url {'url': 'https://x.threatbook.com/v5/domain/fget-career.com'}
+2025-12-23 00:48:14,251 - DEBUG - http://localhost:59743 "POST /session HTTP/1.1" 500 0
+2025-12-23 00:48:14,251 - DEBUG - Remote response: status=500 | data={"value":{"error":"session not created","message":"session not created: Chrome failed to start: crashed.\n  (session not created: DevToolsActivePort file doesn't exist)\n  (The process started from chrome location D:\\MCPTools\\chrome-win64\\chrome.exe is no longer running, so ChromeDriver is assuming that Chrome has crashed.)","stacktrace":"\tGetHandleVerifier [0x0x7ff75af30c95+79605]\n\tGetHandleVerifier [0x0x7ff75af30cf0+79696]\n\t(No symbol) [0x0x7ff75accc20a]\n\t(No symbol) [0x0x7ff75ad0b2fc]\n\t(No symbol) [0x0x7ff75ad05005]\n\t(No symbol) [0x0x7ff75ad588ee]\n\t(No symbol) [0x0x7ff75ad58080]\n\t(No symbol) [0x0x7ff75ad4abc3]\n\t(No symbol) [0x0x7ff75ad13de1]\n\t(No symbol) [0x0x7ff75ad14b73]\n\tGetHandleVerifier [0x0x7ff75b1f307d+2972381]\n\tGetHandleVerifier [0x0x7ff75b1ed3cd+2948653]\n\tGetHandleVerifier [0x0x7ff75b20c1ad+3075085]\n\tGetHandleVerifier [0x0x7ff75af4a77e+184798]\n\tGetHandleVerifier [0x0x7ff75af5264f+217263]\n\tGetHandleVerifier [0x0x7ff75af393e4+114244]\n\tGetHandleVerifier [0x0x7ff75af39599+114681]\n\tGetHandleVerifier [0x0x7ff75af20078+10968]\n\tBaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]\n\tRtlUserThreadStart [0x0x7ffe1f42c53c+44]\n"}} | headers=HTTPHeaderDict({'Content-Length': '1178', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:14,251 - DEBUG - Finished Request
+2025-12-23 00:48:15,066 - DEBUG - http://localhost:59736 "POST /session/d907cf24bb3d6a7a8918b1a5998a7d9a/url HTTP/1.1" 200 0
+2025-12-23 00:48:15,066 - DEBUG - Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:15,066 - DEBUG - Finished Request
+2025-12-23 00:48:15,066 - INFO - 页面加载中，请等待 10 秒...
+2025-12-23 00:48:16,332 - INFO - 
+❌ 分析过程中出现错误: Message: session not created: Chrome failed to start: crashed.
+  (session not created: DevToolsActivePort file doesn't exist)
+  (The process started from chrome location D:\MCPTools\chrome-win64\chrome.exe is no longer running, so ChromeDriver is assuming that Chrome has crashed.); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#sessionnotcreatedexception
+Stacktrace:
+	GetHandleVerifier [0x0x7ff75af30c95+79605]
+	GetHandleVerifier [0x0x7ff75af30cf0+79696]
+	(No symbol) [0x0x7ff75accc20a]
+	(No symbol) [0x0x7ff75ad0b2fc]
+	(No symbol) [0x0x7ff75ad05005]
+	(No symbol) [0x0x7ff75ad588ee]
+	(No symbol) [0x0x7ff75ad58080]
+	(No symbol) [0x0x7ff75ad4abc3]
+	(No symbol) [0x0x7ff75ad13de1]
+	(No symbol) [0x0x7ff75ad14b73]
+	GetHandleVerifier [0x0x7ff75b1f307d+2972381]
+	GetHandleVerifier [0x0x7ff75b1ed3cd+2948653]
+	GetHandleVerifier [0x0x7ff75b20c1ad+3075085]
+	GetHandleVerifier [0x0x7ff75af4a77e+184798]
+	GetHandleVerifier [0x0x7ff75af5264f+217263]
+	GetHandleVerifier [0x0x7ff75af393e4+114244]
+	GetHandleVerifier [0x0x7ff75af39599+114681]
+	GetHandleVerifier [0x0x7ff75af20078+10968]
+	BaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]
+	RtlUserThreadStart [0x0x7ffe1f42c53c+44]
+
+2025-12-23 00:48:25,066 - DEBUG - POST http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a/element {'using': 'css selector', 'value': '.summary-top'}
+2025-12-23 00:48:25,067 - DEBUG - http://localhost:59736 "POST /session/d907cf24bb3d6a7a8918b1a5998a7d9a/element HTTP/1.1" 404 0
+2025-12-23 00:48:25,067 - DEBUG - Remote response: status=404 | data={"value":{"error":"invalid session id","message":"invalid session id: session deleted as the browser has closed the connection\nfrom disconnected: not connected to DevTools\n  (Session info: chrome=139.0.7258.5)","stacktrace":"\tGetHandleVerifier [0x0x7ff75af30c95+79605]\n\tGetHandleVerifier [0x0x7ff75af30cf0+79696]\n\t(No symbol) [0x0x7ff75accc20a]\n\t(No symbol) [0x0x7ff75acb8345]\n\t(No symbol) [0x0x7ff75acdd024]\n\t(No symbol) [0x0x7ff75ad524e5]\n\t(No symbol) [0x0x7ff75ad7294d]\n\t(No symbol) [0x0x7ff75ad4abc3]\n\t(No symbol) [0x0x7ff75ad13de1]\n\t(No symbol) [0x0x7ff75ad14b73]\n\tGetHandleVerifier [0x0x7ff75b1f307d+2972381]\n\tGetHandleVerifier [0x0x7ff75b1ed3cd+2948653]\n\tGetHandleVerifier [0x0x7ff75b20c1ad+3075085]\n\tGetHandleVerifier [0x0x7ff75af4a77e+184798]\n\tGetHandleVerifier [0x0x7ff75af5264f+217263]\n\tGetHandleVerifier [0x0x7ff75af393e4+114244]\n\tGetHandleVerifier [0x0x7ff75af39599+114681]\n\tGetHandleVerifier [0x0x7ff75af20078+10968]\n\tBaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]\n\tRtlUserThreadStart [0x0x7ffe1f42c53c+44]\n"}} | headers=HTTPHeaderDict({'Content-Length': '1061', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:25,067 - DEBUG - Finished Request
+2025-12-23 00:48:25,067 - INFO - 截取元素 summary-top 时出错: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=139.0.7258.5); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	GetHandleVerifier [0x0x7ff75af30c95+79605]
+	GetHandleVerifier [0x0x7ff75af30cf0+79696]
+	(No symbol) [0x0x7ff75accc20a]
+	(No symbol) [0x0x7ff75acb8345]
+	(No symbol) [0x0x7ff75acdd024]
+	(No symbol) [0x0x7ff75ad524e5]
+	(No symbol) [0x0x7ff75ad7294d]
+	(No symbol) [0x0x7ff75ad4abc3]
+	(No symbol) [0x0x7ff75ad13de1]
+	(No symbol) [0x0x7ff75ad14b73]
+	GetHandleVerifier [0x0x7ff75b1f307d+2972381]
+	GetHandleVerifier [0x0x7ff75b1ed3cd+2948653]
+	GetHandleVerifier [0x0x7ff75b20c1ad+3075085]
+	GetHandleVerifier [0x0x7ff75af4a77e+184798]
+	GetHandleVerifier [0x0x7ff75af5264f+217263]
+	GetHandleVerifier [0x0x7ff75af393e4+114244]
+	GetHandleVerifier [0x0x7ff75af39599+114681]
+	GetHandleVerifier [0x0x7ff75af20078+10968]
+	BaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]
+	RtlUserThreadStart [0x0x7ffe1f42c53c+44]
+
+2025-12-23 00:48:25,067 - DEBUG - POST http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a/element {'using': 'css selector', 'value': '.result-intelInsight_con'}
+2025-12-23 00:48:25,067 - DEBUG - http://localhost:59736 "POST /session/d907cf24bb3d6a7a8918b1a5998a7d9a/element HTTP/1.1" 404 0
+2025-12-23 00:48:25,068 - DEBUG - Remote response: status=404 | data={"value":{"error":"invalid session id","message":"invalid session id","stacktrace":"\tGetHandleVerifier [0x0x7ff75af30c95+79605]\n\tGetHandleVerifier [0x0x7ff75af30cf0+79696]\n\t(No symbol) [0x0x7ff75accc03c]\n\t(No symbol) [0x0x7ff75ad12f0f]\n\t(No symbol) [0x0x7ff75ad4acb2]\n\t(No symbol) [0x0x7ff75ad457c3]\n\t(No symbol) [0x0x7ff75ad44889]\n\t(No symbol) [0x0x7ff75ac96fd5]\n\tGetHandleVerifier [0x0x7ff75b1f307d+2972381]\n\tGetHandleVerifier [0x0x7ff75b1ed3cd+2948653]\n\tGetHandleVerifier [0x0x7ff75b20c1ad+3075085]\n\tGetHandleVerifier [0x0x7ff75af4a77e+184798]\n\tGetHandleVerifier [0x0x7ff75af5264f+217263]\n\t(No symbol) [0x0x7ff75ac95fd1]\n\tGetHandleVerifier [0x0x7ff75b3106e8+4141384]\n\tBaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]\n\tRtlUserThreadStart [0x0x7ffe1f42c53c+44]\n"}} | headers=HTTPHeaderDict({'Content-Length': '792', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:25,068 - DEBUG - Finished Request
+2025-12-23 00:48:25,068 - INFO - 截取元素 result-intelInsight_con 时出错: Message: invalid session id; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	GetHandleVerifier [0x0x7ff75af30c95+79605]
+	GetHandleVerifier [0x0x7ff75af30cf0+79696]
+	(No symbol) [0x0x7ff75accc03c]
+	(No symbol) [0x0x7ff75ad12f0f]
+	(No symbol) [0x0x7ff75ad4acb2]
+	(No symbol) [0x0x7ff75ad457c3]
+	(No symbol) [0x0x7ff75ad44889]
+	(No symbol) [0x0x7ff75ac96fd5]
+	GetHandleVerifier [0x0x7ff75b1f307d+2972381]
+	GetHandleVerifier [0x0x7ff75b1ed3cd+2948653]
+	GetHandleVerifier [0x0x7ff75b20c1ad+3075085]
+	GetHandleVerifier [0x0x7ff75af4a77e+184798]
+	GetHandleVerifier [0x0x7ff75af5264f+217263]
+	(No symbol) [0x0x7ff75ac95fd1]
+	GetHandleVerifier [0x0x7ff75b3106e8+4141384]
+	BaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]
+	RtlUserThreadStart [0x0x7ffe1f42c53c+44]
+
+2025-12-23 00:48:25,068 - DEBUG - POST http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a/element {'using': 'css selector', 'value': '.ant-collapse.ant-collapse-icon-position-start.ant-collapse-ghost'}
+2025-12-23 00:48:25,068 - DEBUG - http://localhost:59736 "POST /session/d907cf24bb3d6a7a8918b1a5998a7d9a/element HTTP/1.1" 404 0
+2025-12-23 00:48:25,068 - DEBUG - Remote response: status=404 | data={"value":{"error":"invalid session id","message":"invalid session id","stacktrace":"\tGetHandleVerifier [0x0x7ff75af30c95+79605]\n\tGetHandleVerifier [0x0x7ff75af30cf0+79696]\n\t(No symbol) [0x0x7ff75accc03c]\n\t(No symbol) [0x0x7ff75ad12f0f]\n\t(No symbol) [0x0x7ff75ad4acb2]\n\t(No symbol) [0x0x7ff75ad457c3]\n\t(No symbol) [0x0x7ff75ad44889]\n\t(No symbol) [0x0x7ff75ac96fd5]\n\tGetHandleVerifier [0x0x7ff75b1f307d+2972381]\n\tGetHandleVerifier [0x0x7ff75b1ed3cd+2948653]\n\tGetHandleVerifier [0x0x7ff75b20c1ad+3075085]\n\tGetHandleVerifier [0x0x7ff75af4a77e+184798]\n\tGetHandleVerifier [0x0x7ff75af5264f+217263]\n\t(No symbol) [0x0x7ff75ac95fd1]\n\tGetHandleVerifier [0x0x7ff75b3106e8+4141384]\n\tBaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]\n\tRtlUserThreadStart [0x0x7ffe1f42c53c+44]\n"}} | headers=HTTPHeaderDict({'Content-Length': '792', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:25,068 - DEBUG - Finished Request
+2025-12-23 00:48:25,068 - INFO - 展开威胁面板时出错: Message: invalid session id; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	GetHandleVerifier [0x0x7ff75af30c95+79605]
+	GetHandleVerifier [0x0x7ff75af30cf0+79696]
+	(No symbol) [0x0x7ff75accc03c]
+	(No symbol) [0x0x7ff75ad12f0f]
+	(No symbol) [0x0x7ff75ad4acb2]
+	(No symbol) [0x0x7ff75ad457c3]
+	(No symbol) [0x0x7ff75ad44889]
+	(No symbol) [0x0x7ff75ac96fd5]
+	GetHandleVerifier [0x0x7ff75b1f307d+2972381]
+	GetHandleVerifier [0x0x7ff75b1ed3cd+2948653]
+	GetHandleVerifier [0x0x7ff75b20c1ad+3075085]
+	GetHandleVerifier [0x0x7ff75af4a77e+184798]
+	GetHandleVerifier [0x0x7ff75af5264f+217263]
+	(No symbol) [0x0x7ff75ac95fd1]
+	GetHandleVerifier [0x0x7ff75b3106e8+4141384]
+	BaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]
+	RtlUserThreadStart [0x0x7ffe1f42c53c+44]
+
+2025-12-23 00:48:25,068 - DEBUG - POST http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a/element {'using': 'xpath', 'value': '/html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]'}
+2025-12-23 00:48:25,069 - DEBUG - http://localhost:59736 "POST /session/d907cf24bb3d6a7a8918b1a5998a7d9a/element HTTP/1.1" 404 0
+2025-12-23 00:48:25,069 - DEBUG - Remote response: status=404 | data={"value":{"error":"invalid session id","message":"invalid session id","stacktrace":"\tGetHandleVerifier [0x0x7ff75af30c95+79605]\n\tGetHandleVerifier [0x0x7ff75af30cf0+79696]\n\t(No symbol) [0x0x7ff75accc03c]\n\t(No symbol) [0x0x7ff75ad12f0f]\n\t(No symbol) [0x0x7ff75ad4acb2]\n\t(No symbol) [0x0x7ff75ad457c3]\n\t(No symbol) [0x0x7ff75ad44889]\n\t(No symbol) [0x0x7ff75ac96fd5]\n\tGetHandleVerifier [0x0x7ff75b1f307d+2972381]\n\tGetHandleVerifier [0x0x7ff75b1ed3cd+2948653]\n\tGetHandleVerifier [0x0x7ff75b20c1ad+3075085]\n\tGetHandleVerifier [0x0x7ff75af4a77e+184798]\n\tGetHandleVerifier [0x0x7ff75af5264f+217263]\n\t(No symbol) [0x0x7ff75ac95fd1]\n\tGetHandleVerifier [0x0x7ff75b3106e8+4141384]\n\tBaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]\n\tRtlUserThreadStart [0x0x7ffe1f42c53c+44]\n"}} | headers=HTTPHeaderDict({'Content-Length': '792', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:25,069 - DEBUG - Finished Request
+2025-12-23 00:48:25,069 - INFO - 点击XPath元素失败 /html/body/div[1]/div[1]/main/div[1]/div/div[3]/div/div[1]/div/div/div/ul/li[8]: Message: invalid session id; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#invalidsessionidexception
+Stacktrace:
+	GetHandleVerifier [0x0x7ff75af30c95+79605]
+	GetHandleVerifier [0x0x7ff75af30cf0+79696]
+	(No symbol) [0x0x7ff75accc03c]
+	(No symbol) [0x0x7ff75ad12f0f]
+	(No symbol) [0x0x7ff75ad4acb2]
+	(No symbol) [0x0x7ff75ad457c3]
+	(No symbol) [0x0x7ff75ad44889]
+	(No symbol) [0x0x7ff75ac96fd5]
+	GetHandleVerifier [0x0x7ff75b1f307d+2972381]
+	GetHandleVerifier [0x0x7ff75b1ed3cd+2948653]
+	GetHandleVerifier [0x0x7ff75b20c1ad+3075085]
+	GetHandleVerifier [0x0x7ff75af4a77e+184798]
+	GetHandleVerifier [0x0x7ff75af5264f+217263]
+	(No symbol) [0x0x7ff75ac95fd1]
+	GetHandleVerifier [0x0x7ff75b3106e8+4141384]
+	BaseThreadInitThunk [0x0x7ffe1e7fe8d7+23]
+	RtlUserThreadStart [0x0x7ffe1f42c53c+44]
+
+2025-12-23 00:48:25,069 - INFO - 点击目标元素失败
+2025-12-23 00:48:25,069 - INFO - 
+✅ 报告已生成: ./logs/ioc\fget-career.com_domain_threat_report.md
+2025-12-23 00:48:25,069 - DEBUG - DELETE http://localhost:59736/session/d907cf24bb3d6a7a8918b1a5998a7d9a {}
+2025-12-23 00:48:25,070 - DEBUG - http://localhost:59736 "DELETE /session/d907cf24bb3d6a7a8918b1a5998a7d9a HTTP/1.1" 200 0
+2025-12-23 00:48:25,070 - DEBUG - Remote response: status=200 | data={"value":null} | headers=HTTPHeaderDict({'Content-Length': '14', 'Content-Type': 'application/json; charset=utf-8', 'cache-control': 'no-cache'})
+2025-12-23 00:48:25,070 - DEBUG - Finished Request

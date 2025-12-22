@@ -1,7 +1,7 @@
 # DOMAIN 威胁分析报告
 
 **目标**: xiaoshihou.name  
-**查询时间**: 2025-12-05 01:32:02  
+**查询时间**: 2025-12-18 16:31:07  
 **数据来源**: 微步在线威胁情报平台
 
 ---
@@ -9,6 +9,8 @@
 ## 基本信息
 ![基本信息](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/xiaoshihou.name_summary_top.png)
 
+## 情报洞察
+暂时未找到情报洞察元素
 
 ---
 
@@ -25,17 +27,18 @@
 
 ## 相关样本
 
-**相关样本数量**: 5
+**相关样本数量**: 6
 
 📝 由于数量限制，我们只获取第一页的内容。
 
 | 文件名称 | 类型 | 扫描时间 | SHA256 | 多引擎检出 | 木马家族和类型 | 威胁等级 |
 | --- | --- | --- | --- | --- | --- | --- |
-| cy5YCBff.zip | Zip | 2025-12-05 13:00:54 | fead24d8cf10610d6a22e1071cd8799fdf7a099128daa19ac1ec22a9335d9e0b | 3 / 28 | Agent木马 | 恶意 |
-| cz51N0i7.zip | Zip | 2025-12-07 00:46:56 | ffa7421cba22cd969f44de31565cb7da756c6c6221e6b2319ce0e0d6a4ae4089 | 4 / 28 | Agent木马 | 恶意 |
-| EfmwdZdb.rar | RAR | 2025-12-07 00:47:12 | 5936459216b868c3bc8a2bc53da0685ffd248dc0c88151d2ad21a5e2060ffa2e | 4 / 28 | Agent木马 | 恶意 |
-| dayinjiDriveinstalil.exe | EXEx86 | 2025-12-05 15:55:42 | c09416d5993cedf0b282b86f32dc8c3177e05b30772edf22c07690d1b469828a | 1 / 28 | MalGeneric恶意软件 | 恶意 |
-| PGErJ987.zip | Zip | 2025-12-07 00:47:44 | bfab031b62decc0092bba81b78bc6dbc0fa9a99401ee987700f2d3b00400afa6 | 4 / 28 | Agent木马 | 恶意 |
+| 3.zip | Zip | 2025-12-18 16:14:16 | 4140091e202a8bd02c8a3a771f92dbf6e5d776824b522e33f9b4d7defa3f3cdf | 4 / 25 | Agent木马 | 恶意 |
+| cy5YCBff.zip | Zip | 2025-12-18 16:14:35 | fead24d8cf10610d6a22e1071cd8799fdf7a099128daa19ac1ec22a9335d9e0b | 4 / 25 | Agent木马 | 恶意 |
+| cz51N0i7.zip | Zip | 2025-12-18 16:14:50 | ffa7421cba22cd969f44de31565cb7da756c6c6221e6b2319ce0e0d6a4ae4089 | 4 / 28 | Agent木马 | 恶意 |
+| EfmwdZdb.rar | RAR | 2025-12-18 16:15:06 | 5936459216b868c3bc8a2bc53da0685ffd248dc0c88151d2ad21a5e2060ffa2e | 4 / 25 | Agent木马 | 恶意 |
+| dayinjiDriveinstalil.exe | EXEx86 | 2025-12-18 16:15:21 | c09416d5993cedf0b282b86f32dc8c3177e05b30772edf22c07690d1b469828a | 0 / 25 | MalGeneric | 恶意 |
+| PGErJ987.zip | Zip | 2025-12-18 16:15:39 | bfab031b62decc0092bba81b78bc6dbc0fa9a99401ee987700f2d3b00400afa6 | 4 / 25 | Agent木马 | 恶意 |
 
 
 💾 详细数据已保存为CSV文件: `xiaoshihou.name_threat_data.csv`
@@ -46,26 +49,45 @@
 ## 样本常见释放路径分析
 
 
+### SHA256: 4140091e202a8bd02c8a3a771f92dbf6e5d776824b522e33f9b4d7defa3f3cdf
+
+![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_4140091e202a8bd0_report.png)
+
+#### Win10(1903 64bit,Office2016)环境下常见释放路径
+
+暂时没有文件的常见释放路径
+
+#### Win7(64bit,Office2013)环境下常见释放路径
+
+暂时没有文件的常见释放路径
+
+
 ### SHA256: fead24d8cf10610d6a22e1071cd8799fdf7a099128daa19ac1ec22a9335d9e0b
 
 ![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_fead24d8cf10610d_report.png)
 
 #### Win10(1903 64bit,Office2016)环境下常见释放路径
-无
+
+暂时没有文件的常见释放路径
+
 
 ### SHA256: ffa7421cba22cd969f44de31565cb7da756c6c6221e6b2319ce0e0d6a4ae4089
 
 ![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_ffa7421cba22cd96_report.png)
 
 #### Win10(1903 64bit,Office2016)环境下常见释放路径
-无
+
+暂时没有文件的常见释放路径
+
 
 ### SHA256: 5936459216b868c3bc8a2bc53da0685ffd248dc0c88151d2ad21a5e2060ffa2e
 
 ![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_5936459216b868c3_report.png)
 
 #### Win10(1903 64bit,Office2016)环境下常见释放路径
-无
+
+暂时没有文件的常见释放路径
+
 
 ### SHA256: c09416d5993cedf0b282b86f32dc8c3177e05b30772edf22c07690d1b469828a
 
@@ -124,4 +146,6 @@ SHA256：
 ![样本报告](../../src/mcpsectrace/mcp_servers/artifacts/ioc/ioc_pic/sample_bfab031b62decc00_report.png)
 
 #### Win10(1903 64bit,Office2016)环境下常见释放路径
-无
+
+暂时没有文件的常见释放路径
+

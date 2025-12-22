@@ -2,7 +2,7 @@
 项目压缩脚本
 
 功能：
-- 将 D:\MCPSecTrace 压缩为 D:\MCPSecTrace.zip（排除 .venv 目录）
+- 将 D:\MCPSecTrace 压缩为 D:\MCPSecTrace.zip（包含 .venv 目录）
 - 将 D:\MCPTools 压缩为 D:\MCPTools.zip
 """
 import io
@@ -111,12 +111,12 @@ def main():
         {
             "source": r"D:\MCPSecTrace",
             "output": r"D:\MCPSecTrace.zip",
-            "exclude": [".venv", "__pycache__", ".pytest_cache", ".git", "node_modules"]
+            "exclude": ["__pycache__", ".pytest_cache", ".git", "node_modules"]
         },
         {
             "source": r"D:\MCPTools",
             "output": r"D:\MCPTools.zip",
-            "exclude": ["__pycache__", ".pytest_cache", ".git", "node_modules"]
+            "exclude": []  # MCPTools 不排除任何目录，全部压缩
         }
     ]
 

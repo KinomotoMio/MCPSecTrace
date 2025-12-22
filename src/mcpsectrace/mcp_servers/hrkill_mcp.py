@@ -480,7 +480,7 @@ def scan_virus():
             )
             if return_pos:
                 click_image_at_location(return_pos, description="返回主页按钮")
-                time.sleep(get_sleep_time("medium"))
+                time.sleep(get_sleep_time("long"))
             else:
                 debug_print("[WARN] 未找到返回主页按钮位置，尝试继续")
 

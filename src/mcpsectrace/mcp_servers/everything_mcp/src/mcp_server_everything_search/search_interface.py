@@ -202,7 +202,7 @@ class WindowsSearchProvider(SearchProvider):
 
         dll_path = os.getenv(
             "EVERYTHING_SDK_PATH",
-            "D:\\dev\\tools\\Everything-SDK\\dll\\Everything64.dll",
+            "D:\\MCPTools\\Everything\\Everything-SDK\\dll\\Everything64.dll",
         )
         self.everything_sdk = EverythingSDK(dll_path)
 
@@ -220,6 +220,10 @@ class WindowsSearchProvider(SearchProvider):
         query = query.replace("\\\\", "\\")
         # 如果查询包含正斜杠，将其替换为反斜杠
         query = query.replace("/", "\\")
+
+        # 如果 sort_by 为 None，使用默认值 1 (按名称升序)
+        if sort_by is None:
+            sort_by = 1
 
         return self.everything_sdk.search_files(
             query=query,
