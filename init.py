@@ -228,7 +228,7 @@ def configure_tool_paths(mcp_sectrace_dir):
     2. 启动 Everything 服务
     3. 使用 Everything SDK 自动搜索并填写 user_settings.toml 中的工具路径
     """
-    print("[Step 5] 配置工具路径...")
+    print("[Step 7] 配置工具路径...")
 
     try:
         # 检查 tomlkit 是否可用
@@ -455,7 +455,7 @@ def configure_browser_login(mcp_sectrace_dir):
     2. 打开浏览器访问 x.threatbook.com
     3. 提示用户登录微步网站
     """
-    print("[Step 7] 配置浏览器并引导微步登录...")
+    print("[Step 5] 配置浏览器并引导微步登录...")
 
     try:
         # 检查 tomlkit 是否可用
@@ -606,8 +606,9 @@ def configure_workflow(mcp_sectrace_dir):
 def configure_mcp_tools(mcp_sectrace_dir):
     """
     配置 MCPTools：
-    将 mcpsetting.json 复制到 Cline 的配置目录，
-    命名为 cline_mcp_settings.json（覆盖现有文件）
+    1. 将 mcpsetting.json 复制到 Cline 的配置目录
+    2. 启动并关闭 VSCode 以初始化配置
+    3. 修改 state.vscdb 中的 Cline 配置
     """
     print("[Step 3] 配置 MCPTools...")
 
@@ -636,6 +637,108 @@ def configure_mcp_tools(mcp_sectrace_dir):
         print(f"复制: {source_file}")
         print(f"到: {target_file}")
         shutil.copy2(source_file, target_file)
+        print(f"[SUCCESS] MCP 配置文件复制完成。")
+
+        # 启动 VSCode 以初始化配置（以管理员身份）
+        print("\n初始化 VSCode 配置...")
+        vscode_exe = mcp_sectrace_dir.parent / "MCPTools" / "VSCode" / "Code.exe"
+
+        if not vscode_exe.exists():
+            print(f"[WARN] VSCode 未找到: {vscode_exe}")
+            print("[INFO] 跳过 VSCode 初始化，请手动启动一次 VSCode")
+        else:
+            try:
+                import time
+
+                print(f"启动 VSCode: {vscode_exe}")
+                # 使用 Popen 启动 VSCode，这样可以获取进程对象
+                vscode_process = subprocess.Popen(
+                    [str(vscode_exe)],
+                    cwd=str(vscode_exe.parent),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+
+                print("[SUCCESS] VSCode 已启动")
+                # 等待 VSCode 初始化
+                print("等待 VSCode 初始化 (5秒)...")
+                time.sleep(5)
+
+                # 使用 terminate() 温和地关闭 VSCode
+                print("关闭 VSCode...")
+                vscode_process.terminate()
+
+                # 等待进程退出，最多等待 5 秒
+                try:
+                    vscode_process.wait(timeout=5)
+                    print("[SUCCESS] VSCode 已关闭")
+                except subprocess.TimeoutExpired:
+                    # 如果超时，强制杀掉
+                    print("[INFO] VSCode 未响应，强制关闭...")
+                    vscode_process.kill()
+                    vscode_process.wait()
+                    print("[SUCCESS] VSCode 已强制关闭")
+
+                # 额外等待确保完全退出
+                time.sleep(2)
+
+            except Exception as e:
+                print(f"[WARN] VSCode 初始化失败: {e}")
+                print("[INFO] 请手动启动一次 VSCode 后再运行初始化")
+
+        # 修改 state.vscdb 中的 Cline 配置
+        print("\n配置 Cline 插件设置...")
+        state_vscdb_path = Path(
+            f"C:\\Users\\{username}\\AppData\\Roaming\\Code\\User\\globalStorage\\state.vscdb"
+        )
+        cline_sqlite_file = mcp_sectrace_dir / "assets" / "clinesqlite.txt"
+
+        if not state_vscdb_path.exists():
+            print(f"[WARN] state.vscdb 不存在: {state_vscdb_path}")
+            print("[INFO] 请先启动一次 VSCode 以创建配置文件")
+        elif not cline_sqlite_file.exists():
+            print(f"[WARN] clinesqlite.txt 不存在: {cline_sqlite_file}")
+        else:
+            try:
+                import sqlite3
+
+                # 读取要写入的值
+                with open(cline_sqlite_file, 'r', encoding='utf-8') as f:
+                    cline_value = f.read().strip()
+
+                # 连接 SQLite 数据库
+                conn = sqlite3.connect(str(state_vscdb_path))
+                cursor = conn.cursor()
+
+                # 检查键是否存在
+                cursor.execute(
+                    "SELECT value FROM ItemTable WHERE key = ?",
+                    ("saoudrizwan.claude-dev",)
+                )
+                existing = cursor.fetchone()
+
+                if existing:
+                    # 更新现有记录
+                    cursor.execute(
+                        "UPDATE ItemTable SET value = ? WHERE key = ?",
+                        (cline_value, "saoudrizwan.claude-dev")
+                    )
+                    print("[SUCCESS] 已更新 Cline 配置")
+                else:
+                    # 插入新记录
+                    cursor.execute(
+                        "INSERT INTO ItemTable (key, value) VALUES (?, ?)",
+                        ("saoudrizwan.claude-dev", cline_value)
+                    )
+                    print("[SUCCESS] 已插入 Cline 配置")
+
+                conn.commit()
+                conn.close()
+
+            except Exception as e:
+                print(f"[WARN] 修改 state.vscdb 失败: {e}")
+                print("[INFO] Cline 配置将在首次使用时自动创建")
+
         print(f"[SUCCESS] MCPTools 配置已完成。")
         return True
 
@@ -687,7 +790,16 @@ def configure_vscode_extensions(mcp_sectrace_dir):
         with open(cline_setting_path, "r", encoding="utf-8") as f:
             cline_config = json.load(f)
 
-        # 3. 检查是否已存在相同的插件（根据 identifier.id）
+        # 3. 替换 location.path 中的 {username} 占位符
+        if "location" in cline_config and "path" in cline_config["location"]:
+            original_path = cline_config["location"]["path"]
+            if "{username}" in original_path:
+                cline_config["location"]["path"] = original_path.replace("{username}", username)
+                print(f"  [INFO] 替换路径中的 {{username}} 为 {username}")
+                print(f"    原路径: {original_path}")
+                print(f"    新路径: {cline_config['location']['path']}")
+
+        # 4. 检查是否已存在相同的插件（根据 identifier.id）
         cline_id = cline_config["identifier"]["id"]
         extension_exists = any(
             ext.get("identifier", {}).get("id") == cline_id
@@ -697,7 +809,7 @@ def configure_vscode_extensions(mcp_sectrace_dir):
         if extension_exists:
             print(f"[INFO] 插件'{cline_id}'已存在，无需添加。")
         else:
-            # 4. 添加新配置到 extensions.json
+            # 5. 添加新配置到 extensions.json
             extensions_data.append(cline_config)
             with open(extensions_json_path, "w", encoding="utf-8") as f:
                 json.dump(extensions_data, f, indent=4, ensure_ascii=False)
@@ -929,8 +1041,8 @@ def initialize_environment():
 
     print()
 
-    # Step 5: 配置工具路径
-    if not configure_tool_paths(mcp_sectrace_dir):
+    # Step 5: 配置浏览器并引导微步登录
+    if not configure_browser_login(mcp_sectrace_dir):
         wait_for_user()
         return False
 
@@ -943,8 +1055,8 @@ def initialize_environment():
 
     print()
 
-    # Step 7: 配置浏览器并引导微步登录
-    if not configure_browser_login(mcp_sectrace_dir):
+    # Step 7: 配置工具路径
+    if not configure_tool_paths(mcp_sectrace_dir):
         wait_for_user()
         return False
 
